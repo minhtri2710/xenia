@@ -57,14 +57,14 @@ export default async function WinePage({ params, searchParams }: Props) {
   const path = `/ruou-vang/${wine.slug}`;
   const price = format.number(v.priceVnd, { style: "currency", currency: "VND", maximumFractionDigits: 0 });
   const vintageText = (year: number | null) => (year === null ? t("nv") : String(year));
-  const window =
-    v.drinkFrom != null && v.drinkTo != null
-      ? t("windowRange", { from: String(v.drinkFrom), to: String(v.drinkTo) })
-      : v.drinkFrom != null
-        ? t("windowFrom", { from: String(v.drinkFrom) })
-        : v.drinkTo != null
-          ? t("windowTo", { to: String(v.drinkTo) })
-          : null;
+  let window: string | null = null;
+  if (v.drinkFrom != null && v.drinkTo != null) {
+    window = t("windowRange", { from: String(v.drinkFrom), to: String(v.drinkTo) });
+  } else if (v.drinkFrom != null) {
+    window = t("windowFrom", { from: String(v.drinkFrom) });
+  } else if (v.drinkTo != null) {
+    window = t("windowTo", { to: String(v.drinkTo) });
+  }
 
   return (
     <article className="pt-4">

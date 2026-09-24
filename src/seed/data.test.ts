@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BOTTLE_SIZES } from "../lib/catalogue";
+import { BOTTLE_SIZES, isAdRestricted } from "../lib/catalogue";
 import { type Localized, producers, seedCatalogue, wines } from "./data";
 
 const localized = (l: Localized) => l.vi.trim() !== "" && l.en.trim() !== "";
@@ -35,7 +35,7 @@ describe("seed catalogue", () => {
 
   it("has at least one published wine at or above 15% ABV, and the rest below", () => {
     const published = wines.filter((w) => w.status === "published");
-    const strong = published.filter((w) => w.vintages.some((x) => x.status === "published" && x.abvPct >= 15));
+    const strong = published.filter((w) => w.vintages.some((x) => x.status === "published" && isAdRestricted(x.abvPct)));
     expect(strong.length).toBeGreaterThanOrEqual(1);
     expect(strong.length).toBeLessThan(published.length / 4);
   });
