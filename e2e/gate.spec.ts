@@ -1,7 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
-import { vietnamDateYearsAgo } from "./support";
+import { expectNoSeriousA11yViolations, vietnamDateYearsAgo } from "./support";
 
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
 const EN_TRANSLATION = "No sale of alcohol or beer to anyone under 18";
@@ -10,12 +9,6 @@ async function declare(page: Page, name: string, dob: string) {
   await page.locator("#gate-name").fill(name);
   await page.locator("#gate-dob").fill(dob);
   await page.locator("form button[type=submit]").click();
-}
-
-async function expectNoSeriousA11yViolations(page: Page) {
-  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  const blocking = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-  expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`)).toEqual([]);
 }
 
 test.describe("unverified visitor", () => {

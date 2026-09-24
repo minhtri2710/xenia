@@ -244,7 +244,7 @@
       "payment": "Payment",
       "paymentMethods": "Cashless only: VietQR bank transfer or card (simulated), chosen on the next page after you place the order.",
       "totals": "Costs",
-      "changed": "Your order changed after you reviewed it (items, a price, the delivery zone or its fee). Nothing was placed or charged. Please review the order below again and confirm.",
+      "changed": "Your order changed after you reviewed it (items, a price, your details or delivery address, the delivery zone or its fee). Nothing was placed or charged. Please review the order below again and confirm.",
       "expired": "This checkout has expired. Please review your order and confirm again.",
       "problems": {
         "stock": "{name}: only {stock} left. We updated the quantity; please review and confirm again.",

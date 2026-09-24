@@ -1,8 +1,7 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
 import { wines as seedWines } from "../src/seed/data";
-import { blockThirdParty, seedCatalogue, vietnamDateYearsAgo } from "./support";
+import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, vietnamDateYearsAgo } from "./support";
 
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
 const LOCALES = [
@@ -217,9 +216,7 @@ for (const { locale, prefix } of LOCALES) {
       await expect(page).toHaveURL((url) => url.pathname === `${prefix}/ruou-vang`);
       for (const query of ["", "?country=FR&size=750", "?country=NZ&type=sweet"]) {
         await page.goto(`${prefix}/ruou-vang${query}`);
-        const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-        const blocking = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-        expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`), query).toEqual([]);
+        await expectNoSeriousA11yViolations(page, query);
       }
     });
   });

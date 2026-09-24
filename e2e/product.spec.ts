@@ -1,7 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, seedCatalogue, vietnamDateYearsAgo } from "./support";
+import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, vietnamDateYearsAgo } from "./support";
 
 // Every expected value below is written by hand from `src/seed/data.ts`, never computed with
 // `selectVintage` or the page's own code.
@@ -26,12 +25,6 @@ async function declareAdult(page: Page, path: string) {
 
 const spec = (page: Page, id: string) => page.locator(`[data-spec="${id}"] dd`);
 const vnd = async (page: Page, id: string) => Number((await spec(page, id).textContent())!.replace(/\D/g, ""));
-
-async function expectNoSeriousA11yViolations(page: Page, label: string) {
-  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  const blocking = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-  expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`), label).toEqual([]);
-}
 
 test.beforeAll(async ({ request }) => {
   await seedCatalogue(request);

@@ -1,9 +1,8 @@
 import { execFileSync } from "node:child_process";
 
-import AxeBuilder from "@axe-core/playwright";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, seedCatalogue, vietnamDateYearsAgo } from "./support";
+import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, vietnamDateYearsAgo } from "./support";
 
 // Every money value below is written by hand from `src/seed/data.ts` (vintage prices) and its
 // `ZONE_FEES` (HCMC 30 000, Hà Nội 45 000), never computed with `computeTotals` or the pages' code.
@@ -51,12 +50,12 @@ async function addToCart(page: Page, prefix: string, slug: string, qty = 1) {
   await expect(page).toHaveURL((url) => url.pathname === `${prefix}/gio-hang`);
 }
 
-async function fillBuyer(page: Page, dob: string) {
+async function fillBuyer(page: Page, dob: string, address = "12 Lê Lợi, Quận 1") {
   await page.locator("#buyer-name").fill("Nguyễn Văn An");
   await page.locator("#buyer-dob").fill(dob);
   await page.locator("#buyer-phone").fill("090 123 4567");
   await page.locator("#buyer-email").fill("an@example.test");
-  await page.locator("#buyer-address").fill("12 Lê Lợi, Quận 1");
+  await page.locator("#buyer-address").fill(address);
   await page.locator("form button[type=submit]").click();
 }
 
@@ -109,12 +108,6 @@ async function consentAndPlace(page: Page, prefix: string) {
   await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
   await expect(page).toHaveURL((url) => url.pathname.startsWith(`${prefix}/don-hang/`));
   return new URL(page.url()).pathname.split("/").pop()!;
-}
-
-async function expectNoSeriousA11yViolations(page: Page, label: string) {
-  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  const blocking = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-  expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`), label).toEqual([]);
 }
 
 async function expectNotice(page: Page) {
@@ -599,6 +592,39 @@ for (const { input, change, restore, totals } of CHANGES) {
     } finally {
       restore?.(ids);
     }
+  });
+}
+
+for (const { locale, prefix } of LOCALES) {
+  test(`an address change in another tab after the review is refused, re-reviewed, then placed at the new address (${locale})`, async ({ page }) => {
+    await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
+    await addToCart(page, prefix, "colle-vento-rosso");
+    await toReview(page, prefix, "hcmc");
+    await expect(page.getByTestId("review-delivery")).toContainText("12 Lê Lợi, Quận 1");
+
+    // The same buyer, in a second tab, resubmits step 1 with another address.
+    const other = await page.context().newPage();
+    await other.goto(`${prefix}/thanh-toan`);
+    await fillBuyer(other, vietnamDateYearsAgo(30), "99 Nguyễn Huệ, Quận 3");
+    await expect(other).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
+
+    const before = orderCount();
+    await page.locator("input[name=terms]").check();
+    await page.locator("input[name=privacy]").check();
+    await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+
+    await expect(page.getByTestId("review-changed")).toContainText(
+      locale === "vi" ? "Đơn hàng đã thay đổi sau khi bạn xem lại" : "Your order changed after you reviewed it",
+    );
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan` && url.search === "?changed=1");
+    expect(orderCount()).toBe(before);
+    await expect(page.getByTestId("review-delivery")).toContainText("99 Nguyễn Huệ, Quận 3");
+    await expect(page.locator("input[name=terms]")).not.toBeChecked();
+    await expect(page.locator("input[name=privacy]")).not.toBeChecked();
+
+    const token = await consentAndPlace(page, prefix);
+    expect(orderCount()).toBe(before + 1);
+    expect(sql(`SELECT buyer_address FROM orders WHERE token = '${token}'`)).toBe("99 Nguyễn Huệ, Quận 3");
   });
 }
 

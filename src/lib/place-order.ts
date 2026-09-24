@@ -47,8 +47,8 @@ async function stockOf(payload: BasePayload, id: number): Promise<number> {
  * - Every line is re-read: a draft or missing vintage or wine, or a quantity above stock, refuses
  *   the whole order with a per-line problem.
  * - The order must be the one step 4 showed (Law 122 Art. 12): `reviewedDigest` is compared with
- *   `orderDigest` of the lines, zone, fee and totals about to be stored; a mismatch refuses with
- *   "changed".
+ *   `orderDigest` of the lines, buyer, zone, fee and totals about to be stored; a mismatch refuses
+ *   with "changed".
  * - Stock is decremented here, at placement, with an atomic `stock = stock - qty` in vintage-id
  *   order; the `vintages_stock_non_negative` CHECK refuses a concurrent oversell.
  */
@@ -116,6 +116,7 @@ export async function placeOrder(
     const totals = computeTotals(snapshots, fee);
     const digest = orderDigest({
       lines: snapshots.map((s) => ({ vintageId: s.vintage, qty: s.qty, unitPriceVnd: s.unitPriceVnd })),
+      buyer,
       zone,
       feeVnd: fee,
       totals,

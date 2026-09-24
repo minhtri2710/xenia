@@ -52,6 +52,7 @@ export default async function ReviewStep({ params, searchParams }: Props) {
   // The digest of exactly what this page shows; placement refuses an order that differs.
   const digest = orderDigest({
     lines: items.map((i) => ({ vintageId: i.vintageId, qty: i.qty, unitPriceVnd: i.priceVnd })),
+    buyer,
     zone,
     feeVnd: fee,
     totals,

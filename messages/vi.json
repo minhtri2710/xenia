@@ -243,7 +243,7 @@
       "payment": "Thanh toán",
       "paymentMethods": "Chỉ thanh toán không dùng tiền mặt: chuyển khoản VietQR hoặc thẻ (mô phỏng), chọn ở bước sau khi đặt hàng.",
       "totals": "Chi phí",
-      "changed": "Đơn hàng đã thay đổi sau khi bạn xem lại (sản phẩm, giá, khu vực giao hàng hoặc phí giao hàng). Chưa có đơn hàng nào được đặt hay thanh toán. Vui lòng xem lại đơn hàng bên dưới và xác nhận lại.",
+      "changed": "Đơn hàng đã thay đổi sau khi bạn xem lại (sản phẩm, giá, thông tin người mua hoặc địa chỉ giao hàng, khu vực giao hàng hoặc phí giao hàng). Chưa có đơn hàng nào được đặt hay thanh toán. Vui lòng xem lại đơn hàng bên dưới và xác nhận lại.",
       "expired": "Phiên thanh toán đã hết hạn. Vui lòng xem lại đơn hàng và xác nhận lại.",
       "problems": {
         "stock": "{name}: chỉ còn {stock} chai. Chúng tôi đã cập nhật số lượng; vui lòng xem lại và xác nhận lại.",
