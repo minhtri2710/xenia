@@ -18,7 +18,7 @@ pnpm db:up               # start Postgres (only needed for /admin, /api and pnpm
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm test` | Vitest unit tests (`src/**/*.test.ts`) |
-| `pnpm test:e2e` | Playwright + axe. Starts its own `next dev` on **localhost:3417** and stops it afterwards. Needs no database. |
+| `pnpm test:e2e` | Playwright + axe. Starts its own `next dev` on **localhost:3417** and stops it afterwards. Needs `pnpm db:up`: `e2e/admin.spec.ts` empties the `users` table and creates its own admin. |
 | `pnpm build` | Regenerates Payload's import map, then `next build`. Needs `.env` but no running database. |
 | `pnpm payload generate:types` | Regenerate `src/payload-types.ts` after a collection change |
 
@@ -63,3 +63,5 @@ One live contract and one implementation path. No compatibility layers, shims, a
 - Mood B (ivory editorial): tokens in `src/app/globals.css`. Fonts are Cormorant Garamond (display) and Be Vietnam Pro (body), self-hosted from `@fontsource` packages; both carry the Vietnamese subset.
 - No runtime request to any third-party origin (fonts, analytics, embeds). No images of people; no competitor content.
 - Payload admin lives at `/admin` and is not behind the gate.
+- The admin makes no third-party request either: `admin.avatar` is `"default"` (Payload's default is Gravatar). `e2e/admin.spec.ts` fails on any non-localhost request in create-first-user, dashboard, account and login.
+- Payload's code and JSON field editors load Monaco from `cdn.jsdelivr.net`, and Payload has no setting to self-host it. A slice that adds a `code` or `json` field must first make Monaco load without a third-party origin, or not use the field.

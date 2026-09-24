@@ -16,6 +16,8 @@ export default buildConfig({
   secret: requiredEnv("PAYLOAD_SECRET"),
   admin: {
     user: "users",
+    // Payload defaults to Gravatar, a third-party request carrying a hash of the admin email.
+    avatar: "default",
     importMap: { baseDir: dirname },
   },
   collections: [
