@@ -18,7 +18,8 @@ pnpm db:up               # start Postgres (only needed for /admin, /api and pnpm
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm test` | Vitest unit tests (`src/**/*.test.ts`) |
-| `pnpm test:e2e` | Playwright + axe. Starts its own `next dev` on **localhost:3417** and stops it afterwards. Needs `pnpm db:up`: `e2e/admin.spec.ts` empties the `users` table and creates its own admin. |
+| `pnpm seed` | Replaces the catalogue (producers, wines, vintages) with the fictional seed in `src/seed/data.ts`. Deterministic content; never touches `users` or any other collection. Needs `pnpm db:up`. |
+| `pnpm test:e2e` | Playwright + axe. Starts its own `next dev` on **localhost:3417** and stops it afterwards. Needs `pnpm db:up`: `e2e/admin.spec.ts` empties the `users` table and creates its own admin, and the admin and catalogue specs run `pnpm seed` in `beforeAll`, so no spec relies on existing data. |
 | `pnpm build` | Regenerates Payload's import map, then `next build`. Needs `.env` but no running database. |
 | `pnpm payload generate:types` | Regenerate `src/payload-types.ts` after a collection change |
 
@@ -57,11 +58,21 @@ One live contract and one implementation path. No compatibility layers, shims, a
 - Privacy: the declared name and date of birth are never persisted — no database, log, cookie value or analytics. The marker cookie `xenia_age_ok=1` carries no personal data, is `HttpOnly`, `SameSite=Lax`, `Secure` in production, and lasts for the browser session. A forged marker is an accepted residual (equal to a false self-declaration); do not add signing or eKYC.
 - The notice `Không bán rượu, bia cho người chưa đủ 18 tuổi` (Law 44 Art. 32.5) is in the storefront layout footer on every page; `/en` shows an English translation beside it.
 
+## Catalogue
+
+- Collections in `src/collections/catalogue.ts`: `producers`, `wines`, `vintages`, localized vi (default) and en with `fallback: false`. Vocabularies (types, countries, occasions, pairings, bottle sizes) live in `src/lib/catalogue.ts`.
+- Access: the catalogue collections set no `access`, so Payload's default applies and every operation over `/api` needs an authenticated admin. Do not add a public `read`: `/api` is exempt from the age gate, so a public read would hand product information to an undeclared visitor (Decree 24/2020 Art. 6.1, D4). The storefront reads through Payload's Local API on the server (`src/lib/catalogue-data.ts`). GraphQL has no route (`src/app/(payload)/api` has only the REST catch-all). `e2e/catalogue.spec.ts` checks unauthenticated REST and `/api/graphql` return no catalogue data.
+- Published: a wine with `status: published` that has at least one `published` vintage. The collection page lists only those.
+- `ad_restricted` (ABV ≥ 15) is derived from `vintages.abvPct` wherever it is needed, and is never stored.
+- Collection page `/ruou-vang`: facet and sort state is the URL query, applied on the server by the pure `listWines` in `src/lib/catalogue.ts`. Facets are plain links, so they work without client JS. Size and price band are vintage facets: a wine matches when one of its published vintages satisfies both, and the card's "from" price is the lowest price among the matching vintages.
+- Price bands (integer VND, VAT included; lower bound inclusive, upper exclusive): under 1 000 000; 1 000 000 to under 2 000 000; 2 000 000 to under 4 000 000; 4 000 000 and over.
+- Images are placeholders drawn in CSS. There is no `public/` directory.
+
 ## Conventions
 
 - All UI copy lives in `messages/vi.json` and `messages/en.json`. `src/i18n/messages.test.ts` fails on hardcoded JSX copy under `src/app/[locale]`.
 - Mood B (ivory editorial): tokens in `src/app/globals.css`. Fonts are Cormorant Garamond (display) and Be Vietnam Pro (body), self-hosted from `@fontsource` packages; both carry the Vietnamese subset.
 - No runtime request to any third-party origin (fonts, analytics, embeds). No images of people; no competitor content.
 - Payload admin lives at `/admin` and is not behind the gate.
-- The admin makes no third-party request either: `admin.avatar` is `"default"` (Payload's default is Gravatar). `e2e/admin.spec.ts` fails on any non-localhost request in create-first-user, dashboard, account and login.
+- The admin makes no third-party request either: `admin.avatar` is `"default"` (Payload's default is Gravatar). `e2e/admin.spec.ts` fails on any non-localhost http(s) request or ws(s) connection in create-first-user, dashboard, account, the catalogue lists and login. Every third-party check uses `blockThirdParty` in `e2e/support.ts`, which watches both.
 - Payload's code and JSON field editors load Monaco from `cdn.jsdelivr.net`, and Payload has no setting to self-host it. A slice that adds a `code` or `json` field must first make Monaco load without a third-party origin, or not use the field.

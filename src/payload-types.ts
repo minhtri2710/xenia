@@ -68,6 +68,9 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    producers: Producer;
+    wines: Wine;
+    vintages: Vintage;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -76,6 +79,9 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    producers: ProducersSelect<false> | ProducersSelect<true>;
+    wines: WinesSelect<false> | WinesSelect<true>;
+    vintages: VintagesSelect<false> | VintagesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -84,10 +90,10 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('vi' | 'en') | ('vi' | 'en')[];
   globals: {};
   globalsSelect: {};
-  locale: null;
+  locale: 'vi' | 'en';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -142,6 +148,106 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "producers".
+ */
+export interface Producer {
+  id: number;
+  name: string;
+  country: 'FR' | 'IT' | 'ES' | 'PT' | 'DE' | 'AT' | 'US' | 'CL' | 'AR' | 'AU' | 'NZ' | 'ZA';
+  region: string;
+  story: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wines".
+ */
+export interface Wine {
+  id: number;
+  /**
+   * Shared by both locales: /ruou-vang/<slug> and /en/ruou-vang/<slug>.
+   */
+  slug: string;
+  producer: number | Producer;
+  name: string;
+  type: 'red' | 'white' | 'rose' | 'sparkling' | 'sweet';
+  country: 'FR' | 'IT' | 'ES' | 'PT' | 'DE' | 'AT' | 'US' | 'CL' | 'AR' | 'AU' | 'NZ' | 'ZA';
+  region: string;
+  appellation?: string | null;
+  grapes: {
+    grape: string;
+    pct?: number | null;
+    id?: string | null;
+  }[];
+  tasting: {
+    nose: string;
+    palate: string;
+    finish: string;
+  };
+  /**
+   * Each axis from 1 (low) to 5 (high).
+   */
+  profile: {
+    body: number;
+    tannin: number;
+    sweetness: number;
+    acidity: number;
+  };
+  pairings?:
+    | (
+        | 'beef'
+        | 'pork'
+        | 'poultry'
+        | 'seafood'
+        | 'fish'
+        | 'cheese'
+        | 'spicy'
+        | 'dessert'
+        | 'bun-cha'
+        | 'pho'
+        | 'bo-luc-lac'
+        | 'goi-cuon'
+        | 'cha-gio'
+        | 'vit-quay'
+      )[]
+    | null;
+  servingTempC: number;
+  occasions?: ('gift' | 'tet' | 'celebration' | 'dinner' | 'everyday')[] | null;
+  status: 'draft' | 'published';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vintages".
+ */
+export interface Vintage {
+  id: number;
+  wine: number | Wine;
+  /**
+   * Leave empty for a non-vintage (NV) wine.
+   */
+  year?: number | null;
+  bottleMl: '375' | '750' | '1500';
+  /**
+   * % vol. S3 derives the ≥15° advertising restriction from this; it is never stored.
+   */
+  abvPct: number;
+  /**
+   * Whole VND, VAT included.
+   */
+  priceVnd: number;
+  stock: number;
+  drinkFrom?: number | null;
+  drinkTo?: number | null;
+  importer: string;
+  status: 'draft' | 'published';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -163,10 +269,23 @@ export interface PayloadKv {
  */
 export interface PayloadLockedDocument {
   id: number;
-  document?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  document?:
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'producers';
+        value: number | Producer;
+      } | null)
+    | ({
+        relationTo: 'wines';
+        value: number | Wine;
+      } | null)
+    | ({
+        relationTo: 'vintages';
+        value: number | Vintage;
+      } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
@@ -230,6 +349,77 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "producers_select".
+ */
+export interface ProducersSelect<T extends boolean = true> {
+  name?: T;
+  country?: T;
+  region?: T;
+  story?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wines_select".
+ */
+export interface WinesSelect<T extends boolean = true> {
+  slug?: T;
+  producer?: T;
+  name?: T;
+  type?: T;
+  country?: T;
+  region?: T;
+  appellation?: T;
+  grapes?:
+    | T
+    | {
+        grape?: T;
+        pct?: T;
+        id?: T;
+      };
+  tasting?:
+    | T
+    | {
+        nose?: T;
+        palate?: T;
+        finish?: T;
+      };
+  profile?:
+    | T
+    | {
+        body?: T;
+        tannin?: T;
+        sweetness?: T;
+        acidity?: T;
+      };
+  pairings?: T;
+  servingTempC?: T;
+  occasions?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vintages_select".
+ */
+export interface VintagesSelect<T extends boolean = true> {
+  wine?: T;
+  year?: T;
+  bottleMl?: T;
+  abvPct?: T;
+  priceVnd?: T;
+  stock?: T;
+  drinkFrom?: T;
+  drinkTo?: T;
+  importer?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

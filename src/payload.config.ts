@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { buildConfig } from "payload";
 
+import { Producers, Vintages, Wines } from "./collections/catalogue";
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function requiredEnv(name: string): string {
@@ -27,7 +29,19 @@ export default buildConfig({
       admin: { useAsTitle: "email" },
       fields: [],
     },
+    Producers,
+    Wines,
+    Vintages,
   ],
+  localization: {
+    locales: [
+      { code: "vi", label: "Tiếng Việt" },
+      { code: "en", label: "English" },
+    ],
+    defaultLocale: "vi",
+    // A missing translation is a content error the seed tests catch, not something to paper over.
+    fallback: false,
+  },
   // Pre-launch: Payload pushes the schema in development; no migrations until first deploy.
   db: postgresAdapter({
     pool: { connectionString: requiredEnv("DATABASE_URI") },

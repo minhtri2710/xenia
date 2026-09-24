@@ -1,16 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
+import { vietnamDateYearsAgo } from "./support";
+
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
 const EN_TRANSLATION = "No sale of alcohol or beer to anyone under 18";
-
-/** An ISO date `yearsAgo` years before today's Vietnamese calendar date. */
-function vietnamDateYearsAgo(yearsAgo: number): string {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
-  const [year, month, day] = today.split("-");
-  // 28 February stands in for a 29 February that may not exist in the target year.
-  return `${Number(year) - yearsAgo}-${month}-${month === "02" && day === "29" ? "28" : day}`;
-}
 
 async function declare(page: Page, name: string, dob: string) {
   await page.locator("#gate-name").fill(name);

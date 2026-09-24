@@ -18,7 +18,8 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:reset": "docker compose down && rm -rf .data/postgres",
-    "payload": "payload"
+    "payload": "payload",
+    "seed": "payload run src/seed/run.ts"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "5.2.8",

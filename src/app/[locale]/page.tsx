@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { Link } from "@/i18n/navigation";
+
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -10,6 +12,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <div className="max-w-2xl">
         <h1 className="font-display text-5xl leading-tight font-medium sm:text-6xl">{t("title")}</h1>
         <p className="mt-6 text-lg text-muted">{t("lead")}</p>
+        <Link href="/ruou-vang" className="mt-8 inline-block text-wine underline underline-offset-4">
+          {t("browse")}
+        </Link>
       </div>
       <div
         role="img"

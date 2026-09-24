@@ -33,10 +33,75 @@
   "Home": {
     "title": "Wine for memorable occasions",
     "lead": "A collection of wine and light grape wine, with refined gift wrapping — in preparation.",
-    "placeholder": "Placeholder image"
+    "placeholder": "Placeholder image",
+    "browse": "Browse the wine collection"
   },
   "NotFound": {
     "title": "Page not found",
     "back": "Back to home"
+  },
+  "Catalogue": {
+    "title": "Wine",
+    "lead": "Red, white, rosé, sparkling and sweet wines from renowned regions. Prices include VAT.",
+    "filters": "Filters",
+    "all": "All",
+    "sortLabel": "Sort:",
+    "count": "{count, plural, one {# wine} other {# wines}}",
+    "facets": {
+      "type": "Type",
+      "country": "Country",
+      "region": "Region",
+      "grape": "Grape",
+      "price": "Price",
+      "occasion": "Occasion",
+      "size": "Bottle size"
+    },
+    "sorts": {
+      "name": "Name A–Z",
+      "price-asc": "Price, low to high",
+      "price-desc": "Price, high to low"
+    },
+    "types": {
+      "red": "Red",
+      "white": "White",
+      "rose": "Rosé",
+      "sparkling": "Sparkling",
+      "sweet": "Sweet"
+    },
+    "countries": {
+      "FR": "France",
+      "IT": "Italy",
+      "ES": "Spain",
+      "PT": "Portugal",
+      "DE": "Germany",
+      "AT": "Austria",
+      "US": "United States",
+      "CL": "Chile",
+      "AR": "Argentina",
+      "AU": "Australia",
+      "NZ": "New Zealand",
+      "ZA": "South Africa"
+    },
+    "occasions": {
+      "gift": "Gift",
+      "tet": "Tết",
+      "celebration": "Celebration",
+      "dinner": "Dinner",
+      "everyday": "Everyday"
+    },
+    "priceBands": {
+      "lt1m": "Under ₫1,000,000",
+      "1m-2m": "₫1,000,000 to under ₫2,000,000",
+      "2m-4m": "₫2,000,000 to under ₫4,000,000",
+      "gte4m": "₫4,000,000 and over"
+    },
+    "size": "{ml} ml",
+    "from": "From {price}",
+    "outOfStock": "Out of stock",
+    "empty": {
+      "title": "No wines match",
+      "body": "Try removing a filter to see more."
+    },
+    "clear": "Clear filters"
   }
 }

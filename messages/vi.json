@@ -32,10 +32,75 @@
   "Home": {
     "title": "Rượu vang cho những dịp đáng nhớ",
     "lead": "Bộ sưu tập rượu vang và vang nhẹ, gói quà tinh tế — đang được chuẩn bị.",
-    "placeholder": "Ảnh minh hoạ"
+    "placeholder": "Ảnh minh hoạ",
+    "browse": "Xem bộ sưu tập rượu vang"
   },
   "NotFound": {
     "title": "Không tìm thấy trang",
     "back": "Về trang chủ"
+  },
+  "Catalogue": {
+    "title": "Rượu vang",
+    "lead": "Bộ sưu tập vang đỏ, trắng, hồng, sủi và ngọt từ những vùng vang nổi tiếng. Giá đã gồm VAT.",
+    "filters": "Bộ lọc",
+    "all": "Tất cả",
+    "sortLabel": "Sắp xếp:",
+    "count": "{count} loại vang",
+    "facets": {
+      "type": "Loại vang",
+      "country": "Quốc gia",
+      "region": "Vùng",
+      "grape": "Giống nho",
+      "price": "Khoảng giá",
+      "occasion": "Dịp",
+      "size": "Dung tích"
+    },
+    "sorts": {
+      "name": "Tên A–Z",
+      "price-asc": "Giá tăng dần",
+      "price-desc": "Giá giảm dần"
+    },
+    "types": {
+      "red": "Vang đỏ",
+      "white": "Vang trắng",
+      "rose": "Vang hồng",
+      "sparkling": "Vang sủi",
+      "sweet": "Vang ngọt"
+    },
+    "countries": {
+      "FR": "Pháp",
+      "IT": "Ý",
+      "ES": "Tây Ban Nha",
+      "PT": "Bồ Đào Nha",
+      "DE": "Đức",
+      "AT": "Áo",
+      "US": "Mỹ",
+      "CL": "Chile",
+      "AR": "Argentina",
+      "AU": "Úc",
+      "NZ": "New Zealand",
+      "ZA": "Nam Phi"
+    },
+    "occasions": {
+      "gift": "Quà tặng",
+      "tet": "Tết",
+      "celebration": "Tiệc mừng",
+      "dinner": "Bữa tối",
+      "everyday": "Hằng ngày"
+    },
+    "priceBands": {
+      "lt1m": "Dưới 1.000.000 ₫",
+      "1m-2m": "1.000.000 – dưới 2.000.000 ₫",
+      "2m-4m": "2.000.000 – dưới 4.000.000 ₫",
+      "gte4m": "Từ 4.000.000 ₫"
+    },
+    "size": "{ml} ml",
+    "from": "Từ {price}",
+    "outOfStock": "Tạm hết hàng",
+    "empty": {
+      "title": "Không có loại vang phù hợp",
+      "body": "Thử bỏ bớt bộ lọc để xem thêm lựa chọn."
+    },
+    "clear": "Xoá bộ lọc"
   }
 }
