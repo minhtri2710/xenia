@@ -9,7 +9,7 @@ describe("safeReturnPath", () => {
     ["/en", "/en"],
     ["/en/qua-tang#top", "/en/qua-tang#top"],
   ])("keeps the same-origin path %j", (raw, expected) => {
-    expect(safeReturnPath(raw)).toBe(expected);
+    expect(safeReturnPath(raw, "/en")).toBe(expected);
   });
 
   it.each([
@@ -24,11 +24,13 @@ describe("safeReturnPath", () => {
     "javascript:alert(1)",
     "evil.example",
     "",
-  ])("rejects %j in favour of /", (raw) => {
-    expect(safeReturnPath(raw)).toBe("/");
+  ])("rejects %j in favour of the locale home", (raw) => {
+    expect(safeReturnPath(raw, "/")).toBe("/");
+    expect(safeReturnPath(raw, "/en")).toBe("/en");
   });
 
-  it.each([undefined, null, 42, ["/a"]])("rejects the non-string %j", (raw) => {
-    expect(safeReturnPath(raw)).toBe("/");
+  it.each([undefined, null, 42, ["/a"]])("rejects the non-string %j in favour of the locale home", (raw) => {
+    expect(safeReturnPath(raw, "/")).toBe("/");
+    expect(safeReturnPath(raw, "/en")).toBe("/en");
   });
 });

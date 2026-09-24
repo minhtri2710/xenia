@@ -78,6 +78,19 @@ test("an open-redirect `next` returns the adult to / instead", async ({ page }) 
   await expect(page).toHaveURL((url) => url.hostname === "localhost" && url.pathname === "/");
 });
 
+test("an adult declaration on the English gate with no `next` returns the visitor to /en", async ({ page }) => {
+  await page.goto("/en/xac-minh-tuoi");
+  await declare(page, "Jane Doe", vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.pathname === "/en");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wine for memorable occasions");
+});
+
+test("an open-redirect `next` on the English gate returns the adult to /en instead", async ({ page }) => {
+  await page.goto("/en/xac-minh-tuoi?next=//evil.example");
+  await declare(page, "Jane Doe", vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.hostname === "localhost" && url.pathname === "/en");
+});
+
 test.describe("invalid input shows a field error on the gate", () => {
   test("blank name", async ({ page, context }) => {
     await page.goto("/");

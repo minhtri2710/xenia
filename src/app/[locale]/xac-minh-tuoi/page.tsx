@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { getPathname } from "@/i18n/navigation";
 import { safeReturnPath } from "@/lib/return-path";
 
 import { GateForm } from "./gate-form";
@@ -19,7 +20,7 @@ export default async function GatePage({ params, searchParams }: Props) {
     <section className="max-w-2xl pt-8">
       <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
       <p className="mt-6 text-lg">{t("intro")}</p>
-      <GateForm locale={locale} next={safeReturnPath(next)} />
+      <GateForm locale={locale} next={safeReturnPath(next, getPathname({ href: "/", locale }))} />
       <p className="mt-8 max-w-md text-sm text-muted">{t("privacy")}</p>
     </section>
   );

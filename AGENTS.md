@@ -54,7 +54,7 @@ One live contract and one implementation path. No compatibility layers, shims, a
 - Validation is on the server (`src/app/[locale]/xac-minh-tuoi/actions.ts`, `src/lib/age.ts`). Blank or whitespace-only name, unparseable date and future date of birth are field errors, not refusals.
 - Adult: the visitor returns to the sanitised `next` path. Under 18: redirected to `/tam-biet` with no marker. There is no lockout.
 - Age rule (`isAdult` in `src/lib/age.ts`): computed on the calendar date in `Asia/Ho_Chi_Minh`, never server-local or UTC. The 18th birthday is adult. A 29 February birthday reaches 18 on 1 March in a non-leap year.
-- Return path (`src/lib/return-path.ts`): only same-origin relative paths. Absolute URLs, `//host`, backslashes, control characters and `javascript:` become `/`.
+- Return path (`src/lib/return-path.ts`): only same-origin relative paths. A missing or empty `next`, absolute URLs, `//host`, backslashes, control characters and `javascript:` become the home of the gate's locale: `/` for vi, `/en` for en.
 - Privacy: the declared name and date of birth are never persisted — no database, log, cookie value or analytics. The marker cookie `xenia_age_ok=1` carries no personal data, is `HttpOnly`, `SameSite=Lax`, `Secure` in production, and lasts for the browser session. A forged marker is an accepted residual (equal to a false self-declaration); do not add signing or eKYC.
 - The notice `Không bán rượu, bia cho người chưa đủ 18 tuổi` (Law 44 Art. 32.5) is in the storefront layout footer on every page; `/en` shows an English translation beside it.
 

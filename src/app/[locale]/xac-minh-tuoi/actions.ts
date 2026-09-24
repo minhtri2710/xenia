@@ -42,5 +42,5 @@ export async function declareAge(_previous: GateState, formData: FormData): Prom
     secure: process.env.NODE_ENV === "production",
     path: "/",
   });
-  redirect(safeReturnPath(field(formData, "next")));
+  redirect(safeReturnPath(field(formData, "next"), getPathname({ href: "/", locale })));
 }
