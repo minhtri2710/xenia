@@ -4,7 +4,8 @@
   },
   "Brand": {
     "name": "xenia",
-    "tagline": "Rượu vang và vang nhẹ"
+    "tagline": "Rượu vang và vang nhẹ",
+    "cart": "Giỏ hàng"
   },
   "Notice": {
     "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi"
@@ -163,6 +164,146 @@
       "sweetness": "Độ ngọt",
       "acidity": "Độ chua"
     },
-    "pairings": "Món ăn kết hợp"
+    "pairings": "Món ăn kết hợp",
+    "quantity": "Số lượng",
+    "addToCart": "Thêm vào giỏ hàng"
+  },
+  "Cart": {
+    "title": "Giỏ hàng",
+    "empty": "Giỏ hàng của bạn đang trống.",
+    "browse": "Xem bộ sưu tập rượu vang",
+    "unitPrice": "{price} / chai",
+    "quantity": "Số lượng",
+    "update": "Cập nhật",
+    "remove": "Bỏ {name} khỏi giỏ",
+    "goods": "Tiền hàng",
+    "vatNote": "Giá đã bao gồm VAT. Phí giao hàng được tính ở bước giao hàng.",
+    "checkout": "Thanh toán",
+    "errors": {
+      "quantity": "Số lượng phải là số nguyên lớn hơn 0.",
+      "unavailable": "Sản phẩm này hiện không còn bán hoặc đã hết hàng."
+    }
+  },
+  "Checkout": {
+    "title": "Thanh toán",
+    "steps": {
+      "label": "Các bước thanh toán",
+      "buyer": "Người mua",
+      "delivery": "Giao hàng",
+      "review": "Xem lại & xác nhận"
+    },
+    "buyer": {
+      "title": "Thông tin người mua",
+      "intro": "Theo quy định, người mua rượu phải từ đủ 18 tuổi. Vui lòng khai báo đầy đủ họ tên, ngày sinh và địa chỉ cư trú.",
+      "fields": {
+        "name": "Họ và tên",
+        "dob": "Ngày sinh",
+        "phone": "Số điện thoại",
+        "email": "Email",
+        "address": "Địa chỉ cư trú"
+      },
+      "privacy": "Ngày sinh chỉ dùng để kiểm tra tuổi và không được lưu lại.",
+      "submit": "Tiếp tục",
+      "errors": {
+        "nameRequired": "Vui lòng nhập họ và tên.",
+        "nameTooLong": "Họ và tên quá dài.",
+        "dobRequired": "Vui lòng nhập ngày sinh.",
+        "dobInvalid": "Ngày sinh không hợp lệ.",
+        "dobFuture": "Ngày sinh không thể ở tương lai.",
+        "phoneRequired": "Vui lòng nhập số điện thoại.",
+        "phoneInvalid": "Số điện thoại không hợp lệ (10 chữ số, bắt đầu bằng 0 hoặc +84).",
+        "emailRequired": "Vui lòng nhập email.",
+        "emailInvalid": "Email không hợp lệ.",
+        "addressRequired": "Vui lòng nhập địa chỉ cư trú.",
+        "addressTooLong": "Địa chỉ quá dài."
+      }
+    },
+    "delivery": {
+      "title": "Giao hàng",
+      "toBuyer": "Giao cho người mua: {name}, {address}.",
+      "idCheck": "Người giao hàng chỉ trao rượu cho người từ đủ 18 tuổi và xuất trình giấy tờ tùy thân. Không có giấy tờ, đơn hàng sẽ không được trao.",
+      "zone": "Khu vực giao hàng",
+      "zoneOption": "{zone} — phí giao hàng {fee}",
+      "submit": "Tiếp tục",
+      "errors": {
+        "zoneRequired": "Vui lòng chọn khu vực giao hàng."
+      }
+    },
+    "review": {
+      "title": "Xem lại & xác nhận",
+      "intro": "Vui lòng kiểm tra đơn hàng. Bạn có thể sửa từng phần trước khi đặt hàng.",
+      "goods": "Hàng hóa",
+      "editGoods": "Sửa giỏ hàng",
+      "line": "{qty} × {name} {vintage}, {size} — {price} / chai",
+      "buyer": "Người mua",
+      "editBuyer": "Sửa thông tin người mua",
+      "delivery": "Giao hàng",
+      "editDelivery": "Sửa giao hàng",
+      "deliveryMethod": "Giao tận nơi cho người mua, khu vực {zone}: {address}",
+      "payment": "Thanh toán",
+      "paymentMethods": "Chỉ thanh toán không dùng tiền mặt: chuyển khoản VietQR hoặc thẻ (mô phỏng), chọn ở bước sau khi đặt hàng.",
+      "totals": "Chi phí",
+      "expired": "Phiên thanh toán đã hết hạn. Vui lòng xem lại đơn hàng và xác nhận lại.",
+      "problems": {
+        "stock": "{name}: chỉ còn {stock} chai. Chúng tôi đã cập nhật số lượng; vui lòng xem lại và xác nhận lại.",
+        "unavailable": "{name}: sản phẩm không còn bán và đã được bỏ khỏi giỏ hàng; vui lòng xem lại và xác nhận lại."
+      },
+      "consent": {
+        "terms": "Tôi đồng ý với <link>điều khoản mua bán</link>.",
+        "privacy": "Tôi đồng ý với <link>chính sách bảo mật</link>.",
+        "termsRequired": "Vui lòng đồng ý với điều khoản mua bán.",
+        "privacyRequired": "Vui lòng đồng ý với chính sách bảo mật."
+      },
+      "submit": "Đặt hàng"
+    },
+    "totals": {
+      "goods": "Tiền hàng",
+      "shipping": "Phí giao hàng",
+      "total": "Tổng cộng (đã bao gồm VAT)",
+      "vatIncluded": "Trong đó VAT (10%)"
+    }
+  },
+  "Zones": {
+    "hcmc": "TP. Hồ Chí Minh",
+    "hanoi": "Hà Nội"
+  },
+  "Order": {
+    "title": "Đơn hàng",
+    "heading": "Đơn hàng {number}",
+    "statusLabel": "Trạng thái:",
+    "statuses": {
+      "placed": "Đã đặt, chờ thanh toán",
+      "paid": "Đã thanh toán",
+      "packed": "Đã đóng gói",
+      "out_for_delivery": "Đang giao",
+      "delivered": "Đã giao",
+      "id_check_failed": "Không giao được (không xuất trình giấy tờ)",
+      "cancelled": "Đã hủy",
+      "returned": "Đã hoàn trả"
+    },
+    "keepLink": "Lưu lại đường dẫn riêng này để xem đơn hàng:",
+    "payment": {
+      "title": "Thanh toán",
+      "failed": "Thanh toán không thành công. Bạn có thể thử lại.",
+      "invalid": "Vui lòng chọn phương thức thanh toán.",
+      "mockNote": "Đây là thanh toán mô phỏng: không có giao dịch thật, không cần số thẻ hay số tài khoản.",
+      "method": "Phương thức thanh toán",
+      "methods": {
+        "vietqr_mock": "Chuyển khoản VietQR (mô phỏng)",
+        "card_mock": "Thẻ (mô phỏng)"
+      },
+      "succeed": "Mô phỏng thanh toán thành công",
+      "fail": "Mô phỏng thanh toán thất bại"
+    },
+    "lines": "Hàng hóa",
+    "line": "{qty} × {name} {vintage}, {size}, {abv}% vol — {price} / chai",
+    "totals": "Chi phí",
+    "goods": "Tiền hàng",
+    "shipping": "Phí giao hàng",
+    "total": "Tổng cộng (đã bao gồm VAT)",
+    "vatIncluded": "Trong đó VAT (10%)",
+    "delivery": "Giao hàng",
+    "deliveryTo": "Giao cho {name}, {address} ({zone}).",
+    "idCheck": "Người giao hàng chỉ trao rượu cho người từ đủ 18 tuổi và xuất trình giấy tờ tùy thân."
   }
 }

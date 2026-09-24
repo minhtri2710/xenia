@@ -1,11 +1,12 @@
 /**
  * `pnpm seed`: replaces the catalogue (vintages, wines, producers) with the fictional seed in
- * `data.ts`. It never touches `users` or any other collection. Same data on every run.
+ * `data.ts` and sets the delivery zones in the `site-settings` global. It never touches `users`,
+ * `orders` or any other collection. Same data on every run.
  */
 import { getPayload } from "payload";
 
 import config from "../payload.config";
-import { IMPORTER, producers, wines } from "./data";
+import { IMPORTER, producers, wines, ZONE_FEES } from "./data";
 
 const payload = await getPayload({ config });
 
@@ -54,6 +55,8 @@ for (const w of wines) {
     });
   }
 }
+
+await payload.updateGlobal({ slug: "site-settings", data: { zones: ZONE_FEES.map((z) => ({ ...z })) } });
 
 const counts = await Promise.all(
   (["producers", "wines", "vintages"] as const).map(async (c) => `${c}=${(await payload.count({ collection: c })).totalDocs}`),

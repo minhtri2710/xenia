@@ -71,6 +71,7 @@ export interface Config {
     producers: Producer;
     wines: Wine;
     vintages: Vintage;
+    orders: Order;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +83,7 @@ export interface Config {
     producers: ProducersSelect<false> | ProducersSelect<true>;
     wines: WinesSelect<false> | WinesSelect<true>;
     vintages: VintagesSelect<false> | VintagesSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -91,8 +93,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('vi' | 'en') | ('vi' | 'en')[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: 'vi' | 'en';
   widgets: {
     collections: CollectionsWidget;
@@ -251,6 +257,71 @@ export interface Vintage {
   createdAt: string;
 }
 /**
+ * Orders are never deleted. Only the status can be changed here.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  number: string;
+  status:
+    'placed' | 'paid' | 'packed' | 'out_for_delivery' | 'delivered' | 'id_check_failed' | 'cancelled' | 'returned';
+  token: string;
+  clientKey: string;
+  buyer: {
+    name: string;
+    phone: string;
+    email: string;
+    address: string;
+  };
+  ageAttestedAt: string;
+  /**
+   * Delivered to the buyer at the buyer's address.
+   */
+  delivery: {
+    zone: 'hcmc' | 'hanoi';
+  };
+  lines: {
+    vintage?: (number | null) | Vintage;
+    wineNameVi: string;
+    wineNameEn: string;
+    /**
+     * Empty for NV.
+     */
+    year?: number | null;
+    bottleMl: '375' | '750' | '1500';
+    abvPct: number;
+    unitPriceVnd: number;
+    qty: number;
+    id?: string | null;
+  }[];
+  /**
+   * Whole VND, VAT included.
+   */
+  totals: {
+    goodsVnd: number;
+    shippingVnd: number;
+    vatIncludedVnd: number;
+    totalVnd: number;
+  };
+  consents: {
+    terms: boolean;
+    privacy: boolean;
+    at: string;
+  };
+  /**
+   * Mock payment only: no provider, no card or account number.
+   */
+  payment: {
+    method?: ('vietqr_mock' | 'card_mock') | null;
+    status: 'unpaid' | 'failed' | 'paid';
+    paidAt?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -289,6 +360,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'vintages';
         value: number | Vintage;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -428,6 +503,67 @@ export interface VintagesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  number?: T;
+  status?: T;
+  token?: T;
+  clientKey?: T;
+  buyer?:
+    | T
+    | {
+        name?: T;
+        phone?: T;
+        email?: T;
+        address?: T;
+      };
+  ageAttestedAt?: T;
+  delivery?:
+    | T
+    | {
+        zone?: T;
+      };
+  lines?:
+    | T
+    | {
+        vintage?: T;
+        wineNameVi?: T;
+        wineNameEn?: T;
+        year?: T;
+        bottleMl?: T;
+        abvPct?: T;
+        unitPriceVnd?: T;
+        qty?: T;
+        id?: T;
+      };
+  totals?:
+    | T
+    | {
+        goodsVnd?: T;
+        shippingVnd?: T;
+        vatIncludedVnd?: T;
+        totalVnd?: T;
+      };
+  consents?:
+    | T
+    | {
+        terms?: T;
+        privacy?: T;
+        at?: T;
+      };
+  payment?:
+    | T
+    | {
+        method?: T;
+        status?: T;
+        paidAt?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -465,6 +601,41 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  /**
+   * Delivery zones and their flat fee (whole VND, VAT included).
+   */
+  zones?:
+    | {
+        zone: 'hcmc' | 'hanoi';
+        feeVnd: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  zones?:
+    | T
+    | {
+        zone?: T;
+        feeVnd?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

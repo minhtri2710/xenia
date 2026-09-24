@@ -4,7 +4,8 @@
   },
   "Brand": {
     "name": "xenia",
-    "tagline": "Wine and light grape wine"
+    "tagline": "Wine and light grape wine",
+    "cart": "Cart"
   },
   "Notice": {
     "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi",
@@ -164,6 +165,146 @@
       "sweetness": "Sweetness",
       "acidity": "Acidity"
     },
-    "pairings": "Food pairings"
+    "pairings": "Food pairings",
+    "quantity": "Quantity",
+    "addToCart": "Add to cart"
+  },
+  "Cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "browse": "Browse the wine collection",
+    "unitPrice": "{price} / bottle",
+    "quantity": "Quantity",
+    "update": "Update",
+    "remove": "Remove {name}",
+    "goods": "Goods",
+    "vatNote": "Prices include VAT. Delivery is charged at the delivery step.",
+    "checkout": "Check out",
+    "errors": {
+      "quantity": "The quantity must be a whole number above 0.",
+      "unavailable": "That wine is no longer available or is out of stock."
+    }
+  },
+  "Checkout": {
+    "title": "Checkout",
+    "steps": {
+      "label": "Checkout steps",
+      "buyer": "Buyer",
+      "delivery": "Delivery",
+      "review": "Review & confirm"
+    },
+    "buyer": {
+      "title": "Buyer details",
+      "intro": "By law, buyers of alcohol must be 18 or over. Please declare your full name, date of birth and residential address.",
+      "fields": {
+        "name": "Full name",
+        "dob": "Date of birth",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Residential address"
+      },
+      "privacy": "Your date of birth is used only to check your age and is not stored.",
+      "submit": "Continue",
+      "errors": {
+        "nameRequired": "Please enter your full name.",
+        "nameTooLong": "That name is too long.",
+        "dobRequired": "Please enter your date of birth.",
+        "dobInvalid": "That date of birth is not valid.",
+        "dobFuture": "Date of birth cannot be in the future.",
+        "phoneRequired": "Please enter your phone number.",
+        "phoneInvalid": "That phone number is not valid (10 digits, starting with 0 or +84).",
+        "emailRequired": "Please enter your email.",
+        "emailInvalid": "That email is not valid.",
+        "addressRequired": "Please enter your residential address.",
+        "addressTooLong": "That address is too long."
+      }
+    },
+    "delivery": {
+      "title": "Delivery",
+      "toBuyer": "Delivered to the buyer: {name}, {address}.",
+      "idCheck": "The courier hands the wine only to an adult aged 18 or over who shows ID. Without ID, the order is not handed over.",
+      "zone": "Delivery zone",
+      "zoneOption": "{zone} — delivery {fee}",
+      "submit": "Continue",
+      "errors": {
+        "zoneRequired": "Please choose a delivery zone."
+      }
+    },
+    "review": {
+      "title": "Review & confirm",
+      "intro": "Please check your order. You can edit each part before placing it.",
+      "goods": "Goods",
+      "editGoods": "Edit cart",
+      "line": "{qty} × {name} {vintage}, {size} — {price} / bottle",
+      "buyer": "Buyer",
+      "editBuyer": "Edit buyer details",
+      "delivery": "Delivery",
+      "editDelivery": "Edit delivery",
+      "deliveryMethod": "Home delivery to the buyer, {zone}: {address}",
+      "payment": "Payment",
+      "paymentMethods": "Cashless only: VietQR bank transfer or card (simulated), chosen on the next page after you place the order.",
+      "totals": "Costs",
+      "expired": "This checkout has expired. Please review your order and confirm again.",
+      "problems": {
+        "stock": "{name}: only {stock} left. We updated the quantity; please review and confirm again.",
+        "unavailable": "{name}: no longer available and removed from your cart; please review and confirm again."
+      },
+      "consent": {
+        "terms": "I agree to the <link>terms of sale</link>.",
+        "privacy": "I agree to the <link>privacy policy</link>.",
+        "termsRequired": "Please agree to the terms of sale.",
+        "privacyRequired": "Please agree to the privacy policy."
+      },
+      "submit": "Place order"
+    },
+    "totals": {
+      "goods": "Goods",
+      "shipping": "Delivery",
+      "total": "Total (VAT included)",
+      "vatIncluded": "Of which VAT (10%)"
+    }
+  },
+  "Zones": {
+    "hcmc": "Ho Chi Minh City",
+    "hanoi": "Hà Nội"
+  },
+  "Order": {
+    "title": "Order",
+    "heading": "Order {number}",
+    "statusLabel": "Status:",
+    "statuses": {
+      "placed": "Placed, awaiting payment",
+      "paid": "Paid",
+      "packed": "Packed",
+      "out_for_delivery": "Out for delivery",
+      "delivered": "Delivered",
+      "id_check_failed": "Not handed over (no ID shown)",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "keepLink": "Keep this private link to view your order:",
+    "payment": {
+      "title": "Payment",
+      "failed": "The payment did not go through. You can try again.",
+      "invalid": "Please choose a payment method.",
+      "mockNote": "This is a simulated payment: no real transaction, and no card or account number is needed.",
+      "method": "Payment method",
+      "methods": {
+        "vietqr_mock": "VietQR bank transfer (simulated)",
+        "card_mock": "Card (simulated)"
+      },
+      "succeed": "Simulate a successful payment",
+      "fail": "Simulate a failed payment"
+    },
+    "lines": "Goods",
+    "line": "{qty} × {name} {vintage}, {size}, {abv}% vol — {price} / bottle",
+    "totals": "Costs",
+    "goods": "Goods",
+    "shipping": "Delivery",
+    "total": "Total (VAT included)",
+    "vatIncluded": "Of which VAT (10%)",
+    "delivery": "Delivery",
+    "deliveryTo": "To {name}, {address} ({zone}).",
+    "idCheck": "The courier hands the wine only to an adult aged 18 or over who shows ID."
   }
 }

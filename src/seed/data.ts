@@ -42,6 +42,12 @@ export type SeedWine = {
 /** Fictional importer of record for every seeded vintage. */
 export const IMPORTER = "Công ty TNHH Xenia Nhập khẩu (dữ liệu mẫu)";
 
+/** Placeholder flat delivery fees per zone (whole VND, VAT included) for the `site-settings` global. */
+export const ZONE_FEES = [
+  { zone: "hcmc", feeVnd: 30_000 },
+  { zone: "hanoi", feeVnd: 45_000 },
+] as const;
+
 export const producers: SeedProducer[] = [
   {
     key: "lune-grise",

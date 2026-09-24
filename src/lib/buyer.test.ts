@@ -1,0 +1,93 @@
+import { describe, expect, it } from "vitest";
+
+import { checkBuyer, checkContact, normalizePhone } from "./buyer";
+
+// 2026-09-24 10:00 in Asia/Ho_Chi_Minh.
+const NOW = new Date("2026-09-24T03:00:00Z");
+
+const VALID = {
+  name: " Nguyễn Văn An ",
+  dob: "1990-05-01",
+  phone: "090 123 4567",
+  email: " an@example.test ",
+  address: " 12 Lê Lợi, Quận 1, TP.HCM ",
+};
+
+describe("checkBuyer", () => {
+  it("accepts an adult and trims and normalises the contact fields, without the date of birth", () => {
+    const result = checkBuyer(VALID, NOW);
+    expect(result).toEqual({
+      ok: true,
+      adult: true,
+      buyer: { name: "Nguyễn Văn An", phone: "0901234567", email: "an@example.test", address: "12 Lê Lợi, Quận 1, TP.HCM" },
+    });
+    expect(JSON.stringify(result)).not.toContain("1990");
+  });
+
+  it("is adult on the 18th birthday, Vietnamese date", () => {
+    expect(checkBuyer({ ...VALID, dob: "2008-09-24" }, NOW)).toMatchObject({ ok: true, adult: true });
+  });
+
+  it("is not adult the day before the 18th birthday", () => {
+    expect(checkBuyer({ ...VALID, dob: "2008-09-25" }, NOW)).toMatchObject({ ok: true, adult: false });
+  });
+
+  it("uses the Asia/Ho_Chi_Minh date, not UTC", () => {
+    // 2026-09-23T17:30Z is already 24 September in Vietnam.
+    expect(checkBuyer({ ...VALID, dob: "2008-09-24" }, new Date("2026-09-23T17:30:00Z"))).toMatchObject({ ok: true, adult: true });
+  });
+
+  it("reports every blank field", () => {
+    expect(checkBuyer({ name: " ", dob: "", phone: "", email: " ", address: "\t" }, NOW)).toEqual({
+      ok: false,
+      errors: {
+        name: "nameRequired",
+        dob: "dobRequired",
+        phone: "phoneRequired",
+        email: "emailRequired",
+        address: "addressRequired",
+      },
+    });
+  });
+
+  it("reports invalid and future dates of birth as field errors", () => {
+    expect(checkBuyer({ ...VALID, dob: "1990-02-30" }, NOW)).toEqual({ ok: false, errors: { dob: "dobInvalid" } });
+    expect(checkBuyer({ ...VALID, dob: "2026-09-25" }, NOW)).toEqual({ ok: false, errors: { dob: "dobFuture" } });
+  });
+
+  it("reports invalid phone and email", () => {
+    expect(checkBuyer({ ...VALID, phone: "12345", email: "an@example" }, NOW)).toEqual({
+      ok: false,
+      errors: { phone: "phoneInvalid", email: "emailInvalid" },
+    });
+  });
+
+  it("reports an address that is too long", () => {
+    expect(checkBuyer({ ...VALID, address: "x".repeat(501) }, NOW)).toEqual({ ok: false, errors: { address: "addressTooLong" } });
+  });
+});
+
+describe("checkContact", () => {
+  it("validates without a date of birth", () => {
+    expect(checkContact({ name: "An", phone: "+84 90 123 4567", email: "a@b.vn", address: "Hà Nội" })).toEqual({
+      ok: true,
+      buyer: { name: "An", phone: "0901234567", email: "a@b.vn", address: "Hà Nội" },
+    });
+  });
+});
+
+describe("normalizePhone", () => {
+  it.each([
+    ["0901234567", "0901234567"],
+    ["+84901234567", "0901234567"],
+    ["090.123.4567", "0901234567"],
+    ["090-123-4567", "0901234567"],
+    ["0012345678", null],
+    ["090123456", null],
+    ["09012345678", null],
+    ["84901234567", null],
+    ["090123456a", null],
+  ])("%s → %s", (value, phone) => {
+    expect(normalizePhone(value)).toBe(phone);
+  });
+});

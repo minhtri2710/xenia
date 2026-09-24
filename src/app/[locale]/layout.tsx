@@ -35,11 +35,16 @@ export default async function LocaleLayout({ children, params }: Props) {
     <html lang={locale}>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <NextIntlClientProvider>
-          <header className="px-6 py-8 sm:px-12">
-            <Link href="/" className="font-display text-3xl font-semibold tracking-wide text-ink">
-              {brand("name")}
+          <header className="flex items-start justify-between gap-6 px-6 py-8 sm:px-12">
+            <div>
+              <Link href="/" className="font-display text-3xl font-semibold tracking-wide text-ink">
+                {brand("name")}
+              </Link>
+              <p className="mt-1 text-sm text-muted">{brand("tagline")}</p>
+            </div>
+            <Link href="/gio-hang" className="mt-2 text-sm text-wine underline underline-offset-4">
+              {brand("cart")}
             </Link>
-            <p className="mt-1 text-sm text-muted">{brand("tagline")}</p>
           </header>
           <main className="flex-1 px-6 pb-16 sm:px-12">{children}</main>
           <footer className="border-t border-ink/15 px-6 py-6 text-sm sm:px-12">

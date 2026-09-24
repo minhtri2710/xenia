@@ -82,10 +82,10 @@ for (const { locale, prefix } of LOCALES) {
         vi ? ["Thịt bò", "Bò lúc lắc", "Phô mai"] : ["Beef", "Bò lúc lắc (shaking beef)", "Cheese"],
       );
 
-      // No occasions (dinner, gift) and no add-to-cart.
+      // No occasions (dinner, gift); the only button is add-to-cart.
       const main = page.locator("main");
       for (const text of vi ? ["Bữa tối", "Quà tặng"] : ["Dinner", "Gift"]) await expect(main).not.toContainText(text);
-      await expect(main.getByRole("button")).toHaveCount(0);
+      await expect(main.getByRole("button")).toHaveText([vi ? "Thêm vào giỏ hàng" : "Add to cart"]);
 
       await expect(page.getByTestId("age-notice")).toContainText(LEGAL_NOTICE);
       await page.waitForLoadState("networkidle");

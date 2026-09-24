@@ -5,6 +5,8 @@ import { Link } from "@/i18n/navigation";
 import { loadWine } from "@/lib/catalogue-data";
 import { selectVintage } from "@/lib/vintage-selection";
 
+import { addToCart } from "../../gio-hang/actions";
+
 type Props = {
   params: Promise<{ locale: string; slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -106,6 +108,30 @@ export default async function WinePage({ params, searchParams }: Props) {
               }))}
             />
           </nav>
+
+          {v.stock > 0 && (
+            <form action={addToCart} className="mt-8 flex flex-wrap items-end gap-3" data-testid="add-to-cart">
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="vintageId" value={v.id} />
+              <label className="grid gap-1 text-sm">
+                {t("quantity")}
+                <input
+                  name="qty"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={v.stock}
+                  step={1}
+                  required
+                  defaultValue={1}
+                  className="w-24 border border-ink/40 bg-white px-3 py-2"
+                />
+              </label>
+              <button type="submit" className="bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink">
+                {t("addToCart")}
+              </button>
+            </form>
+          )}
         </div>
       </div>
 
