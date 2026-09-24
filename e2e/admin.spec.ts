@@ -1,8 +1,6 @@
-import { execFileSync } from "node:child_process";
-
 import { expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, seedCatalogue } from "./support";
+import { blockThirdParty, seedCatalogue, sql } from "./support";
 
 const EMAIL = "admin@xenia.test";
 const PASSWORD = "e2e-dev-only-password";
@@ -33,7 +31,7 @@ async function submit(page: Page, apiPath: string) {
 test.beforeAll(async ({ request }) => {
   // Payload pushes its schema on first use; then empty the users so create-first-user is reachable.
   await seedCatalogue(request);
-  execFileSync("docker", ["exec", "xenia-dev-postgres", "psql", "-U", "xenia", "-d", "xenia", "-c", "TRUNCATE users CASCADE"]);
+  sql("TRUNCATE users CASCADE");
 });
 
 test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage and login", async ({ page }) => {

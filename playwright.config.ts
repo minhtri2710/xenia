@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// The specs' SQL (`sql` in e2e/support.ts) reads DATABASE_URI; a value already in the shell wins.
+process.loadEnvFile();
+
 // 3417 is xenia's e2e port: 3000 is `pnpm dev`, 7784-7785 belong to other projects.
 const PORT = 3417;
 // `localhost`, not 127.0.0.1: Next builds `request.url` on `localhost`, so with

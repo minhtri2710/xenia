@@ -1,8 +1,6 @@
-import { execFileSync } from "node:child_process";
-
 import { type Browser, expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, vietnamDateYearsAgo } from "./support";
+import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, sql, vietnamDateYearsAgo } from "./support";
 
 // Every money value below is written by hand from `src/seed/data.ts` (vintage prices) and its
 // `ZONE_FEES` (HCMC 30 000, Hà Nội 45 000), never computed with `computeTotals` or the pages' code.
@@ -15,11 +13,9 @@ const LOCALES = [
 ] as const;
 const ADMIN_EMAIL = "admin@xenia.test";
 const ADMIN_PASSWORD = "e2e-dev-only-password";
+const BUYER_EMAIL = "An.Nguyen@Example.TEST";
+const BUYER_ADDRESS = "12  Lê Lợi,  Quận 1";
 const COD = /\bCOD\b|cash on delivery|thanh toán khi (nhận|giao) hàng|tiền mặt khi/i;
-
-function sql(query: string): string {
-  return execFileSync("docker", ["exec", "xenia-dev-postgres", "psql", "-U", "xenia", "-d", "xenia", "-tAc", query], { encoding: "utf8" }).trim();
-}
 
 const orderCount = () => Number(sql("SELECT count(*) FROM orders"));
 const stockOf = (id: number) => Number(sql(`SELECT stock FROM vintages WHERE id = ${id}`));
@@ -50,11 +46,11 @@ async function addToCart(page: Page, prefix: string, slug: string, qty = 1) {
   await expect(page).toHaveURL((url) => url.pathname === `${prefix}/gio-hang`);
 }
 
-async function fillBuyer(page: Page, dob: string, address = "12 Lê Lợi, Quận 1") {
+async function fillBuyer(page: Page, dob: string, address = "12 Lê Lợi, Quận 1", email = "an@example.test") {
   await page.locator("#buyer-name").fill("Nguyễn Văn An");
   await page.locator("#buyer-dob").fill(dob);
   await page.locator("#buyer-phone").fill("090 123 4567");
-  await page.locator("#buyer-email").fill("an@example.test");
+  await page.locator("#buyer-email").fill(email);
   await page.locator("#buyer-address").fill(address);
   await page.locator("form button[type=submit]").click();
 }
@@ -169,7 +165,8 @@ for (const { locale, prefix } of LOCALES) {
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan`);
     await expectNotice(page);
     await expectNoSeriousA11yViolations(page, "step 1");
-    await fillBuyer(page, vietnamDateYearsAgo(30));
+    // Not normalized: the review and placement must bind the buyer exactly as validated (trimmed only).
+    await fillBuyer(page, vietnamDateYearsAgo(30), BUYER_ADDRESS, BUYER_EMAIL);
 
     // Step 2.
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
@@ -214,9 +211,11 @@ for (const { locale, prefix } of LOCALES) {
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan`);
     expect(orderCount()).toBe(before);
 
+    // Placed on the first submit with both consents: no `?changed=1` re-review.
     const token = await consentAndPlace(page, prefix);
     expect(orderCount()).toBe(before + 1);
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(sql(`SELECT buyer_email || '|' || buyer_address FROM orders WHERE token = '${token}'`)).toBe(`${BUYER_EMAIL}|${BUYER_ADDRESS}`);
 
     // Status page before payment; stock is reserved at placement.
     await expect(page.getByTestId("order-status")).toHaveText(vi ? "Đã đặt, chờ thanh toán" : "Placed, awaiting payment");
@@ -702,7 +701,7 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   expect(orderCount()).toBe(count);
 
   // An authenticated admin cannot delete an order, can change its status, and cannot rewrite its totals.
-  execFileSync("docker", ["exec", "xenia-dev-postgres", "psql", "-U", "xenia", "-d", "xenia", "-c", "TRUNCATE users CASCADE"]);
+  sql("TRUNCATE users CASCADE");
   const admin = page.request;
   expect((await admin.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } })).ok()).toBe(true);
   expect((await admin.post("/api/users/login", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } })).ok()).toBe(true);

@@ -29,6 +29,23 @@ export async function blockThirdParty(page: Page): Promise<string[]> {
 }
 
 /**
+ * The database the e2e run uses: the path of `DATABASE_URI`, which `playwright.config.ts` loads
+ * from `.env` unless the shell already sets it. Missing either fails the run.
+ */
+function databaseName(): string {
+  const uri = process.env.DATABASE_URI;
+  if (!uri) throw new Error("DATABASE_URI is not set");
+  const name = decodeURIComponent(new URL(uri).pathname.slice(1));
+  if (!name) throw new Error("DATABASE_URI names no database");
+  return name;
+}
+
+/** Runs one SQL statement in the e2e database and returns its unaligned, tuples-only output. */
+export function sql(query: string): string {
+  return execFileSync("docker", ["exec", "xenia-dev-postgres", "psql", "-U", "xenia", "-d", databaseName(), "-tAc", query], { encoding: "utf8" }).trim();
+}
+
+/**
  * Replaces the catalogue with the fixed seed (`pnpm seed`). The dev server pushes Payload's
  * schema on its first request, so hit it first; the seed then finds the tables in place.
  */
