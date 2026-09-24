@@ -1,0 +1,19 @@
+name: xenia
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: xenia-dev-postgres
+    environment:
+      POSTGRES_USER: xenia
+      POSTGRES_PASSWORD: xenia-dev-only
+      POSTGRES_DB: xenia
+    ports:
+      - "127.0.0.1:5437:5432"
+    volumes:
+      - ./.data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xenia -d xenia"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivory: #f8f4ec;
+  --color-paper: #efe8da;
+  --color-ink: #1b1816;
+  --color-muted: #574f47;
+  --color-wine: #7b1e2c;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-ink);
+}

@@ -1,0 +1,42 @@
+{
+  "Meta": {
+    "title": "xenia — Wine"
+  },
+  "Brand": {
+    "name": "xenia",
+    "tagline": "Wine and light grape wine"
+  },
+  "Notice": {
+    "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi",
+    "translation": "No sale of alcohol or beer to anyone under 18"
+  },
+  "Gate": {
+    "title": "Age verification",
+    "intro": "By law, please declare your full name and date of birth before viewing product information.",
+    "name": "Full name",
+    "dob": "Date of birth",
+    "submit": "Confirm",
+    "privacy": "What you declare is used only to check your age and is not stored.",
+    "errors": {
+      "nameRequired": "Please enter your full name.",
+      "nameTooLong": "That name is too long.",
+      "dobRequired": "Please enter your date of birth.",
+      "dobInvalid": "That date of birth is not valid.",
+      "dobFuture": "Date of birth cannot be in the future."
+    }
+  },
+  "Exit": {
+    "title": "See you later",
+    "body": "Sorry, xenia only serves customers aged 18 and over.",
+    "back": "Back to age verification"
+  },
+  "Home": {
+    "title": "Wine for memorable occasions",
+    "lead": "A collection of wine and light grape wine, with refined gift wrapping — in preparation.",
+    "placeholder": "Placeholder image"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "back": "Back to home"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "Meta": {
+    "title": "xenia — Rượu vang"
+  },
+  "Brand": {
+    "name": "xenia",
+    "tagline": "Rượu vang và vang nhẹ"
+  },
+  "Notice": {
+    "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi"
+  },
+  "Gate": {
+    "title": "Xác minh tuổi",
+    "intro": "Theo quy định pháp luật, vui lòng khai báo họ tên và ngày sinh trước khi xem thông tin sản phẩm.",
+    "name": "Họ và tên",
+    "dob": "Ngày sinh",
+    "submit": "Xác nhận",
+    "privacy": "Thông tin bạn khai báo chỉ dùng để xác minh tuổi và không được lưu trữ.",
+    "errors": {
+      "nameRequired": "Vui lòng nhập họ và tên.",
+      "nameTooLong": "Họ và tên quá dài.",
+      "dobRequired": "Vui lòng nhập ngày sinh.",
+      "dobInvalid": "Ngày sinh không hợp lệ.",
+      "dobFuture": "Ngày sinh không thể ở tương lai."
+    }
+  },
+  "Exit": {
+    "title": "Hẹn gặp lại",
+    "body": "Rất tiếc, xenia chỉ phục vụ khách hàng từ đủ 18 tuổi trở lên.",
+    "back": "Quay lại trang xác minh tuổi"
+  },
+  "Home": {
+    "title": "Rượu vang cho những dịp đáng nhớ",
+    "lead": "Bộ sưu tập rượu vang và vang nhẹ, gói quà tinh tế — đang được chuẩn bị.",
+    "placeholder": "Ảnh minh hoạ"
+  },
+  "NotFound": {
+    "title": "Không tìm thấy trang",
+    "back": "Về trang chủ"
+  }
+}

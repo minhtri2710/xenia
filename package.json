@@ -1,0 +1,48 @@
+{
+  "name": "xenia",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "payload generate:importmap && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down && rm -rf .data/postgres",
+    "payload": "payload"
+  },
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "5.2.8",
+    "@fontsource/cormorant-garamond": "5.2.8",
+    "@payloadcms/db-postgres": "3.88.0",
+    "@payloadcms/next": "3.88.0",
+    "graphql": "16.12.0",
+    "next": "16.3.6",
+    "next-intl": "4.14.6",
+    "payload": "3.88.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.61.1",
+    "@tailwindcss/postcss": "4.3.1",
+    "@types/node": "26.1.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.3.6",
+    "tailwindcss": "4.3.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  }
+}
