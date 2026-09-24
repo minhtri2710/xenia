@@ -73,9 +73,11 @@ export type ReviewState = {
 };
 
 /**
- * Step 4: explicit consent (Law 122 Art. 12), then placement. The posted client key is the only
- * posted value placement uses; prices, fees and totals come from the database. A refused line
- * rewrites the cart to what is available, so the review the buyer confirms next is accurate.
+ * Step 4: explicit consent (Law 122 Art. 12), then placement. The posted client key and the
+ * review's digest are the only posted values placement uses; prices, fees and totals come from the
+ * database. An order that no longer matches the digest re-shows the review with the change notice
+ * and unticked consents. A refused line (placement found no order for the key) rewrites the cart
+ * to what is available, so the review the buyer confirms next is accurate.
  */
 export async function submitOrder(_previous: ReviewState, formData: FormData): Promise<ReviewState> {
   const key = field(formData, "clientKey");
@@ -86,7 +88,7 @@ export async function submitOrder(_previous: ReviewState, formData: FormData): P
   if (Object.keys(errors).length > 0) return { errors };
 
   const lines = await readCartLines();
-  const result = await placeOrder(key, lines, await readCheckout(), new Date());
+  const result = await placeOrder(key, field(formData, "digest"), lines, await readCheckout(), new Date());
   if (result.ok) {
     await writeCart([]);
     await clearCheckout();
@@ -96,6 +98,7 @@ export async function submitOrder(_previous: ReviewState, formData: FormData): P
   if (result.reason === "empty") go(formData, "/gio-hang");
   if (result.reason === "buyer") go(formData, "/thanh-toan");
   if (result.reason === "zone") go(formData, "/thanh-toan/giao-hang");
+  if (result.reason === "changed") go(formData, "/thanh-toan/xac-nhan?changed=1");
 
   const problems = result.reason === "lines" ? result.problems : [];
   await writeCart(

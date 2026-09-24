@@ -70,6 +70,39 @@ async function toReview(page: Page, prefix: string, zone: "hcmc" | "hanoi") {
   await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan`);
 }
 
+/** Step 4's displayed goods, shipping, total and VAT included. */
+async function reviewTotals(page: Page) {
+  return Promise.all(["goods", "shipping", "total", "vat"].map((k) => digits(page, `[data-total="${k}"]`)));
+}
+
+/** The stored order's goods, shipping, total and VAT included. */
+function storedTotals(token: string) {
+  return sql(`SELECT concat_ws('|', totals_goods_vnd, totals_shipping_vnd, totals_total_vnd, totals_vat_included_vnd) FROM orders WHERE token = '${token}'`);
+}
+
+/**
+ * Ticks both consents and submits step 4, capturing the place-order POST and aborting it. Returns
+ * its body and a replay that re-sends it (optionally with another body) with the context's cookies.
+ */
+async function capturePlacePost(page: Page) {
+  let captured: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
+  const isReview = (url: URL) => url.pathname === "/thanh-toan/xac-nhan";
+  await page.route(isReview, async (route) => {
+    const r = route.request();
+    if (r.method() !== "POST") return route.continue();
+    const headers = Object.fromEntries(Object.entries(await r.allHeaders()).filter(([k]) => !["host", "content-length", "cookie"].includes(k)));
+    captured = { url: r.url(), headers, body: r.postDataBuffer()! };
+    return route.abort();
+  });
+  await page.locator("input[name=terms]").check();
+  await page.locator("input[name=privacy]").check();
+  await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+  await expect.poll(() => captured).toBeDefined();
+  await page.unroute(isReview);
+  const { url, headers, body } = captured!;
+  return { body, replay: (data: Buffer = body) => page.request.post(url, { headers, data, maxRedirects: 0 }) };
+}
+
 async function consentAndPlace(page: Page, prefix: string) {
   await page.locator("input[name=terms]").check();
   await page.locator("input[name=privacy]").check();
@@ -445,6 +478,8 @@ test("a posted price, total or shipping fee and a price in the cart cookie are i
     },
   ]);
   await toReview(page, "", "hcmc");
+  // The review shows database prices, never the cookie's: 720 000 + 30 000 = 750 000 → VAT 68 182.
+  expect(await reviewTotals(page)).toEqual([720_000, 30_000, 750_000, 68_182]);
   await page.locator("form:has(input[name=clientKey])").evaluate((form) => {
     for (const [name, value] of [
       ["priceVnd", "1"],
@@ -463,10 +498,156 @@ test("a posted price, total or shipping fee and a price in the cart cookie are i
   });
   const token = await consentAndPlace(page, "");
   // 720 000 + 30 000 = 750 000; 750 000 / 11 = 68 181.8 → 68 182.
-  expect(sql(`SELECT concat_ws('|', totals_goods_vnd, totals_shipping_vnd, totals_total_vnd, totals_vat_included_vnd) FROM orders WHERE token = '${token}'`)).toBe(
-    "720000|30000|750000|68182",
-  );
+  expect(storedTotals(token)).toBe("720000|30000|750000|68182");
   expect(sql(`SELECT l.unit_price_vnd FROM orders_lines l JOIN orders o ON l._parent_id = o.id WHERE o.token = '${token}'`)).toBe("720000");
+});
+
+// Law 122 Art. 12: placement places exactly what step 4 showed. The review starts as
+// 1 × Colle del Vento 720 000 + 1 × Due Fiumi Moscato 480 000 = 1 200 000, + HCMC 30 000 = 1 230 000,
+// VAT 1 230 000 / 11 = 111 818.2 → 111 818. Each case changes one priced input between the review and
+// the submit; VAT and total derive from those inputs and cannot change on their own.
+const CHANGES: {
+  input: string;
+  change: (other: Page, ids: { colle: number; moscato: number }) => Promise<void>;
+  restore?: (ids: { colle: number; moscato: number }) => void;
+  totals: [number, number, number, number];
+}[] = [
+  {
+    input: "a quantity",
+    change: async (other, { colle }) => {
+      await other.goto("/gio-hang");
+      const line = other.locator(`[data-vintage="${colle}"]`);
+      await line.locator("input[name=qty]").fill("2");
+      await line.getByRole("button", { name: "Cập nhật" }).click();
+      await expect.poll(() => digits(other, '[data-testid="cart-goods"]')).toBe(1_920_000);
+    },
+    // 2 × 720 000 + 480 000 = 1 920 000; + 30 000 = 1 950 000; / 11 = 177 272.7 → 177 273.
+    totals: [1_920_000, 30_000, 1_950_000, 177_273],
+  },
+  {
+    input: "an added line",
+    change: (other) => addToCart(other, "", "lune-grise-rouge"),
+    // + 850 000 = 2 050 000; + 30 000 = 2 080 000; / 11 = 189 090.9 → 189 091.
+    totals: [2_050_000, 30_000, 2_080_000, 189_091],
+  },
+  {
+    input: "a removed line",
+    change: async (other, { moscato }) => {
+      await other.goto("/gio-hang");
+      await other.locator(`[data-vintage="${moscato}"]`).getByRole("button", { name: /^Bỏ / }).click();
+      await expect(other.getByTestId("cart-lines").locator("li")).toHaveCount(1);
+    },
+    // 720 000 + 30 000 = 750 000; / 11 = 68 181.8 → 68 182.
+    totals: [720_000, 30_000, 750_000, 68_182],
+  },
+  {
+    input: "a unit price",
+    change: async (_, { colle }) => void sql(`UPDATE vintages SET price_vnd = 730000 WHERE id = ${colle}`),
+    restore: ({ colle }) => void sql(`UPDATE vintages SET price_vnd = 720000 WHERE id = ${colle}`),
+    // 730 000 + 480 000 = 1 210 000; + 30 000 = 1 240 000; / 11 = 112 727.3 → 112 727.
+    totals: [1_210_000, 30_000, 1_240_000, 112_727],
+  },
+  {
+    input: "the zone fee",
+    change: async () => void sql("UPDATE site_settings_zones SET fee_vnd = 35000 WHERE zone = 'hcmc'"),
+    restore: () => void sql("UPDATE site_settings_zones SET fee_vnd = 30000 WHERE zone = 'hcmc'"),
+    // 1 200 000 + 35 000 = 1 235 000; / 11 = 112 272.7 → 112 273.
+    totals: [1_200_000, 35_000, 1_235_000, 112_273],
+  },
+  {
+    input: "the zone",
+    change: async (other) => {
+      await other.goto("/thanh-toan/giao-hang");
+      await other.locator("input[name=zone][value=hanoi]").check();
+      await other.locator("form button[type=submit]").click();
+      await expect(other).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan");
+    },
+    // 1 200 000 + Hà Nội 45 000 = 1 245 000; / 11 = 113 181.8 → 113 182.
+    totals: [1_200_000, 45_000, 1_245_000, 113_182],
+  },
+];
+
+for (const { input, change, restore, totals } of CHANGES) {
+  test(`a change to ${input} after the review is refused, re-reviewed, then placed as shown`, async ({ page }) => {
+    const ids = {
+      colle: vintageId("colle-vento-rosso", 2021, 750),
+      moscato: vintageId("due-fiumi-moscato", 2023, 750),
+    };
+    await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+    await addToCart(page, "", "colle-vento-rosso");
+    await addToCart(page, "", "due-fiumi-moscato");
+    await toReview(page, "", "hcmc");
+    expect(await reviewTotals(page)).toEqual([1_200_000, 30_000, 1_230_000, 111_818]);
+
+    try {
+      await change(await page.context().newPage(), ids);
+      const before = orderCount();
+      await page.locator("input[name=terms]").check();
+      await page.locator("input[name=privacy]").check();
+      await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+
+      await expect(page.getByTestId("review-changed")).toContainText("Đơn hàng đã thay đổi sau khi bạn xem lại");
+      await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan");
+      expect(orderCount()).toBe(before);
+      await expect(page.locator("input[name=terms]")).not.toBeChecked();
+      await expect(page.locator("input[name=privacy]")).not.toBeChecked();
+      await expect.poll(() => reviewTotals(page)).toEqual(totals);
+
+      const token = await consentAndPlace(page, "");
+      expect(orderCount()).toBe(before + 1);
+      expect(storedTotals(token)).toBe(totals.join("|"));
+    } finally {
+      restore?.(ids);
+    }
+  });
+}
+
+test("duplicates racing for the last bottle all land on the one order and never rewrite the cart", async ({ page }) => {
+  const sauvignon = vintageId("southern-light-sauvignon", 2023, 750); // 690 000
+  sql(`UPDATE vintages SET stock = 1 WHERE id = ${sauvignon}`);
+  await declareAdult(page, "/ruou-vang/southern-light-sauvignon");
+  await addToCart(page, "", "southern-light-sauvignon");
+  await toReview(page, "", "hcmc");
+  const clientKey = await page.locator("input[name=clientKey]").inputValue();
+  const before = orderCount();
+
+  const { replay } = await capturePlacePost(page);
+  const responses = await Promise.all(Array.from({ length: 6 }, () => replay()));
+  const token = sql(`SELECT token FROM orders WHERE client_key = '${clientKey}'`);
+  expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  for (const response of responses) {
+    expect(JSON.stringify(response.headers())).toContain(`/don-hang/${token}`);
+    const cartCookies = response.headersArray().filter((h) => h.name.toLowerCase() === "set-cookie" && /^xenia_cart=[^;]/.test(h.value));
+    expect(cartCookies).toEqual([]);
+  }
+  expect(orderCount()).toBe(before + 1);
+  expect(stockOf(sauvignon)).toBe(0);
+  // 690 000 + 30 000 = 720 000; / 11 = 65 454.5… → 65 455.
+  expect(storedTotals(token)).toBe("690000|30000|720000|65455");
+});
+
+test("a replay of a placed client key with a forged digest names the one order and places nothing", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const digest = await page.locator("input[name=digest]").inputValue();
+  expect(digest).toMatch(/^[0-9a-f]{64}$/);
+  const before = orderCount();
+
+  const clientKey = await page.locator("input[name=clientKey]").inputValue();
+  const { body, replay } = await capturePlacePost(page);
+  const placed = await replay();
+  expect(orderCount()).toBe(before + 1);
+  const token = sql(`SELECT token FROM orders WHERE client_key = '${clientKey}'`);
+  expect(JSON.stringify(placed.headers())).toContain(`/don-hang/${token}`);
+
+  for (const forged of ["0".repeat(64), "f".repeat(64)]) {
+    const text = body.toString("latin1");
+    expect(text).toContain(digest);
+    const response = await replay(Buffer.from(text.replace(digest, forged), "latin1"));
+    expect(JSON.stringify(response.headers())).toContain(`/don-hang/${token}`);
+    expect(orderCount()).toBe(before + 1);
+  }
 });
 
 test("orders and site settings are admin-only over REST, nobody deletes an order, and the admin order view makes no third-party request", async ({

@@ -4,13 +4,14 @@ import { type BasePayload, commitTransaction, createLocalReq, getPayload, initTr
 import type { CartLine } from "@/lib/cart";
 import type { Checkout } from "@/lib/checkout";
 import { newOrderNumber, newStatusToken } from "@/lib/order";
+import { orderDigest } from "@/lib/order-digest";
 import { computeTotals } from "@/lib/order-totals";
 
 export type LineProblem = { vintageId: number; problem: "unavailable" | "stock"; stock: number };
 
 export type PlaceResult =
   | { ok: true; token: string }
-  | { ok: false; reason: "expired" | "empty" | "buyer" | "zone" }
+  | { ok: false; reason: "expired" | "empty" | "buyer" | "zone" | "changed" }
   | { ok: false; reason: "lines"; problems: LineProblem[] };
 
 const CHECK_VIOLATION = "23514";
@@ -40,13 +41,24 @@ async function stockOf(payload: BasePayload, id: number): Promise<number> {
  * - Idempotent on the client key posted with the review form, which is the checkout state's key:
  *   an order with that key is returned instead of a second one, even after the cookies are
  *   cleared (back-and-resubmit, replayed POST). A concurrent duplicate (double submit) loses on
- *   the unique `clientKey` index, rolls back and returns the winner.
+ *   the unique `clientKey` index, rolls back and returns the winner. Every refusal after the
+ *   transaction starts also returns the winner when one exists (a duplicate that lost at the stock
+ *   edge must still land on the one order).
  * - Every line is re-read: a draft or missing vintage or wine, or a quantity above stock, refuses
  *   the whole order with a per-line problem.
+ * - The order must be the one step 4 showed (Law 122 Art. 12): `reviewedDigest` is compared with
+ *   `orderDigest` of the lines, zone, fee and totals about to be stored; a mismatch refuses with
+ *   "changed".
  * - Stock is decremented here, at placement, with an atomic `stock = stock - qty` in vintage-id
  *   order; the `vintages_stock_non_negative` CHECK refuses a concurrent oversell.
  */
-export async function placeOrder(clientKey: string, lines: CartLine[], checkout: Checkout | null, now: Date): Promise<PlaceResult> {
+export async function placeOrder(
+  clientKey: string,
+  reviewedDigest: string,
+  lines: CartLine[],
+  checkout: Checkout | null,
+  now: Date,
+): Promise<PlaceResult> {
   const payload = await getPayload({ config });
   const existing = await tokenForKey(payload, clientKey);
   if (existing) return { ok: true, token: existing };
@@ -61,6 +73,15 @@ export async function placeOrder(clientKey: string, lines: CartLine[], checkout:
 
   const req = await createLocalReq({}, payload);
   await initTransaction(req);
+  /** Rolls back and returns the token of an order a concurrent duplicate placed, if any. */
+  const rollBack = async () => {
+    await killTransaction(req);
+    return tokenForKey(payload, clientKey);
+  };
+  const refuse = async (result: PlaceResult & { ok: false }): Promise<PlaceResult> => {
+    const winner = await rollBack();
+    return winner ? { ok: true, token: winner } : result;
+  };
   try {
     const sorted = [...lines].sort((a, b) => a.vintageId - b.vintageId);
     const problems: LineProblem[] = [];
@@ -90,20 +111,24 @@ export async function placeOrder(clientKey: string, lines: CartLine[], checkout:
         });
       }
     }
-    if (problems.length > 0) {
-      await killTransaction(req);
-      return { ok: false, reason: "lines", problems };
-    }
+    if (problems.length > 0) return await refuse({ ok: false, reason: "lines", problems });
 
     const totals = computeTotals(snapshots, fee);
+    const digest = orderDigest({
+      lines: snapshots.map((s) => ({ vintageId: s.vintage, qty: s.qty, unitPriceVnd: s.unitPriceVnd })),
+      zone,
+      feeVnd: fee,
+      totals,
+    });
+    if (digest !== reviewedDigest) return await refuse({ ok: false, reason: "changed" });
 
     for (const s of snapshots) {
       try {
         await payload.db.updateOne({ collection: "vintages", id: s.vintage, data: { stock: { $inc: -s.qty } }, req, returning: false });
       } catch (error) {
         if (pgCode(error) !== CHECK_VIOLATION) throw error;
-        await killTransaction(req);
-        return { ok: false, reason: "lines", problems: [{ vintageId: s.vintage, problem: "stock", stock: await stockOf(payload, s.vintage) }] };
+        const stock = await stockOf(payload, s.vintage);
+        return await refuse({ ok: false, reason: "lines", problems: [{ vintageId: s.vintage, problem: "stock", stock }] });
       }
     }
 
@@ -127,8 +152,7 @@ export async function placeOrder(clientKey: string, lines: CartLine[], checkout:
         },
       });
     } catch (error) {
-      await killTransaction(req);
-      const winner = await tokenForKey(payload, clientKey);
+      const winner = await rollBack();
       if (winner) return { ok: true, token: winner };
       throw error;
     }

@@ -3,15 +3,19 @@ import { redirect } from "next/navigation";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { getPathname, Link } from "@/i18n/navigation";
+import { orderDigest } from "@/lib/order-digest";
 import { computeTotals, VND_FORMAT } from "@/lib/order-totals";
 import { loadZones } from "@/lib/shop-data";
 
 import { requireCheckout, Steps } from "../steps";
 import { ReviewForm } from "./review-form";
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Pick<Props, "params">): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Checkout" });
   return { title: t("review.title") };
@@ -31,7 +35,7 @@ function Section({ title, edit, editLabel, children }: { title: string; edit: st
   );
 }
 
-export default async function ReviewStep({ params }: Props) {
+export default async function ReviewStep({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const { items, checkout } = await requireCheckout(locale, "review");
@@ -45,6 +49,14 @@ export default async function ReviewStep({ params }: Props) {
     items.map((i) => ({ qty: i.qty, unitPriceVnd: i.priceVnd })),
     fee,
   );
+  // The digest of exactly what this page shows; placement refuses an order that differs.
+  const digest = orderDigest({
+    lines: items.map((i) => ({ vintageId: i.vintageId, qty: i.qty, unitPriceVnd: i.priceVnd })),
+    zone,
+    feeVnd: fee,
+    totals,
+  });
+  const { changed } = await searchParams;
   const t = await getTranslations("Checkout");
   const p = await getTranslations("Product");
   const z = await getTranslations("Zones");
@@ -56,6 +68,11 @@ export default async function ReviewStep({ params }: Props) {
       <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
       <Steps current="review" />
       <p className="mt-6 text-muted">{t("review.intro")}</p>
+      {changed === "1" && (
+        <p role="alert" className="mt-4 border border-wine/40 p-4 text-wine" data-testid="review-changed">
+          {t("review.changed")}
+        </p>
+      )}
 
       <Section title={t("review.goods")} edit="/gio-hang" editLabel={t("review.editGoods")}>
         <ul className="divide-y divide-ink/10" data-testid="review-lines">
@@ -116,7 +133,7 @@ export default async function ReviewStep({ params }: Props) {
         </dl>
       </section>
 
-      <ReviewForm locale={locale} clientKey={checkout!.key} names={Object.fromEntries(items.map((i) => [i.vintageId, i.wineName]))} />
+      <ReviewForm locale={locale} clientKey={checkout!.key} digest={digest} names={Object.fromEntries(items.map((i) => [i.vintageId, i.wineName]))} />
     </div>
   );
 }

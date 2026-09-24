@@ -12,7 +12,17 @@ const CONSENTS = [
   { name: "privacy", href: "/chinh-sach/bao-mat" },
 ] as const;
 
-export function ReviewForm({ locale, clientKey, names }: { locale: string; clientKey: string; names: Record<number, string> }) {
+export function ReviewForm({
+  locale,
+  clientKey,
+  digest,
+  names,
+}: {
+  locale: string;
+  clientKey: string;
+  digest: string;
+  names: Record<number, string>;
+}) {
   const t = useTranslations("Checkout.review");
   const [state, formAction, pending] = useActionState(submitOrder, { errors: {} } as ReviewState);
   const { errors } = state;
@@ -21,13 +31,14 @@ export function ReviewForm({ locale, clientKey, names }: { locale: string; clien
     <form action={formAction} noValidate className="mt-10 grid gap-4 border-t border-ink/15 pt-6">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="clientKey" value={clientKey} />
+      <input type="hidden" name="digest" value={digest} />
       {errors.problems && errors.problems.length > 0 && (
         <ul role="alert" className="grid gap-1 text-wine" data-testid="line-problems">
           {errors.problems.map((p) => (
             <li key={p.vintageId}>
               {p.problem === "stock" && p.stock > 0
-                ? t("problems.stock", { name: names[p.vintageId] ?? "", stock: p.stock })
-                : t("problems.unavailable", { name: names[p.vintageId] ?? "" })}
+                ? t("problems.stock", { name: names[p.vintageId] ?? t("problems.unknownItem"), stock: p.stock })
+                : t("problems.unavailable", { name: names[p.vintageId] ?? t("problems.unknownItem") })}
             </li>
           ))}
         </ul>
