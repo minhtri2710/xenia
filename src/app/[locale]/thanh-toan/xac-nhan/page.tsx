@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { getPathname, Link } from "@/i18n/navigation";
-import { orderDigest } from "@/lib/order-digest";
-import { computeTotals, VND_FORMAT } from "@/lib/order-totals";
-import { loadZones } from "@/lib/shop-data";
+import { reviewOrder } from "@/lib/order-review";
+import { VND_FORMAT } from "@/lib/order-totals";
+import { loadCards, loadDeliverySettings, loadPackaging } from "@/lib/shop-data";
 
 import { requireCheckout, Steps } from "../steps";
 import { ReviewForm } from "./review-form";
@@ -39,24 +39,27 @@ export default async function ReviewStep({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const { items, checkout } = await requireCheckout(locale, "review");
-  const zones = await loadZones();
-  const zone = checkout!.zone;
-  const fee = zone && zones.get(zone);
-  if (!zone || fee === undefined) redirect(getPathname({ href: "/thanh-toan/giao-hang", locale }));
-  const buyer = checkout!.buyer!;
-
-  const totals = computeTotals(
-    items.map((i) => ({ qty: i.qty, unitPriceVnd: i.priceVnd })),
-    fee,
-  );
-  // The digest of exactly what this page shows; placement refuses an order that differs.
-  const digest = orderDigest({
-    lines: items.map((i) => ({ vintageId: i.vintageId, qty: i.qty, unitPriceVnd: i.priceVnd })),
+  const { buyer, delivery, gift, clientKey } = checkout! as Required<NonNullable<typeof checkout>>;
+  const settings = await loadDeliverySettings();
+  const isGift = delivery.mode === "gift";
+  // Exactly what placement will compute and store; its digest binds the consent to this page.
+  const review = reviewOrder({
+    lines: items.map((i) => ({ vintageId: i.vintageId, qty: i.qty, unitPriceVnd: i.priceVnd, bottleMl: i.bottleMl })),
     buyer,
-    zone,
-    feeVnd: fee,
-    totals,
+    delivery,
+    gift,
+    zone: settings.zones.get(delivery.zone),
+    blackoutDates: settings.blackoutDates,
+    packaging: gift.packaging === null ? undefined : (await loadPackaging({ code: gift.packaging }))[0],
+    card: isGift && gift.card !== null ? (await loadCards({ code: gift.card }))[0] : undefined,
+    now: new Date(),
   });
+  if (!review.ok) {
+    const step = review.step === "delivery" ? "/thanh-toan/giao-hang" : "/thanh-toan/goi-qua";
+    redirect(getPathname({ href: `${step}?invalid=${review.error}`, locale }));
+  }
+  const { totals, wrap, card, digest } = review;
+  const l = locale === "en" ? "en" : "vi";
   const { changed } = await searchParams;
   const t = await getTranslations("Checkout");
   const p = await getTranslations("Product");
@@ -101,8 +104,40 @@ export default async function ReviewStep({ params, searchParams }: Props) {
       </Section>
 
       <Section title={t("review.delivery")} edit="/thanh-toan/giao-hang" editLabel={t("review.editDelivery")}>
-        <p data-testid="review-delivery">{t("review.deliveryMethod", { zone: z(zone), address: buyer.address })}</p>
-        <p className="mt-2 text-sm text-muted">{t("delivery.idCheck")}</p>
+        <p data-testid="review-delivery">
+          {delivery.recipient
+            ? t("review.deliveryGift", { zone: z(delivery.zone), name: delivery.recipient.name, phone: delivery.recipient.phone, address: delivery.recipient.address })
+            : t("review.deliveryMethod", { zone: z(delivery.zone), address: buyer.address })}
+        </p>
+        <p className="mt-2" data-testid="review-date">
+          {t("review.deliveryTime", {
+            date: format.dateTime(new Date(`${delivery.date}T00:00:00Z`), { dateStyle: "full", timeZone: "UTC" }),
+            window: t(`delivery.windows.${delivery.window}`),
+          })}
+        </p>
+        <p className="mt-2 text-sm text-muted" data-testid="review-id-check">
+          {isGift ? t("delivery.recipient.idCheck") : t("delivery.idCheck")}
+        </p>
+      </Section>
+
+      <Section title={t("review.gift")} edit="/thanh-toan/goi-qua" editLabel={t("review.editGift")}>
+        <p data-testid="review-wrap">
+          {wrap ? t("review.wrapLine", { units: wrap.units, name: l === "en" ? wrap.nameEn : wrap.nameVi, amount: vnd(wrap.units * wrap.unitPriceVnd) }) : t("review.noWrap")}
+        </p>
+        {card && (
+          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2" data-testid="review-gift">
+            <dt className="text-muted">{t("gift.card")}</dt>
+            <dd data-gift="card">{card.name[l]}</dd>
+            <dt className="text-muted">{t("gift.message")}</dt>
+            <dd data-gift="message" className="whitespace-pre-line break-words">
+              {gift.message || t("review.noMessage")}
+            </dd>
+            <dt className="text-muted">{t("gift.sender")}</dt>
+            <dd data-gift="sender">{gift.sender ?? t("gift.anonymous")}</dd>
+            <dt className="text-muted">{t("gift.hidePrices")}</dt>
+            <dd data-gift="hide-prices">{gift.hidePrices ? t("review.yes") : t("review.no")}</dd>
+          </dl>
+        )}
       </Section>
 
       <section className="mt-10 border-t border-ink/15 pt-6">
@@ -119,6 +154,10 @@ export default async function ReviewStep({ params, searchParams }: Props) {
           <dd data-total="goods" className="text-right">
             {vnd(totals.goodsVnd)}
           </dd>
+          <dt>{t("totals.wrap")}</dt>
+          <dd data-total="wrap" className="text-right">
+            {vnd(totals.wrapVnd)}
+          </dd>
           <dt>{t("totals.shipping")}</dt>
           <dd data-total="shipping" className="text-right">
             {vnd(totals.shippingVnd)}
@@ -134,7 +173,7 @@ export default async function ReviewStep({ params, searchParams }: Props) {
         </dl>
       </section>
 
-      <ReviewForm locale={locale} clientKey={checkout!.key} digest={digest} names={Object.fromEntries(items.map((i) => [i.vintageId, i.wineName]))} />
+      <ReviewForm locale={locale} clientKey={clientKey} digest={digest} names={Object.fromEntries(items.map((i) => [i.vintageId, i.wineName]))} />
     </div>
   );
 }

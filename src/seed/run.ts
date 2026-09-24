@@ -1,16 +1,17 @@
 /**
- * `pnpm seed`: replaces the catalogue (vintages, wines, producers) with the fictional seed in
- * `data.ts` and sets the delivery zones in the `site-settings` global. It never touches `users`,
- * `orders` or any other collection. Same data on every run.
+ * `pnpm seed`: replaces the catalogue (vintages, wines, producers), the packaging and the card
+ * designs with the fictional seed in `data.ts`, and sets the delivery zones (fee and lead days) and
+ * an empty blackout list in the `site-settings` global. It never touches `users`, `orders`,
+ * `checkout-drafts` or any other collection. Same data on every run.
  */
 import { getPayload } from "payload";
 
 import config from "../payload.config";
-import { IMPORTER, producers, wines, ZONE_FEES } from "./data";
+import { CARD_DESIGNS, IMPORTER, PACKAGING, producers, wines, ZONE_FEES } from "./data";
 
 const payload = await getPayload({ config });
 
-for (const collection of ["vintages", "wines", "producers"] as const) {
+for (const collection of ["vintages", "wines", "producers", "packaging", "card-designs"] as const) {
   await payload.delete({ collection, where: { id: { exists: true } } });
 }
 
@@ -56,10 +57,24 @@ for (const w of wines) {
   }
 }
 
-await payload.updateGlobal({ slug: "site-settings", data: { zones: ZONE_FEES.map((z) => ({ ...z })) } });
+for (const p of PACKAGING) {
+  const doc = await payload.create({
+    collection: "packaging",
+    locale: "vi",
+    data: { ...p, name: p.name.vi, description: p.description.vi, fits: p.fits.map((ml) => String(ml) as "375" | "750" | "1500"), active: true },
+  });
+  await payload.update({ collection: "packaging", id: doc.id, locale: "en", data: { name: p.name.en, description: p.description.en } });
+}
+
+for (const c of CARD_DESIGNS) {
+  const doc = await payload.create({ collection: "card-designs", locale: "vi", data: { code: c.code, name: c.name.vi, active: true } });
+  await payload.update({ collection: "card-designs", id: doc.id, locale: "en", data: { name: c.name.en } });
+}
+
+await payload.updateGlobal({ slug: "site-settings", data: { zones: ZONE_FEES.map((z) => ({ ...z })), blackoutDates: [] } });
 
 const counts = await Promise.all(
-  (["producers", "wines", "vintages"] as const).map(async (c) => `${c}=${(await payload.count({ collection: c })).totalDocs}`),
+  (["producers", "wines", "vintages", "packaging", "card-designs"] as const).map(async (c) => `${c}=${(await payload.count({ collection: c })).totalDocs}`),
 );
 payload.logger.info(`seed: ${counts.join(" ")}`);
 await payload.destroy();

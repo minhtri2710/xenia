@@ -1,15 +1,17 @@
 import config from "@payload-config";
 import { cookies } from "next/headers";
-import { getPayload } from "payload";
+import { getPayload, type PayloadRequest } from "payload";
 
 import { CART_COOKIE, type CartLine, type CartStock, normalizeCart, parseCart, serializeCart } from "@/lib/cart";
 import type { BottleSize } from "@/lib/catalogue";
-import { type Checkout, CHECKOUT_COOKIE, parseCheckout, serializeCheckout } from "@/lib/checkout";
+import { type Checkout, CHECKOUT_COOKIE, checkoutCookie, cookieOptions } from "@/lib/checkout";
+import { deleteDraft, readDraft, writeDraft } from "@/lib/checkout-drafts";
+import type { CardDoc, PackagingDoc } from "@/lib/gift";
 import type { Zone } from "@/lib/order";
 import type { Order } from "@/payload-types";
 
-/** The cart and checkout cookies: HttpOnly, SameSite=Lax, Secure in production, browser session. */
-const COOKIE_OPTIONS = { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" } as const;
+const PRODUCTION = process.env.NODE_ENV === "production";
+const COOKIE_OPTIONS = cookieOptions(PRODUCTION);
 
 export type CartItem = CartLine & {
   slug: string;
@@ -72,23 +74,77 @@ export async function writeCart(lines: CartLine[]) {
   else store.set(CART_COOKIE, serializeCart(lines), COOKIE_OPTIONS);
 }
 
-export async function readCheckout(): Promise<Checkout | null> {
-  return parseCheckout((await cookies()).get(CHECKOUT_COOKIE)?.value);
+/** The draft handle from the checkout cookie. Placement reads the draft with it inside its transaction. */
+export async function checkoutHandle(): Promise<string | undefined> {
+  return (await cookies()).get(CHECKOUT_COOKIE)?.value;
 }
 
+/** The live checkout draft, re-validated, or `null`. */
+export async function readCheckout(): Promise<Checkout | null> {
+  return readDraft(await getPayload({ config }), await checkoutHandle(), new Date());
+}
+
+/** Saves the draft (purging expired drafts first) and points the cookie at it. */
 export async function writeCheckout(state: Checkout) {
-  (await cookies()).set(CHECKOUT_COOKIE, serializeCheckout(state), COOKIE_OPTIONS);
+  const handle = await writeDraft(await getPayload({ config }), await checkoutHandle(), state, new Date());
+  (await cookies()).set(checkoutCookie(handle, PRODUCTION));
 }
 
 export async function clearCheckout() {
+  await deleteDraft(await getPayload({ config }), await checkoutHandle());
   (await cookies()).delete(CHECKOUT_COOKIE);
 }
 
-/** Delivery zones and their flat fee from the `site-settings` global, in the admin's order. */
-export async function loadZones(): Promise<Map<Zone, number>> {
+export type DeliverySettings = { zones: Map<Zone, { feeVnd: number; leadDays: number }>; blackoutDates: string[] };
+
+/** Delivery zones (fee and lead days, in the admin's order) and blackout dates from `site-settings`. */
+export async function loadDeliverySettings(req?: Partial<PayloadRequest>): Promise<DeliverySettings> {
   const payload = await getPayload({ config });
-  const settings = await payload.findGlobal({ slug: "site-settings", depth: 0 });
-  return new Map((settings.zones ?? []).map((z) => [z.zone, z.feeVnd]));
+  const settings = await payload.findGlobal({ slug: "site-settings", depth: 0, req });
+  return {
+    zones: new Map((settings.zones ?? []).map((z) => [z.zone, { feeVnd: z.feeVnd, leadDays: z.leadDays }])),
+    blackoutDates: (settings.blackoutDates ?? []).map((b) => b.date),
+  };
+}
+
+type Localized = { vi: string; en: string };
+
+/** Packaging, every translation; `active` only when asked. */
+export async function loadPackaging(where: { code?: string; activeOnly?: boolean }, req?: Partial<PayloadRequest>): Promise<PackagingDoc[]> {
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: "packaging",
+    where: { and: [...(where.code ? [{ code: { equals: where.code } }] : []), ...(where.activeOnly ? [{ active: { equals: true } }] : [])] },
+    locale: "all",
+    depth: 0,
+    pagination: false,
+    sort: "priceVnd",
+    req,
+  });
+  return docs.map((d) => ({
+    code: d.code,
+    name: d.name as unknown as Localized,
+    description: d.description as unknown as Localized,
+    capacity: d.capacity,
+    fits: (d.fits ?? []).map(Number) as BottleSize[],
+    priceVnd: d.priceVnd,
+    active: d.active,
+  }));
+}
+
+/** Card designs, every translation; `active` only when asked. */
+export async function loadCards(where: { code?: string; activeOnly?: boolean }, req?: Partial<PayloadRequest>): Promise<CardDoc[]> {
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: "card-designs",
+    where: { and: [...(where.code ? [{ code: { equals: where.code } }] : []), ...(where.activeOnly ? [{ active: { equals: true } }] : [])] },
+    locale: "all",
+    depth: 0,
+    pagination: false,
+    sort: "code",
+    req,
+  });
+  return docs.map((d) => ({ code: d.code, name: d.name as unknown as Localized, active: d.active }));
 }
 
 /** An order by its status token, or `null`. The caller checks the token's shape first. */

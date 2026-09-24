@@ -18,6 +18,12 @@ export type BuyerErrors = {
   address?: "addressRequired" | "addressTooLong";
 };
 
+export type Recipient = { name: string; phone: string; address: string };
+
+export type RecipientErrors = Pick<BuyerErrors, "name" | "phone" | "address">;
+
+type RecipientResult = { ok: true; recipient: Recipient } | { ok: false; errors: RecipientErrors };
+
 type ContactResult = { ok: true; buyer: Buyer } | { ok: false; errors: BuyerErrors };
 
 export type BuyerResult = { ok: true; buyer: Buyer; adult: boolean } | { ok: false; errors: BuyerErrors };
@@ -31,25 +37,38 @@ export function normalizePhone(value: string): string | null {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Name, phone, email and address. Used at step 1 and again when the order is placed. */
-export function checkContact(fields: Buyer): ContactResult {
-  const errors: BuyerErrors = {};
+/** The contact fields a buyer and a gift recipient share: name, phone and address. */
+function checkNamePhoneAddress(fields: Omit<Buyer, "email">) {
+  const errors: RecipientErrors = {};
   const name = fields.name.trim();
   const phone = normalizePhone(fields.phone);
-  const email = fields.email.trim();
   const address = fields.address.trim();
-
   if (!name) errors.name = "nameRequired";
   else if (name.length > MAX_NAME_LENGTH) errors.name = "nameTooLong";
   if (!fields.phone.trim()) errors.phone = "phoneRequired";
   else if (!phone) errors.phone = "phoneInvalid";
-  if (!email) errors.email = "emailRequired";
-  else if (email.length > MAX_EMAIL_LENGTH || !EMAIL.test(email)) errors.email = "emailInvalid";
   if (!address) errors.address = "addressRequired";
   else if (address.length > MAX_ADDRESS_LENGTH) errors.address = "addressTooLong";
+  return { errors, name, phone, address };
+}
+
+/** Name, phone, email and address. Used at step 1 and again when the order is placed. */
+export function checkContact(fields: Buyer): ContactResult {
+  const { errors: shared, name, phone, address } = checkNamePhoneAddress(fields);
+  const errors: BuyerErrors = { ...shared };
+  const email = fields.email.trim();
+  if (!email) errors.email = "emailRequired";
+  else if (email.length > MAX_EMAIL_LENGTH || !EMAIL.test(email)) errors.email = "emailInvalid";
 
   if (Object.keys(errors).length > 0 || !phone) return { ok: false, errors };
   return { ok: true, buyer: { name, phone, email, address } };
+}
+
+/** A gift recipient (step 2, gift mode): name, phone and address under the buyer's rules. */
+export function checkRecipient(fields: Recipient): RecipientResult {
+  const { errors, name, phone, address } = checkNamePhoneAddress(fields);
+  if (Object.keys(errors).length > 0 || !phone) return { ok: false, errors };
+  return { ok: true, recipient: { name, phone, address } };
 }
 
 /** Step 1: every field, plus the age re-check on the Asia/Ho_Chi_Minh calendar date at `now`. */

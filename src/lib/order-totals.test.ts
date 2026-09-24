@@ -13,15 +13,17 @@ describe("computeTotals", () => {
           { qty: 2, unitPriceVnd: 850_000 },
           { qty: 1, unitPriceVnd: 720_000 },
         ],
+        0,
         30_000,
       ),
-    ).toEqual({ goodsVnd: 2_420_000, shippingVnd: 30_000, vatIncludedVnd: 222_727, totalVnd: 2_450_000 });
+    ).toEqual({ goodsVnd: 2_420_000, wrapVnd: 0, shippingVnd: 30_000, vatIncludedVnd: 222_727, totalVnd: 2_450_000 });
   });
 
   it("includes shipping in the total and in the VAT base", () => {
     // 1 × 480 000 + 45 000 = 525 000; 525 000 / 11 = 47 727.27 → 47 727.
-    expect(computeTotals([{ qty: 1, unitPriceVnd: 480_000 }], 45_000)).toEqual({
+    expect(computeTotals([{ qty: 1, unitPriceVnd: 480_000 }], 0, 45_000)).toEqual({
       goodsVnd: 480_000,
+      wrapVnd: 0,
       shippingVnd: 45_000,
       vatIncludedVnd: 47_727,
       totalVnd: 525_000,
@@ -29,12 +31,35 @@ describe("computeTotals", () => {
   });
 
   it("allows free shipping", () => {
-    expect(computeTotals([{ qty: 3, unitPriceVnd: 1_100_000 }], 0)).toEqual({
+    expect(computeTotals([{ qty: 3, unitPriceVnd: 1_100_000 }], 0, 0)).toEqual({
       goodsVnd: 3_300_000,
+      wrapVnd: 0,
       shippingVnd: 0,
       vatIncludedVnd: 300_000,
       totalVnd: 3_300_000,
     });
+  });
+
+  it("adds wrap to the total and to the VAT base", () => {
+    // 850 000 + 720 000 = 1 570 000; + wrap 200 000 + 30 000 = 1 800 000; 1 800 000 / 11 = 163 636.36 → 163 636.
+    expect(
+      computeTotals(
+        [
+          { qty: 1, unitPriceVnd: 850_000 },
+          { qty: 1, unitPriceVnd: 720_000 },
+        ],
+        200_000,
+        30_000,
+      ),
+    ).toEqual({ goodsVnd: 1_570_000, wrapVnd: 200_000, shippingVnd: 30_000, vatIncludedVnd: 163_636, totalVnd: 1_800_000 });
+  });
+
+  it.each([
+    ["a negative wrap", -1],
+    ["a fractional wrap", 0.5],
+    ["a NaN wrap", Number.NaN],
+  ])("rejects %s", (_label, wrap) => {
+    expect(() => computeTotals([{ qty: 1, unitPriceVnd: 1 }], wrap, 0)).toThrow(RangeError);
   });
 
   it.each([
@@ -49,7 +74,7 @@ describe("computeTotals", () => {
     ["a fractional shipping fee", [{ qty: 1, unitPriceVnd: 1 }], 0.5],
     ["an unsafe total", [{ qty: 2, unitPriceVnd: Number.MAX_SAFE_INTEGER }], 0],
   ])("rejects %s", (_label, lines, shipping) => {
-    expect(() => computeTotals(lines, shipping)).toThrow(RangeError);
+    expect(() => computeTotals(lines, 0, shipping)).toThrow(RangeError);
   });
 });
 

@@ -44,8 +44,43 @@ export const IMPORTER = "Công ty TNHH Xenia Nhập khẩu (dữ liệu mẫu)";
 
 /** Placeholder flat delivery fees per zone (whole VND, VAT included) for the `site-settings` global. */
 export const ZONE_FEES = [
-  { zone: "hcmc", feeVnd: 30_000 },
-  { zone: "hanoi", feeVnd: 45_000 },
+  { zone: "hcmc", feeVnd: 30_000, leadDays: 1 },
+  { zone: "hanoi", feeVnd: 45_000, leadDays: 1 },
+] as const;
+
+/** Placeholder packaging (F7): the Human sets real names and prices. Every price is at least 1 VND. */
+export const PACKAGING = [
+  {
+    code: "silk",
+    name: { vi: "Giấy lụa và ruy băng", en: "Tissue and silk ribbon" },
+    description: { vi: "Giấy lụa mỏng, ruy băng lụa và tem sáp. Mỗi gói một chai.", en: "Fine tissue, a silk ribbon and a wax seal sticker. One bottle each." },
+    capacity: 1,
+    fits: [375, 750, 1500],
+    priceVnd: 50_000,
+  },
+  {
+    code: "box-1",
+    name: { vi: "Hộp cứng", en: "Rigid box" },
+    description: { vi: "Hộp cứng nắp nam châm, giấy lót và khay giữ chai. Một chai 750 ml.", en: "Rigid box with a magnetic lid, fine paper and a fitted insert. One 750 ml bottle." },
+    capacity: 1,
+    fits: [750],
+    priceVnd: 120_000,
+  },
+  {
+    code: "box-2",
+    name: { vi: "Hộp cứng đôi", en: "Two-bottle box" },
+    description: { vi: "Hộp cứng cho hai chai 750 ml, nắp nam châm và khay giữ chai.", en: "Rigid box for two 750 ml bottles, with a magnetic lid and a fitted insert." },
+    capacity: 2,
+    fits: [750],
+    priceVnd: 200_000,
+  },
+] as const;
+
+export const CARD_DESIGNS = [
+  { code: "chuc-mung", name: { vi: "Chúc mừng", en: "Congratulations" } },
+  { code: "cam-on", name: { vi: "Cảm ơn", en: "Thank you" } },
+  { code: "tet", name: { vi: "Tết", en: "Tết" } },
+  { code: "plain", name: { vi: "Trơn", en: "Plain" } },
 ] as const;
 
 export const producers: SeedProducer[] = [

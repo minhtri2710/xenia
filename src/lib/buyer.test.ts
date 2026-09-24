@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkBuyer, checkContact, normalizePhone } from "./buyer";
+import { checkBuyer, checkContact, checkRecipient, normalizePhone } from "./buyer";
 
 // 2026-09-24 10:00 in Asia/Ho_Chi_Minh.
 const NOW = new Date("2026-09-24T03:00:00Z");
@@ -89,5 +89,29 @@ describe("normalizePhone", () => {
     ["090123456a", null],
   ])("%s → %s", (value, phone) => {
     expect(normalizePhone(value)).toBe(phone);
+  });
+});
+
+describe("checkRecipient", () => {
+  it("trims and normalises under the buyer's rules, without an email", () => {
+    expect(checkRecipient({ name: " Trần Thị Bình ", phone: "+84 912.345.678", address: " 5 Hàng Bài " })).toEqual({
+      ok: true,
+      recipient: { name: "Trần Thị Bình", phone: "0912345678", address: "5 Hàng Bài" },
+    });
+  });
+
+  it("requires name, phone and address", () => {
+    expect(checkRecipient({ name: " ", phone: "", address: "" })).toEqual({
+      ok: false,
+      errors: { name: "nameRequired", phone: "phoneRequired", address: "addressRequired" },
+    });
+  });
+
+  it("applies the buyer's length and phone rules", () => {
+    expect(checkRecipient({ name: "ệ".repeat(201), phone: "12345", address: "ệ".repeat(501) })).toEqual({
+      ok: false,
+      errors: { name: "nameTooLong", phone: "phoneInvalid", address: "addressTooLong" },
+    });
+    expect(checkRecipient({ name: "ệ".repeat(200), phone: "0912345678", address: "ệ".repeat(500) }).ok).toBe(true);
   });
 });

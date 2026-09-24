@@ -191,6 +191,7 @@
       "label": "Checkout steps",
       "buyer": "Buyer",
       "delivery": "Delivery",
+      "gift": "Gift options",
       "review": "Review & confirm"
     },
     "buyer": {
@@ -224,10 +225,45 @@
       "toBuyer": "Delivered to the buyer: {name}, {address}.",
       "idCheck": "The courier hands the wine only to an adult aged 18 or over who shows ID. Without ID, the order is not handed over.",
       "zone": "Delivery zone",
-      "zoneOption": "{zone} — delivery {fee}",
+      "zoneOption": "{zone} — delivery fee {fee}, earliest delivery {earliest}",
       "submit": "Continue",
       "errors": {
-        "zoneRequired": "Please choose a delivery zone."
+        "zoneRequired": "Please choose a delivery zone.",
+        "modeRequired": "Choose how to deliver.",
+        "windowRequired": "Choose a delivery window.",
+        "dateRequired": "Choose a delivery date.",
+        "dateInvalid": "The delivery date is not valid.",
+        "dateTooEarly": "The delivery date is before the earliest date for this zone.",
+        "dateTooLate": "The delivery date can be at most 30 days after the earliest date.",
+        "dateBlackout": "There is no delivery on this date. Choose another date.",
+        "recipient": {
+          "nameRequired": "Enter the recipient's full name.",
+          "nameTooLong": "The recipient's name is too long.",
+          "phoneRequired": "Enter the recipient's phone number.",
+          "phoneInvalid": "The recipient's phone number is not valid (10 digits, starting with 0 or +84).",
+          "addressRequired": "Enter the recipient's address.",
+          "addressTooLong": "The recipient's address is too long."
+        }
+      },
+      "mode": "How to deliver",
+      "modes": {
+        "self": "Deliver to me",
+        "gift": "Send as a gift to someone else"
+      },
+      "recipient": {
+        "legend": "Gift recipient (gifts only)",
+        "idCheck": "The recipient must be 18 or over and show ID on delivery. Otherwise the courier does not hand the gift over.",
+        "name": "Recipient's full name",
+        "phone": "Recipient's phone",
+        "address": "Recipient's address"
+      },
+      "date": "Delivery date",
+      "dateHint": "The earliest date depends on the zone; you can book up to 30 days ahead. Some holidays have no delivery.",
+      "window": "Delivery window",
+      "windows": {
+        "morning": "Morning",
+        "afternoon": "Afternoon",
+        "evening": "Evening"
       }
     },
     "review": {
@@ -241,10 +277,19 @@
       "delivery": "Delivery",
       "editDelivery": "Edit delivery",
       "deliveryMethod": "Home delivery to the buyer, {zone}: {address}",
+      "deliveryGift": "Gift to {name} · {phone}, zone {zone}: {address}",
+      "deliveryTime": "Delivery: {date}, {window}",
+      "gift": "Gift options",
+      "editGift": "Edit gift options",
+      "wrapLine": "Gift wrap: {units} × {name} = {amount}",
+      "noWrap": "No gift wrap",
+      "noMessage": "(no message)",
+      "yes": "Yes",
+      "no": "No",
       "payment": "Payment",
       "paymentMethods": "Cashless only: VietQR bank transfer or card (simulated), chosen on the next page after you place the order.",
       "totals": "Costs",
-      "changed": "Your order changed after you reviewed it (items, a price, your details or delivery address, the delivery zone or its fee). Nothing was placed or charged. Please review the order below again and confirm.",
+      "changed": "Your order changed after you reviewed it (items, a price, your details or delivery address, the recipient, the delivery date or window, the delivery zone or its fee, the packaging or its price, the card, message, sender or hidden prices). Nothing was placed or charged. Please review the order below again and confirm.",
       "expired": "This checkout has expired. Please review your order and confirm again.",
       "problems": {
         "stock": "{name}: only {stock} left. We updated the quantity; please review and confirm again.",
@@ -261,9 +306,39 @@
     },
     "totals": {
       "goods": "Goods",
+      "wrap": "Gift wrap",
       "shipping": "Delivery",
       "total": "Total (VAT included)",
       "vatIncluded": "Of which VAT (10%)"
+    },
+    "gift": {
+      "title": "Gift options",
+      "intro": "Gift wrap is a paid service for any order. The card, message and hidden prices are for gift orders only.",
+      "serviceLink": "About the gift service",
+      "packaging": "Packaging",
+      "noPackaging": "No gift wrap",
+      "packagingOption": "{name} — {capacity} bottle(s) each, {price} each",
+      "wrapLine": "Gift wrap: {units} × {name} = {amount}",
+      "noneFits": "No packaging fits every bottle in your cart.",
+      "someHidden": "Only packaging that fits every bottle in your cart is shown.",
+      "card": "Card",
+      "message": "Message",
+      "messageHint": "Up to {max} characters, plain text only. Remaining: {remaining}.",
+      "sender": "Sender",
+      "senderName": "Sender name on the card",
+      "anonymous": "Send anonymously",
+      "hidePrices": "Hide prices",
+      "hidePricesHint": "No price or receipt goes in the parcel. You still get the receipt.",
+      "submit": "Continue",
+      "errors": {
+        "packagingUnavailable": "This packaging is unavailable or does not fit the bottles in your cart. Choose again.",
+        "cardRequired": "Choose a card design.",
+        "messageTooLong": "The message is longer than {max} characters.",
+        "messageControl": "The message may contain only plain text and line breaks.",
+        "senderRequired": "Enter a sender name or choose to send anonymously.",
+        "senderTooLong": "The sender name is too long.",
+        "giftOnly": "The card, message, sender and hidden prices are for gift orders only."
+      }
     }
   },
   "Zones": {
@@ -302,11 +377,35 @@
     "line": "{qty} × {name} {vintage}, {size}, {abv}% vol — {price} / bottle",
     "totals": "Costs",
     "goods": "Goods",
+    "wrap": "Gift wrap",
     "shipping": "Delivery",
     "total": "Total (VAT included)",
     "vatIncluded": "Of which VAT (10%)",
     "delivery": "Delivery",
     "deliveryTo": "To {name}, {address} ({zone}).",
-    "idCheck": "The courier hands the wine only to an adult aged 18 or over who shows ID."
+    "deliveryGift": "Gift to {name} · {phone}, {address} ({zone}).",
+    "deliveryTime": "Delivery: {date}, {window}",
+    "idCheck": "The courier hands the wine only to an adult aged 18 or over who shows ID.",
+    "gift": "Gift options",
+    "wrapLine": "Gift wrap: {units} × {name} = {amount}",
+    "noWrap": "No gift wrap",
+    "noMessage": "(no message)",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "GiftService": {
+    "title": "Gift service",
+    "intro": "We wrap your bottles, add a card with your message and deliver to your recipient.",
+    "paid": "Gift wrap is a paid service with no free tier, and it comes with no promotion or discount. Prices include VAT.",
+    "packaging": "Packaging",
+    "packagingFacts": "{capacity} bottle(s) each · bottle sizes {sizes} ml · {price} each (VAT included)",
+    "units": "One packaging for the whole order, only when it fits every bottle. Units = total bottles divided by capacity, rounded up.",
+    "cards": "Cards",
+    "message": "Message: up to {max} characters, plain text only (Vietnamese diacritics and line breaks allowed).",
+    "sender": "Sender: a name, or anonymous.",
+    "hidePrices": "Hide prices: on by default for gifts; no price or receipt goes in the parcel.",
+    "recipientTitle": "The recipient",
+    "recipient": "The recipient must be 18 or over and show ID on delivery. Otherwise the courier does not hand the gift over.",
+    "delivery": "Choose the delivery date and window (morning, afternoon, evening) at checkout."
   }
 }

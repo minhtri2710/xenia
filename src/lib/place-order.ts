@@ -2,16 +2,20 @@ import config from "@payload-config";
 import { type BasePayload, commitTransaction, createLocalReq, getPayload, initTransaction, killTransaction } from "payload";
 
 import type { CartLine } from "@/lib/cart";
-import type { Checkout } from "@/lib/checkout";
+import type { BottleSize } from "@/lib/catalogue";
+import { deleteDraft, readDraft } from "@/lib/checkout-drafts";
+import type { DateError } from "@/lib/delivery";
 import { newOrderNumber, newStatusToken } from "@/lib/order";
-import { orderDigest } from "@/lib/order-digest";
-import { computeTotals } from "@/lib/order-totals";
+import { reviewOrder } from "@/lib/order-review";
+import { loadCards, loadDeliverySettings, loadPackaging } from "@/lib/shop-data";
 
 export type LineProblem = { vintageId: number; problem: "unavailable" | "stock"; stock: number };
 
 export type PlaceResult =
   | { ok: true; token: string }
-  | { ok: false; reason: "expired" | "empty" | "buyer" | "zone" | "changed" }
+  | { ok: false; reason: "expired" | "empty" | "buyer" | "changed" }
+  | { ok: false; reason: "delivery"; error: "missing" | "zone" | DateError }
+  | { ok: false; reason: "gift"; error: "missing" | "packaging" | "card" }
   | { ok: false; reason: "lines"; problems: LineProblem[] };
 
 const CHECK_VIOLATION = "23514";
@@ -35,41 +39,37 @@ async function stockOf(payload: BasePayload, id: number): Promise<number> {
 
 /**
  * Places the order in one database transaction through the Local API. Money comes only from the
- * database and the zone fee; nothing the client posts is read here except the cart's vintage ids
- * and quantities and the checkout state, both re-validated.
+ * database, the packaging price and the zone fee; nothing the client posts is read here except the
+ * cart's vintage ids and quantities, and the checkout draft, re-validated.
  *
- * - Idempotent on the client key posted with the review form, which is the checkout state's key:
- *   an order with that key is returned instead of a second one, even after the cookies are
- *   cleared (back-and-resubmit, replayed POST). A concurrent duplicate (double submit) loses on
- *   the unique `clientKey` index, rolls back and returns the winner. Every refusal after the
- *   transaction starts also returns the winner when one exists (a duplicate that lost at the stock
- *   edge must still land on the one order).
+ * - Idempotent on the client key posted with the review form: an order with that key is returned
+ *   first, before the draft is read, so a replayed POST after placement deleted the draft still
+ *   lands on the one order. A concurrent duplicate (double submit) loses on the unique `clientKey`
+ *   index, rolls back and returns the winner. Every refusal after the transaction starts also
+ *   returns the winner when one exists (a duplicate that lost at the stock edge must still land on
+ *   the one order).
+ * - The draft is read by the cookie's handle inside the transaction and must carry the posted key.
  * - Every line is re-read: a draft or missing vintage or wine, or a quantity above stock, refuses
- *   the whole order with a per-line problem.
+ *   the whole order with a per-line problem. The delivery date is re-checked at `now`, and the
+ *   packaging and card are re-read (active, fits, price); one that is no longer valid refuses back
+ *   to its step.
  * - The order must be the one step 4 showed (Law 122 Art. 12): `reviewedDigest` is compared with
- *   `orderDigest` of the lines, buyer, zone, fee and totals about to be stored; a mismatch refuses
- *   with "changed".
+ *   the digest of everything about to be stored; a mismatch refuses with "changed".
  * - Stock is decremented here, at placement, with an atomic `stock = stock - qty` in vintage-id
- *   order; the `vintages_stock_non_negative` CHECK refuses a concurrent oversell.
+ *   order; the `vintages_stock_non_negative` CHECK refuses a concurrent oversell. The draft is
+ *   deleted in the same transaction.
  */
 export async function placeOrder(
   clientKey: string,
   reviewedDigest: string,
   lines: CartLine[],
-  checkout: Checkout | null,
+  handle: string | undefined,
   now: Date,
 ): Promise<PlaceResult> {
   const payload = await getPayload({ config });
   const existing = await tokenForKey(payload, clientKey);
   if (existing) return { ok: true, token: existing };
-
-  if (!checkout || checkout.key !== clientKey) return { ok: false, reason: "expired" };
   if (lines.length === 0) return { ok: false, reason: "empty" };
-  const { buyer, attestedAt, zone } = checkout;
-  if (!buyer || !attestedAt) return { ok: false, reason: "buyer" };
-  const settings = await payload.findGlobal({ slug: "site-settings", depth: 0 });
-  const fee = settings.zones?.find((z) => z.zone === zone)?.feeVnd;
-  if (!zone || fee === undefined) return { ok: false, reason: "zone" };
 
   const req = await createLocalReq({}, payload);
   await initTransaction(req);
@@ -83,6 +83,13 @@ export async function placeOrder(
     return winner ? { ok: true, token: winner } : result;
   };
   try {
+    const checkout = await readDraft(payload, handle, now, req);
+    if (!checkout || checkout.clientKey !== clientKey) return await refuse({ ok: false, reason: "expired" });
+    const { buyer, attestedAt, delivery, gift } = checkout;
+    if (!buyer || !attestedAt) return await refuse({ ok: false, reason: "buyer" });
+    if (!delivery) return await refuse({ ok: false, reason: "delivery", error: "missing" });
+    if (!gift) return await refuse({ ok: false, reason: "gift", error: "missing" });
+
     const sorted = [...lines].sort((a, b) => a.vintageId - b.vintageId);
     const problems: LineProblem[] = [];
     const snapshots = [];
@@ -113,15 +120,23 @@ export async function placeOrder(
     }
     if (problems.length > 0) return await refuse({ ok: false, reason: "lines", problems });
 
-    const totals = computeTotals(snapshots, fee);
-    const digest = orderDigest({
-      lines: snapshots.map((s) => ({ vintageId: s.vintage, qty: s.qty, unitPriceVnd: s.unitPriceVnd })),
+    const settings = await loadDeliverySettings(req);
+    const isGift = delivery.mode === "gift";
+    const review = reviewOrder({
+      lines: snapshots.map((s) => ({ vintageId: s.vintage, qty: s.qty, unitPriceVnd: s.unitPriceVnd, bottleMl: Number(s.bottleMl) as BottleSize })),
       buyer,
-      zone,
-      feeVnd: fee,
-      totals,
+      delivery,
+      gift,
+      zone: settings.zones.get(delivery.zone),
+      blackoutDates: settings.blackoutDates,
+      packaging: gift.packaging === null ? undefined : (await loadPackaging({ code: gift.packaging }, req))[0],
+      card: isGift && gift.card !== null ? (await loadCards({ code: gift.card }, req))[0] : undefined,
+      now,
     });
-    if (digest !== reviewedDigest) return await refuse({ ok: false, reason: "changed" });
+    if (!review.ok) {
+      return await refuse(review.step === "delivery" ? { ok: false, reason: "delivery", error: review.error } : { ok: false, reason: "gift", error: review.error });
+    }
+    if (review.digest !== reviewedDigest) return await refuse({ ok: false, reason: "changed" });
 
     for (const s of snapshots) {
       try {
@@ -133,6 +148,7 @@ export async function placeOrder(
       }
     }
 
+    const { wrap, card, totals } = review;
     const token = newStatusToken();
     try {
       await payload.create({
@@ -145,7 +161,21 @@ export async function placeOrder(
           clientKey,
           buyer,
           ageAttestedAt: attestedAt,
-          delivery: { zone },
+          delivery: { zone: delivery.zone, mode: delivery.mode, recipient: delivery.recipient ?? undefined, date: delivery.date, window: delivery.window },
+          gift: {
+            packagingCode: wrap?.code ?? null,
+            packagingNameVi: wrap?.nameVi ?? null,
+            packagingNameEn: wrap?.nameEn ?? null,
+            packagingUnits: wrap?.units ?? null,
+            packagingUnitPriceVnd: wrap?.unitPriceVnd ?? null,
+            cardCode: card?.code ?? null,
+            cardNameVi: card?.name.vi ?? null,
+            cardNameEn: card?.name.en ?? null,
+            message: isGift ? gift.message : null,
+            sender: isGift ? gift.sender : null,
+            anonymous: isGift && gift.sender === null,
+            hidePrices: isGift && gift.hidePrices,
+          },
           lines: snapshots,
           totals,
           consents: { terms: true, privacy: true, at: now.toISOString() },
@@ -157,6 +187,7 @@ export async function placeOrder(
       if (winner) return { ok: true, token: winner };
       throw error;
     }
+    await deleteDraft(payload, handle, req);
     await commitTransaction(req);
     return { ok: true, token };
   } catch (error) {

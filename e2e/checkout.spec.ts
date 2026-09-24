@@ -55,14 +55,27 @@ async function fillBuyer(page: Page, dob: string, address = "12 Lê Lợi, Quậ
   await page.locator("form button[type=submit]").click();
 }
 
-/** From a filled cart, through steps 1 and 2, to the review. */
+/** Step 2 in self mode: the zone, the prefilled earliest date, the morning window; lands on step 3. */
+async function submitDelivery(page: Page, prefix: string, zone: "hcmc" | "hanoi") {
+  await page.locator(`input[name=zone][value=${zone}]`).check();
+  await page.locator("input[name=window][value=morning]").check();
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/goi-qua`);
+}
+
+/** Step 3 as prefilled (no packaging in self mode); lands on the review. */
+async function submitGift(page: Page, prefix: string) {
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan`);
+}
+
+/** From a filled cart, through steps 1, 2 and 3, to the review. */
 async function toReview(page: Page, prefix: string, zone: "hcmc" | "hanoi") {
   await page.goto(`${prefix}/thanh-toan`);
   await fillBuyer(page, vietnamDateYearsAgo(30));
   await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
-  await page.locator(`input[name=zone][value=${zone}]`).check();
-  await page.locator("form button[type=submit]").click();
-  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan`);
+  await submitDelivery(page, prefix, zone);
+  await submitGift(page, prefix);
 }
 
 /** Step 4's displayed goods, shipping, total and VAT included. */
@@ -121,7 +134,7 @@ test.beforeAll(async ({ request }) => {
 
 test.describe("gate", () => {
   for (const { prefix } of LOCALES) {
-    for (const path of ["/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/xac-nhan", `/don-hang/${"A".repeat(43)}`]) {
+    for (const path of ["/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/goi-qua", "/thanh-toan/xac-nhan", `/don-hang/${"A".repeat(43)}`]) {
       test(`${prefix}${path} redirects an undeclared visitor to the gate`, async ({ page }) => {
         await page.goto(prefix + path);
         await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi` && url.searchParams.get("next") === prefix + path);
@@ -173,11 +186,14 @@ for (const { locale, prefix } of LOCALES) {
     await expect(page.getByTestId("id-check")).toContainText(vi ? "giấy tờ tùy thân" : "shows ID");
     await expectNotice(page);
     await expectNoSeriousA11yViolations(page, "step 2");
-    await page.locator(`input[name=zone][value=${zone}]`).check();
-    await page.locator("form button[type=submit]").click();
+    await submitDelivery(page, prefix, zone);
+
+    // Step 3.
+    await expectNotice(page);
+    await expectNoSeriousA11yViolations(page, "step 3");
+    await submitGift(page, prefix);
 
     // Step 4: review.
-    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan`);
     await expectNotice(page);
     await expectNoSeriousA11yViolations(page, "review");
     const lines = page.getByTestId("review-lines").locator("li");
@@ -192,7 +208,7 @@ for (const { locale, prefix } of LOCALES) {
     expect(await digits(page, '[data-total="total"]')).toBe(expected.total);
     expect(await digits(page, '[data-total="vat"]')).toBe(expected.vat);
     await expect(page.getByTestId("review-totals")).toContainText(vi ? "đã bao gồm VAT" : "VAT included");
-    for (const href of ["/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang"]) {
+    for (const href of ["/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/goi-qua"]) {
       await expect(page.locator(`main a[href="${prefix}${href}"]`).first()).toBeVisible();
     }
     await expect(page.locator("input[name=terms]")).not.toBeChecked();
@@ -550,9 +566,7 @@ const CHANGES: {
     input: "the zone",
     change: async (other) => {
       await other.goto("/thanh-toan/giao-hang");
-      await other.locator("input[name=zone][value=hanoi]").check();
-      await other.locator("form button[type=submit]").click();
-      await expect(other).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan");
+      await submitDelivery(other, "", "hanoi");
     },
     // 1 200 000 + Hà Nội 45 000 = 1 245 000; / 11 = 113 181.8 → 113 182.
     totals: [1_200_000, 45_000, 1_245_000, 113_182],
@@ -721,4 +735,482 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   await expect(page.locator("#field-status")).toBeVisible();
   await page.waitForLoadState("networkidle");
   expect(external).toEqual([]);
+});
+
+// ---- S5: delivery modes and dates, gift options, the gift service page, the server-side draft ----
+// Packaging from `src/seed/data.ts`: silk (1 bottle, every size) 50 000; box-1 (1 bottle, 750 ml)
+// 120 000; box-2 (2 bottles, 750 ml) 200 000. Lead days 1 for both zones.
+
+const RECIPIENT = { name: "Trần Thị Bình", phone: "0912 345 678", address: "5 Hàng Bài, Hoàn Kiếm" };
+const MESSAGE = "Chúc mừng sinh nhật chị Bình!\nThân thương, An.";
+
+/** The Vietnamese calendar date `days` after today, as YYYY-MM-DD. */
+function vietnamDatePlusDays(days: number): string {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+  const [y, m, d] = today.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** Step 2 in gift mode; lands on step 3 unless `expectStep3` is false. */
+async function submitGiftDelivery(
+  page: Page,
+  prefix: string,
+  zone: "hcmc" | "hanoi",
+  { recipient = RECIPIENT, date = vietnamDatePlusDays(3), window = "afternoon", expectStep3 = true } = {},
+) {
+  await page.locator("input[name=mode][value=gift]").check();
+  await page.locator("#delivery-recipientName").fill(recipient.name);
+  await page.locator("#delivery-recipientPhone").fill(recipient.phone);
+  await page.locator("#delivery-recipientAddress").fill(recipient.address);
+  await page.locator(`input[name=zone][value=${zone}]`).check();
+  await page.locator("#delivery-date").fill(date);
+  await page.locator(`input[name=window][value=${window}]`).check();
+  await page.locator("form button[type=submit]").click();
+  if (expectStep3) await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/goi-qua`);
+}
+
+/** Step 3 in gift mode with box-2, the tet card, a message and the prefilled sender; lands on the review. */
+async function submitGiftOptions(page: Page, prefix: string, { packaging = "box-2", message = MESSAGE } = {}) {
+  await page.locator(`input[name=packaging][value="${packaging}"]`).check();
+  await page.locator("input[name=card][value=tet]").check();
+  await page.locator("#gift-message").fill(message);
+  await submitGift(page, prefix);
+}
+
+/** From a filled cart, a gift order through steps 1-3 to the review. */
+async function toGiftReview(page: Page, prefix: string, zone: "hcmc" | "hanoi", options: Parameters<typeof submitGiftOptions>[2] = {}) {
+  await page.goto(`${prefix}/thanh-toan`);
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
+  await submitGiftDelivery(page, prefix, zone);
+  await submitGiftOptions(page, prefix, options);
+}
+
+const draftCount = (clientKey: string) => Number(sql(`SELECT count(*) FROM checkout_drafts WHERE client_key = '${clientKey}'`));
+
+for (const { locale, prefix } of LOCALES) {
+  const vi = locale === "vi";
+  const zone = vi ? "hcmc" : "hanoi";
+  // 850 000 + 720 000 = 1 570 000; box-2: 2 bottles / capacity 2 = 1 × 200 000.
+  // vi: + 30 000 = 1 800 000, VAT 1 800 000 / 11 = 163 636.4 → 163 636.
+  // en: + 45 000 = 1 815 000, VAT 1 815 000 / 11 = 165 000.
+  const expected = vi
+    ? { goods: 1_570_000, wrap: 200_000, shipping: 30_000, total: 1_800_000, vat: 163_636 }
+    : { goods: 1_570_000, wrap: 200_000, shipping: 45_000, total: 1_815_000, vat: 165_000 };
+
+  test(`an adult sends two vintages as a wrapped gift and pays with the mock (${locale})`, async ({ page }) => {
+    test.setTimeout(300_000);
+    const external = await blockThirdParty(page);
+    const date = vietnamDatePlusDays(3);
+    await declareAdult(page, `${prefix}/ruou-vang/lune-grise-rouge`);
+    await addToCart(page, prefix, "lune-grise-rouge");
+    await addToCart(page, prefix, "colle-vento-rosso");
+    await page.goto(`${prefix}/thanh-toan`);
+    await fillBuyer(page, vietnamDateYearsAgo(30));
+
+    // Step 2, gift mode: the recipient 18+ and ID rule (D6).
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
+    await page.locator("input[name=mode][value=gift]").check();
+    await expect(page.getByTestId("recipient-id-check")).toContainText(vi ? "đủ 18 tuổi" : "18 or over");
+    await expectNotice(page);
+    await expectNoSeriousA11yViolations(page, "step 2, gift");
+    await submitGiftDelivery(page, prefix, zone, { date });
+
+    // Step 3: box-2 fits two 750 ml bottles; hide prices is on by default; the sender is the buyer.
+    await expectNotice(page);
+    await expectNoSeriousA11yViolations(page, "step 3, gift");
+    await expect(page.locator("input[name=packaging]")).toHaveCount(4); // none, silk, box-1, box-2
+    await expect(page.locator("input[name=hidePrices]")).toBeChecked();
+    await expect(page.locator("#gift-sender")).toHaveValue("Nguyễn Văn An");
+    await expect(page.getByRole("link", { name: vi ? "Xem dịch vụ gói quà" : "About the gift service" })).toHaveAttribute("href", `${prefix}/dich-vu-goi-qua`);
+    await submitGiftOptions(page, prefix);
+
+    // Step 4.
+    await expectNotice(page);
+    await expectNoSeriousA11yViolations(page, "review, gift");
+    await expect(page.getByTestId("review-delivery")).toContainText(`${RECIPIENT.name} · 0912345678`);
+    await expect(page.getByTestId("review-delivery")).toContainText(RECIPIENT.address);
+    await expect(page.getByTestId("review-date")).toContainText(date.slice(0, 4));
+    await expect(page.getByTestId("review-date")).toContainText(vi ? "Buổi chiều" : "Afternoon");
+    await expect(page.getByTestId("review-id-check")).toContainText(vi ? "đủ 18 tuổi" : "18 or over");
+    await expect(page.getByTestId("review-wrap")).toContainText(vi ? "Gói quà: 1 × Hộp cứng đôi = 200.000" : "Gift wrap: 1 × Two-bottle box = ₫200,000");
+    await expect(page.locator("[data-gift=card]")).toHaveText("Tết");
+    await expect(page.locator("[data-gift=message]")).toHaveText(MESSAGE);
+    await expect(page.locator("[data-gift=sender]")).toHaveText("Nguyễn Văn An");
+    await expect(page.locator("[data-gift=hide-prices]")).toHaveText(vi ? "Có" : "Yes");
+    for (const [k, v] of Object.entries(expected)) expect(await digits(page, `[data-total="${k}"]`), k).toBe(v);
+    for (const href of ["/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/goi-qua"]) {
+      await expect(page.locator(`main a[href="${prefix}${href}"]`).first()).toBeVisible();
+    }
+
+    const clientKey = await page.locator("input[name=clientKey]").inputValue();
+    expect(draftCount(clientKey)).toBe(1);
+    const before = orderCount();
+    const token = await consentAndPlace(page, prefix);
+    expect(orderCount()).toBe(before + 1);
+    // Placement deleted the draft in its transaction.
+    expect(draftCount(clientKey)).toBe(0);
+
+    await page.locator("input[name=method][value=vietqr_mock]").check();
+    await page.getByRole("button", { name: vi ? "Mô phỏng thanh toán thành công" : "Simulate a successful payment" }).click();
+    await expect(page.getByTestId("order-status")).toHaveText(vi ? "Đã thanh toán" : "Paid");
+    await expect(page.getByTestId("order-delivery")).toContainText(RECIPIENT.address);
+    await expect(page.getByTestId("order-wrap")).toContainText(vi ? "1 × Hộp cứng đôi" : "1 × Two-bottle box");
+    await expect(page.getByTestId("order-gift")).toContainText(MESSAGE.split("\n")[0]);
+    for (const [k, v] of Object.entries(expected)) expect(await digits(page, `[data-total="${k}"]`), k).toBe(v);
+    await expectNoSeriousA11yViolations(page, "status, gift");
+
+    expect(
+      sql(
+        `SELECT concat_ws('|', delivery_mode, delivery_recipient_name, delivery_recipient_phone, delivery_recipient_address, delivery_date, delivery_window, gift_packaging_code, gift_packaging_name_vi, gift_packaging_name_en, gift_packaging_units, gift_packaging_unit_price_vnd, gift_card_code, gift_card_name_vi, gift_card_name_en, gift_sender, gift_anonymous, gift_hide_prices, totals_goods_vnd, totals_wrap_vnd, totals_shipping_vnd, totals_total_vnd, totals_vat_included_vnd) FROM orders WHERE token = '${token}'`,
+      ),
+    ).toBe(
+      `gift|${RECIPIENT.name}|0912345678|${RECIPIENT.address}|${date}|afternoon|box-2|Hộp cứng đôi|Two-bottle box|1|200000|tet|Tết|Tết|Nguyễn Văn An|f|t|` +
+        `${expected.goods}|${expected.wrap}|${expected.shipping}|${expected.total}|${expected.vat}`,
+    );
+    expect(sql(`SELECT gift_message FROM orders WHERE token = '${token}'`)).toBe(MESSAGE);
+    expect(external).toEqual([]);
+  });
+
+  test(`the checkout cookie holds only the draft handle, HttpOnly, SameSite=Lax, path / (${locale})`, async ({ page }) => {
+    await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
+    await addToCart(page, prefix, "colle-vento-rosso");
+    await page.goto(`${prefix}/thanh-toan`);
+    await fillBuyer(page, vietnamDateYearsAgo(30));
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
+    const cookie = (await page.context().cookies()).find((c) => c.name === "xenia_checkout")!;
+    expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
+    expect(cookie.value).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(Number(sql(`SELECT count(*) FROM checkout_drafts WHERE handle = '${cookie.value}' AND buyer_email = 'an@example.test'`))).toBe(1);
+  });
+
+  test(`long Vietnamese addresses and a 250-code-point message go through every step and place (${locale})`, async ({ page }) => {
+    test.setTimeout(300_000);
+    // "ệ" is one code point and one UTF-16 unit, nine bytes URL-encoded: the S4 cookie's worst case.
+    const buyerAddress = `12 Lê Lợi ${"ệ".repeat(490)}`;
+    const recipientAddress = `5 Hàng Bài ${"ệ".repeat(489)}`;
+    const message = "ệ".repeat(250);
+    expect([buyerAddress.length, recipientAddress.length, [...message].length]).toEqual([500, 500, 250]);
+    await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
+    await addToCart(page, prefix, "colle-vento-rosso", 2);
+    await page.goto(`${prefix}/thanh-toan`);
+    await fillBuyer(page, vietnamDateYearsAgo(30), buyerAddress);
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
+    await submitGiftDelivery(page, prefix, "hcmc", { recipient: { ...RECIPIENT, address: recipientAddress } });
+    await submitGiftOptions(page, prefix, { message });
+    const token = await consentAndPlace(page, prefix);
+    expect(sql(`SELECT buyer_address || '|' || delivery_recipient_address || '|' || gift_message FROM orders WHERE token = '${token}'`)).toBe(
+      `${buyerAddress}|${recipientAddress}|${message}`,
+    );
+  });
+}
+
+test("self delivery with silk wrap: step 3 offers no gift-only options, refuses them when forged, and the totals include the wrap", async ({ page }) => {
+  test.setTimeout(300_000);
+  const external = await blockThirdParty(page);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso", 2);
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await submitDelivery(page, "", "hcmc");
+
+  for (const name of ["card", "message", "sender", "anonymous", "hidePrices"]) await expect(page.locator(`[name=${name}]`)).toHaveCount(0);
+  await expectNoSeriousA11yViolations(page, "step 3, self");
+  // A forged card and message in self mode are refused.
+  await page.locator("input[name=packaging][value=silk]").check();
+  await page.locator("form:has(input[name=packaging])").evaluate((form) => {
+    for (const [name, value] of [
+      ["card", "tet"],
+      ["message", "forged"],
+    ]) {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    }
+  });
+  await page.locator("form button[type=submit]").click();
+  await expect(page.locator("form [role=alert]")).toContainText("Thiệp, lời nhắn, người gửi và ẩn giá chỉ dành cho đơn gửi quà.");
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
+
+  await page.reload();
+  await page.locator("input[name=packaging][value=silk]").check();
+  await submitGift(page, "");
+  await expect(page.getByTestId("review-gift")).toHaveCount(0);
+  await expect(page.getByTestId("review-wrap")).toContainText("Gói quà: 2 × Giấy lụa và ruy băng = 100.000");
+  // 2 × 720 000 = 1 440 000; silk 2 × 50 000 = 100 000; + 30 000 = 1 570 000; / 11 = 142 727.3 → 142 727.
+  expect(await Promise.all(["goods", "wrap", "shipping", "total", "vat"].map((k) => digits(page, `[data-total="${k}"]`)))).toEqual([
+    1_440_000, 100_000, 30_000, 1_570_000, 142_727,
+  ]);
+  const token = await consentAndPlace(page, "");
+  expect(
+    sql(
+      `SELECT concat_ws('|', delivery_mode, delivery_recipient_name IS NULL, gift_packaging_code, gift_packaging_units, gift_card_code IS NULL, coalesce(gift_message, ''), totals_wrap_vnd, totals_total_vnd) FROM orders WHERE token = '${token}'`,
+    ),
+  ).toBe("self|t|silk|2|t||100000|1570000");
+  expect(external).toEqual([]);
+});
+
+test("a 1500 ml bottle is offered only silk, a forged box-1 is refused, and placement refuses packaging that stopped fitting", async ({ page }) => {
+  test.setTimeout(300_000);
+  await declareAdult(page, "/ruou-vang/lune-grise-rouge?vintage=2019&size=1500");
+  await page.getByTestId("add-to-cart").locator("button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/gio-hang");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await submitDelivery(page, "", "hcmc");
+  const offered = await page.locator("input[name=packaging]").evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  expect(offered).toEqual(["none", "silk"]);
+  await page.locator("form:has(input[name=packaging])").evaluate((form) => {
+    for (const radio of form.querySelectorAll<HTMLInputElement>("input[name=packaging]")) radio.disabled = true;
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "packaging";
+    input.value = "box-1";
+    form.appendChild(input);
+  });
+  await page.locator("form button[type=submit]").click();
+  await expect(page.locator("#packaging-error")).toBeVisible();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
+  expect(sql(`SELECT count(*) FROM checkout_drafts WHERE gift_packaging = 'box-1' AND buyer_email = 'an@example.test' AND updated_at > now() - interval '1 minute'`)).toBe("0");
+
+  // A 750 ml cart reviewed with box-1; a 1500 ml bottle added in another tab before the submit.
+  await page.goto("/gio-hang");
+  await page.locator("[data-vintage]").first().getByRole("button", { name: /^Bỏ / }).click();
+  await expect(page.getByTestId("cart-lines")).toHaveCount(0);
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan/goi-qua");
+  await page.locator("input[name=packaging][value=box-1]").check();
+  await submitGift(page, "");
+  const other = await page.context().newPage();
+  await other.goto("/ruou-vang/lune-grise-rouge?vintage=2019&size=1500");
+  await other.getByTestId("add-to-cart").locator("button[type=submit]").click();
+  await expect(other).toHaveURL((url) => url.pathname === "/gio-hang");
+
+  const before = orderCount();
+  const { replay } = await capturePlacePost(page);
+  const response = await replay();
+  expect(JSON.stringify(response.headers())).toContain("/thanh-toan/goi-qua?invalid=packaging");
+  expect(orderCount()).toBe(before);
+});
+
+test("step 2 refuses a date before the earliest, past the horizon or on a blackout date, and placement refuses a date that became a blackout", async ({ page }) => {
+  test.setTimeout(300_000);
+  const blackout = vietnamDatePlusDays(5);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  const settingsId = sql("SELECT id FROM site_settings");
+  try {
+    sql(`INSERT INTO site_settings_blackout_dates (_order, _parent_id, id, date) VALUES (1, ${settingsId}, 'e2e-blackout', '${blackout}')`);
+    // Earliest = today + 1; latest = earliest + 30 = today + 31.
+    for (const [date, message] of [
+      [vietnamDatePlusDays(0), "sớm hơn ngày sớm nhất"],
+      [vietnamDatePlusDays(32), "trong vòng 30 ngày"],
+      [blackout, "Không giao hàng vào ngày này"],
+    ]) {
+      await page.goto("/thanh-toan/giao-hang");
+      await submitGiftDelivery(page, "", "hcmc", { date, expectStep3: false });
+      await expect(page.locator("#delivery-date-error")).toContainText(message);
+      await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+    }
+    // Both edges of the window are accepted.
+    for (const date of [vietnamDatePlusDays(1), vietnamDatePlusDays(31)]) {
+      await page.goto("/thanh-toan/giao-hang");
+      await submitGiftDelivery(page, "", "hcmc", { date });
+    }
+
+    // Reviewed on a valid date, which becomes a blackout before the submit.
+    const date = vietnamDatePlusDays(4);
+    await page.goto("/thanh-toan/giao-hang");
+    await submitGiftDelivery(page, "", "hcmc", { date });
+    await submitGiftOptions(page, "");
+    sql(`INSERT INTO site_settings_blackout_dates (_order, _parent_id, id, date) VALUES (2, ${settingsId}, 'e2e-blackout-2', '${date}')`);
+    const before = orderCount();
+    const { replay } = await capturePlacePost(page);
+    const response = await replay();
+    expect(JSON.stringify(response.headers())).toContain("/thanh-toan/giao-hang?invalid=dateBlackout");
+    expect(orderCount()).toBe(before);
+    await page.goto("/thanh-toan/giao-hang?invalid=dateBlackout");
+    await expect(page.locator("#delivery-date-error")).toBeVisible();
+  } finally {
+    sql("DELETE FROM site_settings_blackout_dates WHERE id LIKE 'e2e-blackout%'");
+  }
+});
+
+test("a message over 250 code points or with a control character is refused and not stored", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await submitGiftDelivery(page, "", "hcmc");
+  for (const [message, error] of [
+    ["ệ".repeat(251), "Lời nhắn dài quá 250 ký tự."],
+    ["Chúc mừng\u0007", "Lời nhắn chỉ được chứa văn bản thường và xuống dòng."],
+  ]) {
+    await page.locator("input[name=card][value=tet]").check();
+    await page.locator("#gift-message").fill(message);
+    await page.locator("form button[type=submit]").click();
+    await expect(page.locator("#gift-message-error")).toHaveText(error);
+    await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
+  }
+  expect(sql("SELECT count(*) FROM checkout_drafts WHERE gift_message LIKE '%ệệệệệệệệệệ%' OR gift_message LIKE '%' || chr(7) || '%'")).toBe("0");
+});
+
+test("a posted wrap price, units or total is ignored", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await addToCart(page, "", "due-fiumi-moscato");
+  await toGiftReview(page, "", "hcmc");
+  await page.locator("form:has(input[name=clientKey])").evaluate((form) => {
+    for (const [name, value] of [
+      ["wrapVnd", "1"],
+      ["units", "0"],
+      ["packagingUnits", "0"],
+      ["unitPriceVnd", "1"],
+      ["packagingUnitPriceVnd", "1"],
+      ["packaging", "silk"],
+      ["totalVnd", "1"],
+    ]) {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    }
+  });
+  const token = await consentAndPlace(page, "");
+  // 720 000 + 480 000 = 1 200 000; box-2 1 × 200 000; + 30 000 = 1 430 000; / 11 = 130 000.
+  expect(
+    sql(`SELECT concat_ws('|', gift_packaging_code, gift_packaging_units, gift_packaging_unit_price_vnd, totals_wrap_vnd, totals_total_vnd, totals_vat_included_vnd) FROM orders WHERE token = '${token}'`),
+  ).toBe("box-2|1|200000|200000|1430000|130000");
+});
+
+// Each case changes one shown gift or delivery field between the review and the submit.
+const GIFT_CHANGES: { input: string; change: (other: Page, prefix: string) => Promise<void>; restore?: () => void; check: (page: Page) => Promise<void> }[] = [
+  {
+    input: "the packaging price",
+    change: async () => void sql("UPDATE packaging SET price_vnd = 210000 WHERE code = 'box-2'"),
+    restore: () => void sql("UPDATE packaging SET price_vnd = 200000 WHERE code = 'box-2'"),
+    // 1 200 000 + 210 000 + 30 000 = 1 440 000.
+    check: async (page) => expect.poll(() => digits(page, '[data-total="total"]')).toBe(1_440_000),
+  },
+  {
+    input: "the recipient address",
+    change: async (other, prefix) => {
+      await other.goto(`${prefix}/thanh-toan/giao-hang`);
+      await submitGiftDelivery(other, prefix, "hcmc", { recipient: { ...RECIPIENT, address: "7 Tràng Tiền, Hoàn Kiếm" } });
+    },
+    check: async (page) => expect(page.getByTestId("review-delivery")).toContainText("7 Tràng Tiền, Hoàn Kiếm"),
+  },
+  {
+    input: "the delivery date",
+    change: async (other, prefix) => {
+      await other.goto(`${prefix}/thanh-toan/giao-hang`);
+      await submitGiftDelivery(other, prefix, "hcmc", { date: vietnamDatePlusDays(6) });
+    },
+    check: async (page) => expect(page.getByTestId("review-date")).toContainText(String(Number(vietnamDatePlusDays(6).slice(8)))),
+  },
+];
+
+for (const { locale, prefix } of LOCALES) {
+  for (const { input, change, restore, check } of GIFT_CHANGES) {
+    test(`a change to ${input} after the review is refused at ?changed=1 and placed as re-shown (${locale})`, async ({ page }) => {
+      await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
+      await addToCart(page, prefix, "colle-vento-rosso");
+      await addToCart(page, prefix, "due-fiumi-moscato");
+      await toGiftReview(page, prefix, "hcmc");
+      // 720 000 + 480 000 + box-2 200 000 + 30 000 = 1 430 000.
+      expect(await digits(page, '[data-total="total"]')).toBe(1_430_000);
+      try {
+        await change(await page.context().newPage(), prefix);
+        const before = orderCount();
+        await page.locator("input[name=terms]").check();
+        await page.locator("input[name=privacy]").check();
+        await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+        await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan` && url.search === "?changed=1");
+        await expect(page.getByTestId("review-changed")).toContainText(locale === "vi" ? "Đơn hàng đã thay đổi sau khi bạn xem lại" : "Your order changed after you reviewed it");
+        expect(orderCount()).toBe(before);
+        await check(page);
+        await consentAndPlace(page, prefix);
+        expect(orderCount()).toBe(before + 1);
+      } finally {
+        restore?.();
+      }
+    });
+  }
+
+  test(`the gift service page lists packaging, cards and rules, shows no wine, and makes no third-party request (${locale})`, async ({ page }) => {
+    const vi = locale === "vi";
+    await page.goto(`${prefix}/dich-vu-goi-qua`);
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi` && url.searchParams.get("next") === `${prefix}/dich-vu-goi-qua`);
+    const external = await blockThirdParty(page);
+    await declareAdult(page, `${prefix}/dich-vu-goi-qua`);
+    const list = page.getByTestId("service-packaging");
+    await expect(list.locator("[data-packaging]")).toHaveCount(3);
+    await expect(list.locator("[data-packaging=silk]")).toContainText(vi ? "1 chai mỗi gói" : "1 bottle(s) each");
+    await expect(list.locator("[data-packaging=silk]")).toContainText(vi ? "50.000" : "50,000");
+    await expect(list.locator("[data-packaging=box-1]")).toContainText(vi ? "120.000" : "120,000");
+    await expect(list.locator("[data-packaging=box-2]")).toContainText(vi ? "2 chai mỗi gói" : "2 bottle(s) each");
+    await expect(list.locator("[data-packaging=box-2]")).toContainText(vi ? "200.000" : "200,000");
+    await expect(page.getByTestId("service-cards").locator("[data-card]")).toHaveCount(4);
+    await expect(page.getByTestId("paid-service")).toContainText(vi ? "không có hình thức miễn phí" : "no free tier");
+    await expect(page.getByTestId("service-recipient-rule")).toContainText(vi ? "đủ 18 tuổi" : "18 or over");
+    await expect(page.locator("main")).toContainText("250");
+    await expect(page.locator("main a[href*='/ruou-vang']")).toHaveCount(0);
+    for (const wine of ["Lune Grise", "Colle del Vento", "Sept Pierres"]) await expect(page.locator("main")).not.toContainText(wine);
+    await expectNotice(page);
+    await expectNoSeriousA11yViolations(page, "gift service");
+    await page.waitForLoadState("networkidle");
+    expect(external).toEqual([]);
+  });
+}
+
+test("an expired draft reads as absent and sends the buyer back to step 1", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const clientKey = await page.locator("input[name=clientKey]").inputValue();
+  sql(`UPDATE checkout_drafts SET expires_at = now() - interval '1 second' WHERE client_key = '${clientKey}'`);
+  await page.goto("/thanh-toan/xac-nhan");
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan");
+  await expect(page.locator("#buyer-name")).toHaveValue("");
+});
+
+test("gift collections, site settings and checkout drafts are admin-only over REST and nothing is created", async ({ page, request }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+  const handle = (await page.context().cookies()).find((c) => c.name === "xenia_checkout")!.value;
+  const draftId = sql(`SELECT id FROM checkout_drafts WHERE handle = '${handle}'`);
+  const counts = () => sql("SELECT (SELECT count(*) FROM checkout_drafts) || '|' || (SELECT count(*) FROM packaging) || '|' || (SELECT count(*) FROM card_designs)");
+  const before = counts();
+
+  for (const path of [
+    "/api/checkout-drafts",
+    `/api/checkout-drafts/${draftId}`,
+    `/api/checkout-drafts?where[handle][equals]=${handle}`,
+    "/api/packaging",
+    "/api/card-designs",
+    "/api/globals/site-settings",
+  ]) {
+    const response = await request.get(path);
+    expect(response.ok(), `${path} ${response.status()}`).toBe(false);
+    const body = await response.text();
+    for (const secret of [handle, "an@example.test", "Nguyễn Văn An", "box-2", "Hộp cứng", "chuc-mung", "leadDays"]) expect(body, path).not.toContain(secret);
+  }
+  for (const [path, data] of [
+    ["/api/checkout-drafts", { handle: "A".repeat(43), clientKey: "00000000-0000-4000-8000-000000000000", expiresAt: "2099-01-01T00:00:00Z" }],
+    ["/api/packaging", { code: "free", name: "Free", capacity: 1, fits: ["750"], priceVnd: 1, active: true }],
+    ["/api/card-designs", { code: "forged", name: "Forged", active: true }],
+    ["/api/globals/site-settings", { blackoutDates: [] }],
+  ] as const) {
+    const response = await request.post(path, { data });
+    expect(response.ok(), `POST ${path} ${response.status()}`).toBe(false);
+  }
+  expect(counts()).toBe(before);
 });

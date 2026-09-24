@@ -34,7 +34,7 @@ test.beforeAll(async ({ request }) => {
   sql("TRUNCATE users CASCADE");
 });
 
-test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage and login", async ({ page }) => {
+test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage, the gift collections, site settings and login", async ({ page }) => {
   const external = await blockThirdParty(page);
 
   await page.goto("/admin");
@@ -79,6 +79,24 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await expect(indicator).toBeChecked();
   await expect(indicator).toBeDisabled();
   await expect(page.locator("#field-abvPct")).toHaveValue("20");
+  await page.waitForLoadState("networkidle");
+
+  // The gift collections (list and edit view) and the site settings (zones, lead days, blackout dates).
+  for (const [collection, row] of [
+    ["packaging", "box-2"],
+    ["card-designs", "chuc-mung"],
+  ]) {
+    await page.goto(`/admin/collections/${collection}`);
+    await expect(page.locator(".collection-list table")).toContainText(row);
+    await page.waitForLoadState("networkidle");
+    await page.locator(".collection-list tbody tr").first().locator("a").first().click();
+    await expect(page).toHaveURL(new RegExp(`/admin/collections/${collection}/\\d+`));
+    await waitForFormReady(page);
+    await page.waitForLoadState("networkidle");
+  }
+  await page.goto("/admin/globals/site-settings");
+  await waitForFormReady(page);
+  await expect(page.locator("#field-zones")).toBeVisible();
   await page.waitForLoadState("networkidle");
 
   await page.goto("/admin/logout");

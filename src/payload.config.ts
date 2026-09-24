@@ -7,6 +7,8 @@ import { check } from "@payloadcms/db-postgres/drizzle/pg-core";
 import { buildConfig } from "payload";
 
 import { Producers, Vintages, Wines } from "./collections/catalogue";
+import { CheckoutDrafts } from "./collections/checkout-drafts";
+import { CardDesigns, Packaging } from "./collections/gift";
 import { Orders } from "./collections/orders";
 import { SiteSettings } from "./globals/site-settings";
 
@@ -36,7 +38,10 @@ export default buildConfig({
     Producers,
     Wines,
     Vintages,
+    Packaging,
+    CardDesigns,
     Orders,
+    CheckoutDrafts,
   ],
   globals: [SiteSettings],
   localization: {

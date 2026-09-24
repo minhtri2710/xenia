@@ -3,6 +3,8 @@ import type { CollectionConfig, Field, FieldAccess, Validate } from "payload";
 import { MAX_NAME_LENGTH } from "@/lib/age";
 import { MAX_ADDRESS_LENGTH, MAX_EMAIL_LENGTH } from "@/lib/buyer";
 import { BOTTLE_SIZES } from "@/lib/catalogue";
+import { DELIVERY_MODES, DELIVERY_WINDOWS } from "@/lib/delivery";
+import { MAX_MESSAGE_CODE_POINTS } from "@/lib/gift";
 import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, ZONES } from "@/lib/order";
 
 // Access: like the catalogue, Payload's default applies (every operation needs an authenticated
@@ -61,8 +63,42 @@ export const Orders: CollectionConfig = {
     snapshot({
       name: "delivery",
       type: "group",
-      admin: { readOnly: true, description: "Delivered to the buyer at the buyer's address." },
-      fields: [{ name: "zone", type: "select", required: true, options: [...ZONES] }],
+      admin: { readOnly: true, description: "Self: to the buyer at the buyer's address. Gift: to the recipient, who must be 18 or over and show ID." },
+      fields: [
+        { name: "zone", type: "select", required: true, options: [...ZONES] },
+        { name: "mode", type: "select", required: true, options: [...DELIVERY_MODES] },
+        {
+          name: "recipient",
+          type: "group",
+          admin: { condition: (data) => data?.delivery?.mode === "gift" },
+          fields: [
+            { name: "name", type: "text", maxLength: MAX_NAME_LENGTH },
+            { name: "phone", type: "text" },
+            { name: "address", type: "textarea", maxLength: MAX_ADDRESS_LENGTH },
+          ],
+        },
+        { name: "date", type: "text", required: true, admin: { description: "YYYY-MM-DD, Asia/Ho_Chi_Minh." } },
+        { name: "window", type: "select", required: true, options: [...DELIVERY_WINDOWS] },
+      ],
+    }),
+    snapshot({
+      name: "gift",
+      type: "group",
+      admin: { readOnly: true, description: "Packaging for any order; card, message, sender and hide prices for a gift." },
+      fields: [
+        { name: "packagingCode", type: "text", admin: { description: "Empty: no packaging." } },
+        { name: "packagingNameVi", type: "text" },
+        { name: "packagingNameEn", type: "text" },
+        { name: "packagingUnits", type: "number" },
+        { name: "packagingUnitPriceVnd", type: "number", validate: wholeVnd },
+        { name: "cardCode", type: "text" },
+        { name: "cardNameVi", type: "text" },
+        { name: "cardNameEn", type: "text" },
+        { name: "message", type: "textarea", admin: { description: `Plain text, NFC, at most ${MAX_MESSAGE_CODE_POINTS} code points.` } },
+        { name: "sender", type: "text", maxLength: MAX_NAME_LENGTH },
+        { name: "anonymous", type: "checkbox" },
+        { name: "hidePrices", type: "checkbox", admin: { description: "Packing instruction: no price or receipt in the parcel." } },
+      ],
     }),
     snapshot({
       name: "lines",
@@ -85,7 +121,7 @@ export const Orders: CollectionConfig = {
       name: "totals",
       type: "group",
       admin: { readOnly: true, description: "Whole VND, VAT included." },
-      fields: [vnd("goodsVnd"), vnd("shippingVnd"), vnd("vatIncludedVnd"), vnd("totalVnd")],
+      fields: [vnd("goodsVnd"), vnd("wrapVnd"), vnd("shippingVnd"), vnd("vatIncludedVnd"), vnd("totalVnd")],
     }),
     snapshot({
       name: "consents",

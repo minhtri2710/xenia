@@ -71,7 +71,10 @@ export interface Config {
     producers: Producer;
     wines: Wine;
     vintages: Vintage;
+    packaging: Packaging;
+    'card-designs': CardDesign;
     orders: Order;
+    'checkout-drafts': CheckoutDraft;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -83,7 +86,10 @@ export interface Config {
     producers: ProducersSelect<false> | ProducersSelect<true>;
     wines: WinesSelect<false> | WinesSelect<true>;
     vintages: VintagesSelect<false> | VintagesSelect<true>;
+    packaging: PackagingSelect<false> | PackagingSelect<true>;
+    'card-designs': CardDesignsSelect<false> | CardDesignsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    'checkout-drafts': CheckoutDraftsSelect<false> | CheckoutDraftsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -257,6 +263,43 @@ export interface Vintage {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "packaging".
+ */
+export interface Packaging {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  /**
+   * Bottles per unit.
+   */
+  capacity: number;
+  /**
+   * Bottle sizes (ml) it takes.
+   */
+  fits: ('375' | '750' | '1500')[];
+  /**
+   * Per unit, whole VND, VAT included. At least 1.
+   */
+  priceVnd: number;
+  active: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "card-designs".
+ */
+export interface CardDesign {
+  id: number;
+  code: string;
+  name: string;
+  active: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Orders are never deleted. Only the status can be changed here.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -277,10 +320,47 @@ export interface Order {
   };
   ageAttestedAt: string;
   /**
-   * Delivered to the buyer at the buyer's address.
+   * Self: to the buyer at the buyer's address. Gift: to the recipient, who must be 18 or over and show ID.
    */
   delivery: {
     zone: 'hcmc' | 'hanoi';
+    mode: 'self' | 'gift';
+    recipient?: {
+      name?: string | null;
+      phone?: string | null;
+      address?: string | null;
+    };
+    /**
+     * YYYY-MM-DD, Asia/Ho_Chi_Minh.
+     */
+    date: string;
+    window: 'morning' | 'afternoon' | 'evening';
+  };
+  /**
+   * Packaging for any order; card, message, sender and hide prices for a gift.
+   */
+  gift?: {
+    /**
+     * Empty: no packaging.
+     */
+    packagingCode?: string | null;
+    packagingNameVi?: string | null;
+    packagingNameEn?: string | null;
+    packagingUnits?: number | null;
+    packagingUnitPriceVnd?: number | null;
+    cardCode?: string | null;
+    cardNameVi?: string | null;
+    cardNameEn?: string | null;
+    /**
+     * Plain text, NFC, at most 250 code points.
+     */
+    message?: string | null;
+    sender?: string | null;
+    anonymous?: boolean | null;
+    /**
+     * Packing instruction: no price or receipt in the parcel.
+     */
+    hidePrices?: boolean | null;
   };
   lines: {
     vintage?: (number | null) | Vintage;
@@ -301,6 +381,7 @@ export interface Order {
    */
   totals: {
     goodsVnd: number;
+    wrapVnd: number;
     shippingVnd: number;
     vatIncludedVnd: number;
     totalVnd: number;
@@ -317,6 +398,44 @@ export interface Order {
     method?: ('vietqr_mock' | 'card_mock') | null;
     status: 'unpaid' | 'failed' | 'paid';
     paidAt?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "checkout-drafts".
+ */
+export interface CheckoutDraft {
+  id: number;
+  handle: string;
+  clientKey: string;
+  expiresAt: string;
+  buyer?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+  };
+  attestedAt?: string | null;
+  delivery?: {
+    zone?: ('hcmc' | 'hanoi') | null;
+    mode?: ('self' | 'gift') | null;
+    recipient?: {
+      name?: string | null;
+      phone?: string | null;
+      address?: string | null;
+    };
+    date?: string | null;
+    window?: ('morning' | 'afternoon' | 'evening') | null;
+  };
+  gift?: {
+    saved?: boolean | null;
+    packaging?: string | null;
+    card?: string | null;
+    message?: string | null;
+    sender?: string | null;
+    hidePrices?: boolean | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -362,8 +481,20 @@ export interface PayloadLockedDocument {
         value: number | Vintage;
       } | null)
     | ({
+        relationTo: 'packaging';
+        value: number | Packaging;
+      } | null)
+    | ({
+        relationTo: 'card-designs';
+        value: number | CardDesign;
+      } | null)
+    | ({
         relationTo: 'orders';
         value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'checkout-drafts';
+        value: number | CheckoutDraft;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -503,6 +634,32 @@ export interface VintagesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "packaging_select".
+ */
+export interface PackagingSelect<T extends boolean = true> {
+  code?: T;
+  name?: T;
+  description?: T;
+  capacity?: T;
+  fits?: T;
+  priceVnd?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "card-designs_select".
+ */
+export interface CardDesignsSelect<T extends boolean = true> {
+  code?: T;
+  name?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
@@ -523,6 +680,32 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         zone?: T;
+        mode?: T;
+        recipient?:
+          | T
+          | {
+              name?: T;
+              phone?: T;
+              address?: T;
+            };
+        date?: T;
+        window?: T;
+      };
+  gift?:
+    | T
+    | {
+        packagingCode?: T;
+        packagingNameVi?: T;
+        packagingNameEn?: T;
+        packagingUnits?: T;
+        packagingUnitPriceVnd?: T;
+        cardCode?: T;
+        cardNameVi?: T;
+        cardNameEn?: T;
+        message?: T;
+        sender?: T;
+        anonymous?: T;
+        hidePrices?: T;
       };
   lines?:
     | T
@@ -541,6 +724,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         goodsVnd?: T;
+        wrapVnd?: T;
         shippingVnd?: T;
         vatIncludedVnd?: T;
         totalVnd?: T;
@@ -558,6 +742,51 @@ export interface OrdersSelect<T extends boolean = true> {
         method?: T;
         status?: T;
         paidAt?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "checkout-drafts_select".
+ */
+export interface CheckoutDraftsSelect<T extends boolean = true> {
+  handle?: T;
+  clientKey?: T;
+  expiresAt?: T;
+  buyer?:
+    | T
+    | {
+        name?: T;
+        phone?: T;
+        email?: T;
+        address?: T;
+      };
+  attestedAt?: T;
+  delivery?:
+    | T
+    | {
+        zone?: T;
+        mode?: T;
+        recipient?:
+          | T
+          | {
+              name?: T;
+              phone?: T;
+              address?: T;
+            };
+        date?: T;
+        window?: T;
+      };
+  gift?:
+    | T
+    | {
+        saved?: T;
+        packaging?: T;
+        card?: T;
+        message?: T;
+        sender?: T;
+        hidePrices?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -609,12 +838,22 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface SiteSetting {
   id: number;
   /**
-   * Delivery zones and their flat fee (whole VND, VAT included).
+   * Delivery zones, their flat fee (whole VND, VAT included) and lead days (the earliest delivery date is today + lead days).
    */
   zones?:
     | {
         zone: 'hcmc' | 'hanoi';
         feeVnd: number;
+        leadDays: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Dates with no delivery (for example a Tết cut-off), as YYYY-MM-DD on the Vietnamese calendar.
+   */
+  blackoutDates?:
+    | {
+        date: string;
         id?: string | null;
       }[]
     | null;
@@ -631,6 +870,13 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | {
         zone?: T;
         feeVnd?: T;
+        leadDays?: T;
+        id?: T;
+      };
+  blackoutDates?:
+    | T
+    | {
+        date?: T;
         id?: T;
       };
   updatedAt?: T;

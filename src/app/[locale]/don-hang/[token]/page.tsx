@@ -31,6 +31,9 @@ export default async function OrderPage({ params, searchParams }: Props) {
   const t = await getTranslations("Order");
   const p = await getTranslations("Product");
   const z = await getTranslations("Zones");
+  const w = await getTranslations("Checkout.delivery");
+  const g = await getTranslations("Checkout.gift");
+  const gift = order.gift ?? {};
   const format = await getFormatter();
   const vnd = (n: number) => format.number(n, VND_FORMAT);
   const payable = order.status === "placed" && order.payment.status !== "paid";
@@ -126,6 +129,10 @@ export default async function OrderPage({ params, searchParams }: Props) {
           <dd data-total="goods" className="text-right">
             {vnd(order.totals.goodsVnd)}
           </dd>
+          <dt>{t("wrap")}</dt>
+          <dd data-total="wrap" className="text-right">
+            {vnd(order.totals.wrapVnd)}
+          </dd>
           <dt>{t("shipping")}</dt>
           <dd data-total="shipping" className="text-right">
             {vnd(order.totals.shippingVnd)}
@@ -146,9 +153,49 @@ export default async function OrderPage({ params, searchParams }: Props) {
           {t("delivery")}
         </h2>
         <p className="mt-3" data-testid="order-delivery">
-          {t("deliveryTo", { name: order.buyer.name, address: order.buyer.address, zone: z(order.delivery.zone) })}
+          {order.delivery.mode === "gift" && order.delivery.recipient
+            ? t("deliveryGift", {
+                name: order.delivery.recipient.name ?? "",
+                phone: order.delivery.recipient.phone ?? "",
+                address: order.delivery.recipient.address ?? "",
+                zone: z(order.delivery.zone),
+              })
+            : t("deliveryTo", { name: order.buyer.name, address: order.buyer.address, zone: z(order.delivery.zone) })}
         </p>
-        <p className="mt-2 text-sm text-muted">{t("idCheck")}</p>
+        <p className="mt-2" data-testid="order-date">
+          {t("deliveryTime", {
+            date: format.dateTime(new Date(`${order.delivery.date}T00:00:00Z`), { dateStyle: "full", timeZone: "UTC" }),
+            window: w(`windows.${order.delivery.window}`),
+          })}
+        </p>
+        <p className="mt-2 text-sm text-muted">{order.delivery.mode === "gift" ? w("recipient.idCheck") : t("idCheck")}</p>
+      </section>
+
+      <section className="mt-10" aria-labelledby="gift">
+        <h2 id="gift" className="font-display text-2xl font-medium">
+          {t("gift")}
+        </h2>
+        <p className="mt-3" data-testid="order-wrap">
+          {gift.packagingCode
+            ? t("wrapLine", {
+                units: gift.packagingUnits ?? 0,
+                name: (locale === "en" ? gift.packagingNameEn : gift.packagingNameVi) ?? "",
+                amount: vnd(order.totals.wrapVnd),
+              })
+            : t("noWrap")}
+        </p>
+        {gift.cardCode && (
+          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2" data-testid="order-gift">
+            <dt className="text-muted">{g("card")}</dt>
+            <dd>{locale === "en" ? gift.cardNameEn : gift.cardNameVi}</dd>
+            <dt className="text-muted">{g("message")}</dt>
+            <dd className="whitespace-pre-line break-words">{gift.message || t("noMessage")}</dd>
+            <dt className="text-muted">{g("sender")}</dt>
+            <dd>{gift.anonymous ? g("anonymous") : gift.sender}</dd>
+            <dt className="text-muted">{g("hidePrices")}</dt>
+            <dd>{gift.hidePrices ? t("yes") : t("no")}</dd>
+          </dl>
+        )}
       </section>
     </div>
   );

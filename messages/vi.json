@@ -190,6 +190,7 @@
       "label": "Các bước thanh toán",
       "buyer": "Người mua",
       "delivery": "Giao hàng",
+      "gift": "Gói quà",
       "review": "Xem lại & xác nhận"
     },
     "buyer": {
@@ -223,10 +224,45 @@
       "toBuyer": "Giao cho người mua: {name}, {address}.",
       "idCheck": "Người giao hàng chỉ trao rượu cho người từ đủ 18 tuổi và xuất trình giấy tờ tùy thân. Không có giấy tờ, đơn hàng sẽ không được trao.",
       "zone": "Khu vực giao hàng",
-      "zoneOption": "{zone} — phí giao hàng {fee}",
+      "zoneOption": "{zone} — phí giao hàng {fee}, giao sớm nhất ngày {earliest}",
       "submit": "Tiếp tục",
       "errors": {
-        "zoneRequired": "Vui lòng chọn khu vực giao hàng."
+        "zoneRequired": "Vui lòng chọn khu vực giao hàng.",
+        "modeRequired": "Vui lòng chọn hình thức giao.",
+        "windowRequired": "Vui lòng chọn khung giờ giao.",
+        "dateRequired": "Vui lòng chọn ngày giao.",
+        "dateInvalid": "Ngày giao không hợp lệ.",
+        "dateTooEarly": "Ngày giao sớm hơn ngày sớm nhất có thể giao cho khu vực này.",
+        "dateTooLate": "Chỉ có thể đặt ngày giao trong vòng 30 ngày kể từ ngày sớm nhất.",
+        "dateBlackout": "Không giao hàng vào ngày này. Vui lòng chọn ngày khác.",
+        "recipient": {
+          "nameRequired": "Vui lòng nhập họ và tên người nhận.",
+          "nameTooLong": "Họ và tên người nhận quá dài.",
+          "phoneRequired": "Vui lòng nhập số điện thoại người nhận.",
+          "phoneInvalid": "Số điện thoại người nhận không hợp lệ (10 chữ số, bắt đầu bằng 0 hoặc +84).",
+          "addressRequired": "Vui lòng nhập địa chỉ người nhận.",
+          "addressTooLong": "Địa chỉ người nhận quá dài."
+        }
+      },
+      "mode": "Hình thức giao",
+      "modes": {
+        "self": "Giao cho chính tôi",
+        "gift": "Gửi quà cho người khác"
+      },
+      "recipient": {
+        "legend": "Người nhận quà (chỉ khi gửi quà)",
+        "idCheck": "Người nhận phải từ đủ 18 tuổi và xuất trình giấy tờ tùy thân khi nhận hàng. Nếu không, người giao hàng sẽ không trao quà.",
+        "name": "Họ và tên người nhận",
+        "phone": "Số điện thoại người nhận",
+        "address": "Địa chỉ người nhận"
+      },
+      "date": "Ngày giao",
+      "dateHint": "Ngày giao sớm nhất tùy khu vực; có thể đặt trước tối đa 30 ngày. Một số ngày nghỉ không giao hàng.",
+      "window": "Khung giờ giao",
+      "windows": {
+        "morning": "Buổi sáng",
+        "afternoon": "Buổi chiều",
+        "evening": "Buổi tối"
       }
     },
     "review": {
@@ -240,10 +276,19 @@
       "delivery": "Giao hàng",
       "editDelivery": "Sửa giao hàng",
       "deliveryMethod": "Giao tận nơi cho người mua, khu vực {zone}: {address}",
+      "deliveryGift": "Gửi quà cho {name} · {phone}, khu vực {zone}: {address}",
+      "deliveryTime": "Ngày giao: {date}, {window}",
+      "gift": "Gói quà",
+      "editGift": "Sửa gói quà",
+      "wrapLine": "Gói quà: {units} × {name} = {amount}",
+      "noWrap": "Không gói quà",
+      "noMessage": "(không có lời nhắn)",
+      "yes": "Có",
+      "no": "Không",
       "payment": "Thanh toán",
       "paymentMethods": "Chỉ thanh toán không dùng tiền mặt: chuyển khoản VietQR hoặc thẻ (mô phỏng), chọn ở bước sau khi đặt hàng.",
       "totals": "Chi phí",
-      "changed": "Đơn hàng đã thay đổi sau khi bạn xem lại (sản phẩm, giá, thông tin người mua hoặc địa chỉ giao hàng, khu vực giao hàng hoặc phí giao hàng). Chưa có đơn hàng nào được đặt hay thanh toán. Vui lòng xem lại đơn hàng bên dưới và xác nhận lại.",
+      "changed": "Đơn hàng đã thay đổi sau khi bạn xem lại (sản phẩm, giá, thông tin người mua hoặc địa chỉ giao hàng, người nhận, ngày hoặc khung giờ giao, khu vực giao hàng hoặc phí giao hàng, bao bì hoặc giá gói quà, thiệp, lời nhắn, người gửi hoặc ẩn giá). Chưa có đơn hàng nào được đặt hay thanh toán. Vui lòng xem lại đơn hàng bên dưới và xác nhận lại.",
       "expired": "Phiên thanh toán đã hết hạn. Vui lòng xem lại đơn hàng và xác nhận lại.",
       "problems": {
         "stock": "{name}: chỉ còn {stock} chai. Chúng tôi đã cập nhật số lượng; vui lòng xem lại và xác nhận lại.",
@@ -260,9 +305,39 @@
     },
     "totals": {
       "goods": "Tiền hàng",
+      "wrap": "Gói quà",
       "shipping": "Phí giao hàng",
       "total": "Tổng cộng (đã bao gồm VAT)",
       "vatIncluded": "Trong đó VAT (10%)"
+    },
+    "gift": {
+      "title": "Gói quà",
+      "intro": "Gói quà là dịch vụ có tính phí, áp dụng cho mọi đơn hàng. Thiệp, lời nhắn và ẩn giá chỉ dành cho đơn gửi quà.",
+      "serviceLink": "Xem dịch vụ gói quà",
+      "packaging": "Bao bì",
+      "noPackaging": "Không gói quà",
+      "packagingOption": "{name} — {capacity} chai mỗi gói, {price} mỗi gói",
+      "wrapLine": "Gói quà: {units} × {name} = {amount}",
+      "noneFits": "Không có bao bì nào vừa với mọi chai trong giỏ hàng.",
+      "someHidden": "Chỉ hiển thị bao bì vừa với mọi chai trong giỏ hàng.",
+      "card": "Thiệp",
+      "message": "Lời nhắn",
+      "messageHint": "Tối đa {max} ký tự, chỉ văn bản thường. Còn lại: {remaining}.",
+      "sender": "Người gửi",
+      "senderName": "Tên người gửi in trên thiệp",
+      "anonymous": "Gửi ẩn danh",
+      "hidePrices": "Ẩn giá",
+      "hidePricesHint": "Không để giá hay hóa đơn trong kiện hàng. Hóa đơn vẫn gửi cho bạn.",
+      "submit": "Tiếp tục",
+      "errors": {
+        "packagingUnavailable": "Bao bì này không còn hoặc không vừa với các chai trong giỏ hàng. Vui lòng chọn lại.",
+        "cardRequired": "Vui lòng chọn một mẫu thiệp.",
+        "messageTooLong": "Lời nhắn dài quá {max} ký tự.",
+        "messageControl": "Lời nhắn chỉ được chứa văn bản thường và xuống dòng.",
+        "senderRequired": "Vui lòng nhập tên người gửi hoặc chọn gửi ẩn danh.",
+        "senderTooLong": "Tên người gửi quá dài.",
+        "giftOnly": "Thiệp, lời nhắn, người gửi và ẩn giá chỉ dành cho đơn gửi quà."
+      }
     }
   },
   "Zones": {
@@ -301,11 +376,35 @@
     "line": "{qty} × {name} {vintage}, {size}, {abv}% vol — {price} / chai",
     "totals": "Chi phí",
     "goods": "Tiền hàng",
+    "wrap": "Gói quà",
     "shipping": "Phí giao hàng",
     "total": "Tổng cộng (đã bao gồm VAT)",
     "vatIncluded": "Trong đó VAT (10%)",
     "delivery": "Giao hàng",
     "deliveryTo": "Giao cho {name}, {address} ({zone}).",
-    "idCheck": "Người giao hàng chỉ trao rượu cho người từ đủ 18 tuổi và xuất trình giấy tờ tùy thân."
+    "deliveryGift": "Gửi quà cho {name} · {phone}, {address} ({zone}).",
+    "deliveryTime": "Ngày giao: {date}, {window}",
+    "idCheck": "Người giao hàng chỉ trao rượu cho người từ đủ 18 tuổi và xuất trình giấy tờ tùy thân.",
+    "gift": "Gói quà",
+    "wrapLine": "Gói quà: {units} × {name} = {amount}",
+    "noWrap": "Không gói quà",
+    "noMessage": "(không có lời nhắn)",
+    "yes": "Có",
+    "no": "Không"
+  },
+  "GiftService": {
+    "title": "Dịch vụ gói quà",
+    "intro": "Chúng tôi gói chai rượu của bạn, kèm thiệp và lời nhắn viết tay, rồi giao tận tay người nhận.",
+    "paid": "Gói quà là dịch vụ có tính phí, không có hình thức miễn phí, và không đi kèm khuyến mại hay giảm giá. Giá đã bao gồm VAT.",
+    "packaging": "Bao bì",
+    "packagingFacts": "{capacity} chai mỗi gói · cỡ chai {sizes} ml · {price} mỗi gói (đã bao gồm VAT)",
+    "units": "Một loại bao bì cho cả đơn hàng, chỉ khi vừa với mọi chai. Số gói = tổng số chai chia cho sức chứa, làm tròn lên.",
+    "cards": "Thiệp",
+    "message": "Lời nhắn: tối đa {max} ký tự, chỉ văn bản thường (có dấu tiếng Việt, xuống dòng).",
+    "sender": "Người gửi: ghi tên hoặc gửi ẩn danh.",
+    "hidePrices": "Ẩn giá: mặc định khi gửi quà, không để giá hay hóa đơn trong kiện hàng.",
+    "recipientTitle": "Người nhận",
+    "recipient": "Người nhận phải từ đủ 18 tuổi và xuất trình giấy tờ tùy thân khi nhận hàng. Nếu không, người giao hàng sẽ không trao quà.",
+    "delivery": "Chọn ngày và khung giờ giao (sáng, chiều, tối) khi thanh toán."
   }
 }
