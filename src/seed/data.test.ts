@@ -21,6 +21,13 @@ describe("seed catalogue", () => {
     }
   });
 
+  it("has a published wine with no published vintage, and a draft vintage of a listed wine", () => {
+    const listed = seedCatalogue("vi").map((w) => w.slug);
+    const unlisted = wines.filter((w) => w.status === "published" && !listed.includes(w.slug));
+    expect(unlisted.length).toBeGreaterThanOrEqual(1);
+    expect(wines.some((w) => listed.includes(w.slug) && w.vintages.some((x) => x.status === "draft"))).toBe(true);
+  });
+
   it("has at least 3 published wines with several published vintages or sizes", () => {
     const multi = seedCatalogue("vi").filter((w) => w.vintages.length > 1);
     expect(multi.length).toBeGreaterThanOrEqual(3);

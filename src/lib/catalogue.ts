@@ -36,6 +36,14 @@ export type BottleSize = (typeof BOTTLE_SIZES)[number];
 export const STATUSES = ["draft", "published"] as const;
 
 /**
+ * Law 44/2019 Art. 5.7 and 5.9: a vintage at 15% ABV or above may not be advertised or promoted.
+ * Derived from `abvPct` wherever it is needed; never stored.
+ */
+export function isAdRestricted(abvPct: number): boolean {
+  return abvPct >= 15;
+}
+
+/**
  * Price bands in integer VND, VAT included. `min` is inclusive, `max` exclusive,
  * so a bottle at exactly 1 000 000 is in "1m-2m", not "lt1m".
  */

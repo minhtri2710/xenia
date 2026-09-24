@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type CatalogueWine, facetOptions, type Filters, listWines, parseQuery, priceBandOf, toQuery } from "./catalogue";
+import { type CatalogueWine, facetOptions, type Filters, isAdRestricted, listWines, parseQuery, priceBandOf, toQuery } from "./catalogue";
 
 const wine = (slug: string, over: Partial<CatalogueWine> = {}): CatalogueWine => ({
   slug,
@@ -154,5 +154,18 @@ describe("facetOptions", () => {
       sizes: [375, 750, 1500],
     });
     expect(facetOptions(WINES, { ...all, country: "FR" }).regions).toEqual(["Bordeaux", "Burgundy", "Champagne"]);
+  });
+});
+
+describe("isAdRestricted (Law 44/2019 Art. 5.7, 5.9: 15% ABV and above)", () => {
+  it.each([
+    [14.9, false],
+    [14.99, false],
+    [15, true],
+    [15.0, true],
+    [15.1, true],
+    [20, true],
+  ])("ABV %s is restricted: %s", (abv, restricted) => {
+    expect(isAdRestricted(abv)).toBe(restricted);
   });
 });

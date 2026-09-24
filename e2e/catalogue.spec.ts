@@ -1,8 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
-import { type Filters, listWines, parseQuery } from "../src/lib/catalogue";
-import { seedCatalogue as seedData, wines as seedWines } from "../src/seed/data";
+import { wines as seedWines } from "../src/seed/data";
 import { blockThirdParty, seedCatalogue, vietnamDateYearsAgo } from "./support";
 
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
@@ -11,11 +10,85 @@ const LOCALES = [
   { locale: "en", prefix: "/en" },
 ] as const;
 
-/** What the page must list for a query, from the same seed and the unit-tested module. */
-function expected(locale: "vi" | "en", query: string): string[] {
-  const filters: Filters = parseQuery(Object.fromEntries(new URLSearchParams(query)));
-  return listWines(seedData(locale), filters, locale).map((l) => l.wine.slug);
-}
+/**
+ * What the page must list, written by hand from `src/seed/data.ts` (never computed with `listWines`).
+ * Name order is the same in vi and en. "Steinbach Riesling Spätlese" (only a draft vintage) and
+ * "Lune Grise Réserve" (a draft wine) are never listed.
+ */
+const ALL_BY_NAME = [
+  "aubeline-brut",
+  "colle-vento-rosso",
+  "cordillera-carmenere",
+  "coteau-des-pierres",
+  "due-fiumi-moscato",
+  "due-fiumi-nebbiolo",
+  "hollow-creek-cabernet",
+  "lune-grise-rouge",
+  "red-gum-shiraz",
+  "rio-velho-tawny-10",
+  "sept-pierres-blanc",
+  "sol-alto-crianza",
+  "sol-alto-rosado",
+  "southern-light-rose",
+  "southern-light-sauvignon",
+  "steinbach-riesling-kabinett",
+];
+
+/** Each wine's lowest published price, ascending: [slug, from-price in VND]. */
+const BY_PRICE_ASC: [string, number][] = [
+  ["sol-alto-crianza", 360_000],
+  ["cordillera-carmenere", 450_000],
+  ["due-fiumi-moscato", 480_000],
+  ["sol-alto-rosado", 540_000],
+  ["southern-light-sauvignon", 690_000],
+  ["colle-vento-rosso", 720_000],
+  ["steinbach-riesling-kabinett", 780_000],
+  ["southern-light-rose", 820_000],
+  ["lune-grise-rouge", 850_000],
+  ["rio-velho-tawny-10", 1_050_000],
+  ["red-gum-shiraz", 1_150_000],
+  ["sept-pierres-blanc", 1_250_000],
+  ["aubeline-brut", 1_350_000],
+  ["coteau-des-pierres", 1_550_000],
+  ["hollow-creek-cabernet", 2_950_000],
+  ["due-fiumi-nebbiolo", 4_600_000],
+];
+
+/** Query → expected slugs, in order. Prices are VND "from" prices of the matching vintages. */
+const EXPECTED: Record<string, { slugs: string[]; prices?: number[] }> = {
+  "type=sparkling": { slugs: ["aubeline-brut"] },
+  "type=rose": { slugs: ["sol-alto-rosado", "southern-light-rose"] },
+  "country=IT": { slugs: ["colle-vento-rosso", "due-fiumi-moscato", "due-fiumi-nebbiolo"] },
+  "country=FR&region=Burgundy": { slugs: ["coteau-des-pierres", "sept-pierres-blanc"] },
+  "grape=Pinot+Noir": { slugs: ["aubeline-brut", "coteau-des-pierres", "southern-light-rose"] },
+  "price=lt1m": {
+    slugs: [
+      "colle-vento-rosso",
+      "cordillera-carmenere",
+      "due-fiumi-moscato",
+      "lune-grise-rouge",
+      "sol-alto-crianza",
+      "sol-alto-rosado",
+      "southern-light-rose",
+      "southern-light-sauvignon",
+      "steinbach-riesling-kabinett",
+    ],
+  },
+  "price=1m-2m": {
+    slugs: ["aubeline-brut", "coteau-des-pierres", "lune-grise-rouge", "red-gum-shiraz", "rio-velho-tawny-10", "sept-pierres-blanc"],
+    // Aubeline's 375 ml; Lune Grise's magnum, not its 750 ml under 1 000 000.
+    prices: [1_350_000, 1_550_000, 1_950_000, 1_150_000, 1_050_000, 1_250_000],
+  },
+  "price=2m-4m": { slugs: ["aubeline-brut", "hollow-creek-cabernet"], prices: [2_450_000, 2_950_000] },
+  "price=gte4m": { slugs: ["aubeline-brut", "due-fiumi-nebbiolo"], prices: [5_200_000, 4_600_000] },
+  "occasion=tet": { slugs: ["aubeline-brut", "due-fiumi-moscato", "red-gum-shiraz", "rio-velho-tawny-10"] },
+  "size=375": { slugs: ["aubeline-brut", "rio-velho-tawny-10", "sol-alto-crianza"], prices: [1_350_000, 1_050_000, 360_000] },
+  "size=1500": { slugs: ["aubeline-brut", "lune-grise-rouge"], prices: [5_200_000, 1_950_000] },
+  "country=FR&type=red&price=lt1m": { slugs: ["lune-grise-rouge"], prices: [850_000] },
+  "size=1500&sort=price-desc": { slugs: ["aubeline-brut", "lune-grise-rouge"], prices: [5_200_000, 1_950_000] },
+  "sort=price-asc": { slugs: BY_PRICE_ASC.map(([slug]) => slug), prices: BY_PRICE_ASC.map(([, p]) => p) },
+  "sort=price-desc": { slugs: BY_PRICE_ASC.map(([slug]) => slug).reverse(), prices: BY_PRICE_ASC.map(([, p]) => p).reverse() },
+};
 
 /** Opens the collection through the gate: redirect, adult declaration, return to `next`. */
 async function declareAdult(page: Page, prefix = "") {
@@ -28,6 +101,9 @@ async function declareAdult(page: Page, prefix = "") {
 }
 
 const cardSlugs = (page: Page) => page.getByTestId("wine-card").evaluateAll((els) => els.map((e) => e.getAttribute("data-slug")));
+/** Card prices as whole VND, from the displayed text in either locale's format. */
+const cardPrices = async (page: Page) =>
+  (await page.getByTestId("price").allTextContents()).map((text) => Number(text.replace(/\D/g, "")));
 
 test.beforeAll(async ({ request }) => {
   await seedCatalogue(request);
@@ -74,9 +150,7 @@ for (const { locale, prefix } of LOCALES) {
       await declareAdult(page, prefix);
       await page.goto(`${prefix}/ruou-vang`);
 
-      expect(await cardSlugs(page)).toEqual(expected(locale, ""));
-      expect(await cardSlugs(page)).toHaveLength(16);
-      expect(await cardSlugs(page)).not.toContain("lune-grise-reserve");
+      expect(await cardSlugs(page)).toEqual(ALL_BY_NAME);
 
       const card = page.locator('[data-testid="wine-card"][data-slug="aubeline-brut"]');
       await expect(card.getByRole("heading")).toHaveText("Aubeline Brut");
@@ -94,29 +168,10 @@ for (const { locale, prefix } of LOCALES) {
 
     test("each facet and sort narrows or orders on the server, from the URL", async ({ page }) => {
       await declareAdult(page, prefix);
-      for (const query of [
-        "type=sparkling",
-        "type=rose",
-        "country=IT",
-        "country=FR&region=Burgundy",
-        "grape=Pinot+Noir",
-        "price=lt1m",
-        "price=1m-2m",
-        "price=2m-4m",
-        "price=gte4m",
-        "occasion=tet",
-        "size=375",
-        "size=1500",
-        "country=FR&type=red&price=lt1m",
-        "size=1500&sort=price-desc",
-        "sort=price-asc",
-        "sort=price-desc",
-      ]) {
+      for (const [query, { slugs, prices }] of Object.entries(EXPECTED)) {
         await page.goto(`${prefix}/ruou-vang?${query}`);
-        const slugs = await cardSlugs(page);
-        expect(slugs, query).toEqual(expected(locale, query));
-        expect(slugs.length, query).toBeGreaterThan(0);
-        if (!query.startsWith("sort=")) expect(slugs.length, query).toBeLessThan(16);
+        expect(await cardSlugs(page), query).toEqual(slugs);
+        if (prices) expect(await cardPrices(page), query).toEqual(prices);
       }
     });
 
@@ -131,7 +186,19 @@ for (const { locale, prefix } of LOCALES) {
       await expect(page).toHaveURL((url) => url.search === "?country=FR&region=Bordeaux");
       await page.getByRole("link", { name: locale === "vi" ? "Giá giảm dần" : "Price, high to low" }).click();
       await expect(page).toHaveURL((url) => url.search === "?country=FR&region=Bordeaux&sort=price-desc");
-      expect(await cardSlugs(page)).toEqual(expected(locale, "country=FR&region=Bordeaux&sort=price-desc"));
+      expect(await cardSlugs(page)).toEqual(["lune-grise-rouge"]);
+    });
+
+    test("a card opens its product page, carrying the active size facet", async ({ page }) => {
+      await declareAdult(page, prefix);
+      await page.goto(`${prefix}/ruou-vang?size=1500`);
+      await page.locator('[data-slug="lune-grise-rouge"]').getByRole("link").click();
+      await expect(page).toHaveURL((url) => url.pathname === `${prefix}/ruou-vang/lune-grise-rouge` && url.search === "?size=1500");
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(locale === "vi" ? "Lune Grise Đỏ" : "Lune Grise Rouge");
+      // The most recent vintage with a magnum: 2019, 1500 ml at 1 950 000 VND.
+      await expect(page.locator('[data-spec="vintage"] dd')).toHaveText("2019");
+      await expect(page.locator('[data-spec="volume"] dd')).toHaveText("1500 ml");
+      expect(Number((await page.locator('[data-spec="price"] dd').textContent())!.replace(/\D/g, ""))).toBe(1_950_000);
     });
 
     test("an empty result says so and clears the filters", async ({ page }) => {
@@ -140,7 +207,7 @@ for (const { locale, prefix } of LOCALES) {
       await expect(page.getByTestId("empty-result")).toContainText(locale === "vi" ? "Không có loại vang phù hợp" : "No wines match");
       await page.getByTestId("empty-result").getByRole("link").click();
       await expect(page).toHaveURL((url) => url.pathname === `${prefix}/ruou-vang` && url.search === "");
-      expect(await cardSlugs(page)).toHaveLength(16);
+      expect(await cardSlugs(page)).toEqual(ALL_BY_NAME);
     });
 
     test("has no serious accessibility violations, and home links to it", async ({ page }) => {

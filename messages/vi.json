@@ -88,6 +88,22 @@
       "dinner": "Bữa tối",
       "everyday": "Hằng ngày"
     },
+    "pairings": {
+      "beef": "Thịt bò",
+      "pork": "Thịt heo",
+      "poultry": "Gia cầm",
+      "seafood": "Hải sản",
+      "fish": "Cá",
+      "cheese": "Phô mai",
+      "spicy": "Món cay",
+      "dessert": "Món tráng miệng",
+      "bun-cha": "Bún chả",
+      "pho": "Phở",
+      "bo-luc-lac": "Bò lúc lắc",
+      "goi-cuon": "Gỏi cuốn",
+      "cha-gio": "Chả giò",
+      "vit-quay": "Vịt quay"
+    },
     "priceBands": {
       "lt1m": "Dưới 1.000.000 ₫",
       "1m-2m": "1.000.000 – dưới 2.000.000 ₫",
@@ -102,5 +118,51 @@
       "body": "Thử bỏ bớt bộ lọc để xem thêm lựa chọn."
     },
     "clear": "Xoá bộ lọc"
+  },
+  "Product": {
+    "back": "Tất cả rượu vang",
+    "selector": "Chọn niên vụ và dung tích",
+    "vintage": "Niên vụ",
+    "size": "Dung tích",
+    "nv": "Không niên vụ (NV)",
+    "inStock": "Còn hàng",
+    "outOfStock": "Tạm hết hàng",
+    "specs": "Thông tin sản phẩm",
+    "spec": {
+      "producer": "Nhà sản xuất",
+      "vintage": "Niên vụ",
+      "country": "Quốc gia",
+      "region": "Vùng",
+      "appellation": "Tên gọi xuất xứ",
+      "grapes": "Giống nho",
+      "abv": "Độ cồn",
+      "volume": "Dung tích",
+      "drinkingWindow": "Thời điểm uống",
+      "importer": "Nhà nhập khẩu",
+      "servingTemp": "Nhiệt độ phục vụ",
+      "price": "Giá",
+      "stock": "Tình trạng"
+    },
+    "abvValue": "{abv}% vol",
+    "volumeValue": "{ml} ml",
+    "tempValue": "{temp} °C",
+    "windowRange": "{from}–{to}",
+    "windowFrom": "Từ {from}",
+    "windowTo": "Đến {to}",
+    "grapeShare": "{grape} {pct}%",
+    "priceValue": "{price} (đã gồm VAT)",
+    "tasting": "Ghi chú nếm",
+    "nose": "Hương",
+    "palate": "Vị",
+    "finish": "Hậu vị",
+    "profile": "Cấu trúc vị",
+    "profileValue": "{value} trên 5",
+    "axes": {
+      "body": "Độ đậm",
+      "tannin": "Tannin",
+      "sweetness": "Độ ngọt",
+      "acidity": "Độ chua"
+    },
+    "pairings": "Món ăn kết hợp"
   }
 }

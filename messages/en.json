@@ -89,6 +89,22 @@
       "dinner": "Dinner",
       "everyday": "Everyday"
     },
+    "pairings": {
+      "beef": "Beef",
+      "pork": "Pork",
+      "poultry": "Poultry",
+      "seafood": "Seafood",
+      "fish": "Fish",
+      "cheese": "Cheese",
+      "spicy": "Spicy dishes",
+      "dessert": "Dessert",
+      "bun-cha": "Bún chả (grilled pork with noodles)",
+      "pho": "Phở",
+      "bo-luc-lac": "Bò lúc lắc (shaking beef)",
+      "goi-cuon": "Gỏi cuốn (fresh spring rolls)",
+      "cha-gio": "Chả giò (fried spring rolls)",
+      "vit-quay": "Vịt quay (roast duck)"
+    },
     "priceBands": {
       "lt1m": "Under ₫1,000,000",
       "1m-2m": "₫1,000,000 to under ₫2,000,000",
@@ -103,5 +119,51 @@
       "body": "Try removing a filter to see more."
     },
     "clear": "Clear filters"
+  },
+  "Product": {
+    "back": "All wines",
+    "selector": "Choose vintage and size",
+    "vintage": "Vintage",
+    "size": "Size",
+    "nv": "Non-vintage (NV)",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "specs": "Product details",
+    "spec": {
+      "producer": "Producer",
+      "vintage": "Vintage",
+      "country": "Country",
+      "region": "Region",
+      "appellation": "Appellation",
+      "grapes": "Grapes",
+      "abv": "Alcohol",
+      "volume": "Volume",
+      "drinkingWindow": "Drinking window",
+      "importer": "Importer",
+      "servingTemp": "Serving temperature",
+      "price": "Price",
+      "stock": "Availability"
+    },
+    "abvValue": "{abv}% vol",
+    "volumeValue": "{ml} ml",
+    "tempValue": "{temp} °C",
+    "windowRange": "{from}–{to}",
+    "windowFrom": "From {from}",
+    "windowTo": "Until {to}",
+    "grapeShare": "{grape} {pct}%",
+    "priceValue": "{price} (VAT included)",
+    "tasting": "Tasting note",
+    "nose": "Nose",
+    "palate": "Palate",
+    "finish": "Finish",
+    "profile": "Taste profile",
+    "profileValue": "{value} of 5",
+    "axes": {
+      "body": "Body",
+      "tannin": "Tannin",
+      "sweetness": "Sweetness",
+      "acidity": "Acidity"
+    },
+    "pairings": "Food pairings"
   }
 }

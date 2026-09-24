@@ -2,6 +2,7 @@ import config from "@payload-config";
 import { getPayload } from "payload";
 
 import type { BottleSize, CatalogueWine } from "@/lib/catalogue";
+import type { Producer, Vintage, Wine } from "@/payload-types";
 
 /**
  * Published wines with their published vintages, read through the Local API. The catalogue
@@ -30,4 +31,31 @@ export async function loadCatalogue(locale: "vi" | "en"): Promise<CatalogueWine[
       },
     ];
   });
+}
+
+export type ProductVintage = Omit<Vintage, "year" | "bottleMl"> & { year: number | null; bottleMl: BottleSize };
+
+/**
+ * A published wine by slug with its producer and every vintage, drafts included: the pure
+ * `selectVintage` is the one place that drops draft vintages. `null` for a draft or unknown slug.
+ */
+export async function loadWine(
+  slug: string,
+  locale: "vi" | "en",
+): Promise<{ wine: Wine & { producer: Producer }; vintages: ProductVintage[] } | null> {
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: "wines",
+    where: { and: [{ slug: { equals: slug } }, { status: { equals: "published" } }] },
+    locale,
+    depth: 1,
+    limit: 1,
+  });
+  const wine = docs[0];
+  if (!wine || typeof wine.producer !== "object") return null;
+  const vintages = await payload.find({ collection: "vintages", where: { wine: { equals: wine.id } }, depth: 0, pagination: false });
+  return {
+    wine: { ...wine, producer: wine.producer },
+    vintages: vintages.docs.map((x) => ({ ...x, year: x.year ?? null, bottleMl: Number(x.bottleMl) as BottleSize })),
+  };
 }

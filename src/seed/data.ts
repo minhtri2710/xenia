@@ -531,6 +531,27 @@ export const wines: SeedWine[] = [
     vintages: [v(2023, 750, 12.5, 820_000, 15)],
   },
   {
+    // Published, but its only vintage is a draft: not listed, and its page is not found.
+    slug: "steinbach-riesling-spatlese",
+    producer: "weingut-steinbach",
+    name: L("Steinbach Riesling Spätlese", "Steinbach Riesling Spätlese"),
+    type: "white",
+    country: "DE",
+    region: "Mosel",
+    grapes: [{ grape: "Riesling", pct: 100 }],
+    tasting: {
+      nose: L("Mơ chín, hoa cam và mật ong.", "Ripe apricot, orange blossom and honey."),
+      palate: L("Ngọt vừa, độ chua cao, rất thanh.", "Medium-sweet with high acidity, very pure."),
+      finish: L("Dư vị dài, khoáng.", "A long, mineral finish."),
+    },
+    profile: { body: 2, tannin: 1, sweetness: 4, acidity: 5 },
+    pairings: ["spicy", "dessert"],
+    servingTempC: 9,
+    occasions: ["dinner"],
+    status: "published",
+    vintages: [v(2023, 750, 8, 1_100_000, 0, { status: "draft" })],
+  },
+  {
     slug: "lune-grise-reserve",
     producer: "lune-grise",
     name: L("Lune Grise Réserve (chưa phát hành)", "Lune Grise Réserve (unreleased)"),

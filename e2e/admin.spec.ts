@@ -36,7 +36,7 @@ test.beforeAll(async ({ request }) => {
   execFileSync("docker", ["exec", "xenia-dev-postgres", "psql", "-U", "xenia", "-d", "xenia", "-c", "TRUNCATE users CASCADE"]);
 });
 
-test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists and login", async ({ page }) => {
+test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage and login", async ({ page }) => {
   const external = await blockThirdParty(page);
 
   await page.goto("/admin");
@@ -62,6 +62,26 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
     await expect(page.locator(".collection-list table")).toContainText(row);
     await page.waitForLoadState("networkidle");
   }
+
+  // The derived ≥15% ABV indicator, filtered on the stored abvPct (the wine column's relationship
+  // cell is not a stable row key): the seed's only vintages at 15% or above are the two 20% tawnies.
+  const cells = page.locator(".collection-list tbody tr .cell-adRestricted");
+  await page.goto("/admin/collections/vintages?limit=100&where[abvPct][greater_than_equal]=15");
+  await expect(cells).toHaveText(["true", "true"]);
+  await page.goto("/admin/collections/vintages?limit=100&where[abvPct][less_than]=15");
+  await expect(page.locator(".collection-list tbody tr")).toHaveCount(25);
+  expect(new Set(await cells.allTextContents())).toEqual(new Set(["false"]));
+  await page.waitForLoadState("networkidle");
+
+  await page.goto("/admin/collections/vintages?limit=100&where[abvPct][greater_than_equal]=15");
+  const tawny = page.locator(".collection-list tbody tr");
+  await tawny.first().locator("a").first().click();
+  await expect(page).toHaveURL(/\/admin\/collections\/vintages\/\d+/);
+  const indicator = page.locator("#field-adRestricted");
+  await expect(indicator).toBeChecked();
+  await expect(indicator).toBeDisabled();
+  await expect(page.locator("#field-abvPct")).toHaveValue("20");
+  await page.waitForLoadState("networkidle");
 
   await page.goto("/admin/logout");
   await expect(page).toHaveURL(/\/admin\/login/);

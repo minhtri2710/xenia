@@ -177,7 +177,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
                       <div className="mb-8 h-3/5 w-1/5 rounded-t-full bg-wine/15" />
                     </div>
                     <h2 className="mt-4 font-display text-2xl font-semibold">
-                      <Link href={`${PATH}/${wine.slug}`} className="hover:text-wine">
+                      <Link href={`${PATH}/${wine.slug}${filters.size ? `?size=${filters.size}` : ""}`} className="hover:text-wine">
                         {wine.name}
                       </Link>
                     </h2>

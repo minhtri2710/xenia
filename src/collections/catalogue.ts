@@ -1,6 +1,6 @@
 import type { CollectionConfig, SelectField, Validate } from "payload";
 
-import { BOTTLE_SIZES, COUNTRIES, OCCASIONS, PAIRINGS, STATUSES, WINE_TYPES } from "@/lib/catalogue";
+import { BOTTLE_SIZES, COUNTRIES, isAdRestricted, OCCASIONS, PAIRINGS, STATUSES, WINE_TYPES } from "@/lib/catalogue";
 
 // Access: none of these collections sets `access`, so Payload's default applies and every
 // operation needs an authenticated admin. `/api` is exempt from the age gate, so a public
@@ -94,7 +94,7 @@ export const Wines: CollectionConfig = {
 
 export const Vintages: CollectionConfig = {
   slug: "vintages",
-  admin: { defaultColumns: ["wine", "year", "bottleMl", "abvPct", "priceVnd", "stock", "status"] },
+  admin: { defaultColumns: ["wine", "year", "bottleMl", "abvPct", "adRestricted", "priceVnd", "stock", "status"] },
   fields: [
     { name: "wine", type: "relationship", relationTo: "wines", required: true, index: true },
     {
@@ -108,9 +108,23 @@ export const Vintages: CollectionConfig = {
       name: "abvPct",
       type: "number",
       required: true,
-      admin: { step: 0.1, description: "% vol. S3 derives the ≥15° advertising restriction from this; it is never stored." },
+      admin: { step: 0.1, description: "% vol." },
       validate: (value: number | null | undefined) =>
         (typeof value === "number" && value > 0 && value < 100) || "ABV must be above 0 and below 100.",
+    },
+    {
+      // Derived on read from abvPct by `isAdRestricted`; `virtual` keeps it out of the database.
+      name: "adRestricted",
+      label: "No advertising or promotion (ABV ≥ 15%)",
+      type: "checkbox",
+      virtual: true,
+      admin: {
+        readOnly: true,
+        description: "Law 44/2019 Art. 5.7 and 5.9. Derived from ABV; never stored.",
+      },
+      hooks: {
+        afterRead: [({ siblingData }) => (typeof siblingData?.abvPct === "number" ? isAdRestricted(siblingData.abvPct) : undefined)],
+      },
     },
     {
       name: "priceVnd",

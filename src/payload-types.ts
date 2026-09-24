@@ -231,9 +231,13 @@ export interface Vintage {
   year?: number | null;
   bottleMl: '375' | '750' | '1500';
   /**
-   * % vol. S3 derives the ≥15° advertising restriction from this; it is never stored.
+   * % vol.
    */
   abvPct: number;
+  /**
+   * Law 44/2019 Art. 5.7 and 5.9. Derived from ABV; never stored.
+   */
+  adRestricted?: boolean | null;
   /**
    * Whole VND, VAT included.
    */
@@ -412,6 +416,7 @@ export interface VintagesSelect<T extends boolean = true> {
   year?: T;
   bottleMl?: T;
   abvPct?: T;
+  adRestricted?: T;
   priceVnd?: T;
   stock?: T;
   drinkFrom?: T;
