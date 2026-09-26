@@ -55,6 +55,9 @@ export default async function OrderPage({ params, searchParams }: Props) {
         </Link>
       </p>
 
+      {order.status === "expired" && (
+        <p role="status" className="mt-4 text-wine" data-testid="payment-expired">{t("payment.expired")}</p>
+      )}
       {payable && (
         <section className="mt-10 border border-ink/15 p-6" aria-labelledby="payment">
           <h2 id="payment" className="font-display text-2xl font-medium">
@@ -71,6 +74,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
             </p>
           )}
           <p className="mt-3 text-sm text-muted">{t("payment.mockNote")}</p>
+          <p className="mt-3 text-sm" data-testid="payment-deadline">{t("payment.deadline", { deadline: format.dateTime(new Date(order.paymentDueAt), { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }) })}</p>
           <form action={payOrder} className="mt-4 grid gap-4">
             <input type="hidden" name="locale" value={locale} />
             <input type="hidden" name="token" value={token} />

@@ -7,6 +7,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 
 export const PAYMENT_METHODS = ["vietqr_mock", "card_mock"] as const;
 export const ORDER_RETENTION_YEARS = 3;
+export const PAYMENT_HOLD_MINUTES = 60;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_STATUSES = ["unpaid", "failed", "paid"] as const;
@@ -20,8 +21,10 @@ export const ORDER_STATUSES = [
   "id_check_failed",
   "cancelled",
   "returned",
+  "expired",
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
+export const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) => status !== "expired");
 
 /** Delivery zones with a flat fee each; the fees live in the `site-settings` global. */
 export const ZONES = ["hcmc", "hanoi"] as const;

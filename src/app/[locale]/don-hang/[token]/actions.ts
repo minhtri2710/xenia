@@ -1,13 +1,12 @@
 "use server";
 
-import config from "@payload-config";
 import { notFound, redirect } from "next/navigation";
 import { hasLocale } from "next-intl";
-import { getPayload } from "payload";
 
 import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { isPaymentMethod, isStatusToken } from "@/lib/order";
+import { recordPayment } from "@/lib/order-expiry";
 
 /**
  * The mock payment (Law 44/2019 Art. 16.4: cashless only). No provider, no key, no network call,
@@ -26,15 +25,6 @@ export async function payOrder(formData: FormData) {
     redirect(`${back}?payment=invalid`);
   }
 
-  const payload = await getPayload({ config });
-  await payload.update({
-    collection: "orders",
-    where: { and: [{ token: { equals: token } }, { status: { equals: "placed" } }, { "payment.status": { not_equals: "paid" } }] },
-    data:
-      outcome === "success"
-        ? { status: "paid", payment: { method, status: "paid", paidAt: new Date().toISOString() } }
-        : { payment: { method, status: "failed" } },
-    depth: 0,
-  });
-  redirect(back);
+  const result = await recordPayment(token, method, outcome);
+  redirect(result === "expired" ? `${back}?payment=expired` : back);
 }

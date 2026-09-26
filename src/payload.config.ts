@@ -10,6 +10,7 @@ import { Producers, Vintages, Wines } from "./collections/catalogue";
 import { CheckoutDrafts } from "./collections/checkout-drafts";
 import { CardDesigns, Packaging } from "./collections/gift";
 import { Orders } from "./collections/orders";
+import { ORDER_STATUSES } from "./lib/order";
 import { SiteSettings } from "./globals/site-settings";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -60,6 +61,8 @@ export default buildConfig({
       // Stock never goes negative, even under concurrent orders: placement decrements it
       // atomically (`$inc`) and this constraint refuses an oversell (src/lib/place-order.ts).
       ({ schema, extendTable }) => {
+        const statusEnum = schema.enums.enum_orders_status;
+        Object.defineProperty(statusEnum, "enumValues", { value: [...ORDER_STATUSES], configurable: true });
         extendTable({
           table: schema.tables.vintages,
           extraConfig: (t) => ({ stockNonNegative: check("vintages_stock_non_negative", sql`${t.stock} >= 0`) }),
@@ -70,5 +73,6 @@ export default buildConfig({
   }),
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
+    postProcess: [({ compiledTypes }) => compiledTypes.replace(/(export interface Order \{[\s\S]*?status:\s*[^;]*'returned')/, "$1 | 'expired'")],
   },
 });

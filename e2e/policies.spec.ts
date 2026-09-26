@@ -58,6 +58,7 @@ for (const { locale, prefix, draft } of LOCALES) {
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "pending legal review" : "đang chờ luật sư rà soát");
         }
         if (slug === "dieu-khoan") {
+          await expect(page.locator("#main-content")).toContainText(locale === "en" ? "An unpaid order holds stock for 60 minutes after placement" : "Đơn hàng chưa thanh toán giữ tồn kho trong 60 phút kể từ lúc đặt");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Current age threshold: 18+." : "Ngưỡng tuổi hiện tại: 18+.");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Current order retention period: 3 years." : "Thời hạn lưu giữ đơn hàng hiện tại: 3 năm.");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Cash on delivery" : "tiền mặt khi nhận hàng");
@@ -74,6 +75,7 @@ for (const { locale, prefix, draft } of LOCALES) {
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "legal scope" : "phạm vi pháp lý");
         }
         if (slug === "thanh-toan") {
+          await expect(page.locator("#main-content")).toContainText(locale === "en" ? "An unpaid order holds stock for 60 minutes after placement" : "Đơn chưa thanh toán giữ tồn kho trong 60 phút kể từ lúc đặt");
           await expect(page.locator("#main-content")).toContainText("VietQR");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Card" : "Thẻ");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "original payment channel" : "kênh thanh toán ban đầu");

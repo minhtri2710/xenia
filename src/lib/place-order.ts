@@ -6,6 +6,7 @@ import type { BottleSize } from "@/lib/catalogue";
 import { deleteDraft, readDraft } from "@/lib/checkout-drafts";
 import type { DateError } from "@/lib/delivery";
 import { newOrderNumber, newStatusToken } from "@/lib/order";
+import { paymentDueAt, releaseExpiredOrders } from "@/lib/order-expiry";
 import { reviewOrder } from "@/lib/order-review";
 import { loadCards, loadDeliverySettings, loadPackaging } from "@/lib/shop-data";
 
@@ -66,6 +67,7 @@ export async function placeOrder(
   handle: string | undefined,
   now: Date,
 ): Promise<PlaceResult> {
+  await releaseExpiredOrders(now);
   const payload = await getPayload({ config });
   const existing = await tokenForKey(payload, clientKey);
   if (existing) return { ok: true, token: existing };
@@ -157,6 +159,7 @@ export async function placeOrder(
         data: {
           number: newOrderNumber(),
           status: "placed",
+          paymentDueAt: paymentDueAt(now).toISOString(),
           token,
           clientKey,
           buyer,

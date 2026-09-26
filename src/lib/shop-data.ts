@@ -8,6 +8,7 @@ import { type Checkout, CHECKOUT_COOKIE, checkoutCookie, cookieOptions } from "@
 import { deleteDraft, readDraft, writeDraft } from "@/lib/checkout-drafts";
 import type { CardDoc, PackagingDoc } from "@/lib/gift";
 import type { Zone } from "@/lib/order";
+import { releaseExpiredOrders } from "@/lib/order-expiry";
 import type { Order, SiteSetting } from "@/payload-types";
 
 const PRODUCTION = process.env.NODE_ENV === "production";
@@ -52,6 +53,7 @@ async function loadVintages(ids: number[], locale: "vi" | "en") {
 /** The cart cookie resolved against the database: unavailable lines dropped, quantities capped. */
 export async function readCart(locale: "vi" | "en"): Promise<CartItem[]> {
   const lines = parseCart((await cookies()).get(CART_COOKIE)?.value);
+  if (lines.length > 0) await releaseExpiredOrders(new Date());
   const vintages = await loadVintages(
     lines.map((l) => l.vintageId),
     locale,
@@ -61,6 +63,7 @@ export async function readCart(locale: "vi" | "en"): Promise<CartItem[]> {
 
 /** The stock view of one vintage, or `undefined` when it does not exist. */
 export async function vintageStock(id: number): Promise<CartStock | undefined> {
+  await releaseExpiredOrders(new Date());
   return (await loadVintages([id], "vi")).get(id);
 }
 
@@ -154,6 +157,7 @@ export async function loadCards(where: { code?: string; activeOnly?: boolean }, 
 
 /** An order by its status token, or `null`. The caller checks the token's shape first. */
 export async function loadOrder(token: string): Promise<Order | null> {
+  await releaseExpiredOrders(new Date());
   const payload = await getPayload({ config });
   const { docs } = await payload.find({ collection: "orders", where: { token: { equals: token } }, depth: 0, limit: 1 });
   return docs[0] ?? null;

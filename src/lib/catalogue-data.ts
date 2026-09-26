@@ -2,6 +2,7 @@ import config from "@payload-config";
 import { getPayload } from "payload";
 
 import type { BottleSize, CatalogueWine } from "@/lib/catalogue";
+import { releaseExpiredOrders } from "@/lib/order-expiry";
 import type { Producer, Vintage, Wine } from "@/payload-types";
 
 /**
@@ -9,6 +10,7 @@ import type { Producer, Vintage, Wine } from "@/payload-types";
  * collections are admin-only over `/api`; this server-side read is the storefront's only path.
  */
 export async function loadCatalogue(locale: "vi" | "en"): Promise<CatalogueWine[]> {
+  await releaseExpiredOrders(new Date());
   const payload = await getPayload({ config });
   const [wines, vintages] = await Promise.all([
     payload.find({ collection: "wines", where: { status: { equals: "published" } }, locale, depth: 1, pagination: false }),
@@ -43,6 +45,7 @@ export async function loadWine(
   slug: string,
   locale: "vi" | "en",
 ): Promise<{ wine: Wine & { producer: Producer }; vintages: ProductVintage[] } | null> {
+  await releaseExpiredOrders(new Date());
   const payload = await getPayload({ config });
   const { docs } = await payload.find({
     collection: "wines",

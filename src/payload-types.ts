@@ -309,9 +309,10 @@ export interface Order {
   id: number;
   number: string;
   status:
-    'placed' | 'paid' | 'packed' | 'out_for_delivery' | 'delivered' | 'id_check_failed' | 'cancelled' | 'returned';
+    'placed' | 'paid' | 'packed' | 'out_for_delivery' | 'delivered' | 'id_check_failed' | 'cancelled' | 'returned' | 'expired';
   token: string;
   clientKey: string;
+  paymentDueAt: string;
   buyer: {
     name: string;
     phone: string;
@@ -667,6 +668,7 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   token?: T;
   clientKey?: T;
+  paymentDueAt?: T;
   buyer?:
     | T
     | {

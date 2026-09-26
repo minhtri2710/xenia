@@ -6,6 +6,7 @@ import {
   newClientKey,
   newOrderNumber,
   newStatusToken,
+  ADMIN_ORDER_STATUSES,
   ORDER_NUMBER_ALPHABET,
   ORDER_STATUSES,
   PAYMENT_METHODS,
@@ -23,7 +24,8 @@ describe("payment methods (Law 44/2019 Art. 16.4: cashless only)", () => {
 
 describe("order statuses", () => {
   it("are the fixed lifecycle", () => {
-    expect(ORDER_STATUSES).toEqual(["placed", "paid", "packed", "out_for_delivery", "delivered", "id_check_failed", "cancelled", "returned"]);
+    expect(ORDER_STATUSES).toEqual(["placed", "paid", "packed", "out_for_delivery", "delivered", "id_check_failed", "cancelled", "returned", "expired"]);
+    expect(ADMIN_ORDER_STATUSES).not.toContain("expired");
   });
 });
 

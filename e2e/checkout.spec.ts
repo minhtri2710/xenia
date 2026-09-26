@@ -249,6 +249,7 @@ for (const { locale, prefix } of LOCALES) {
     await page.locator("input[name=method][value=card_mock]").check();
     await page.getByRole("button", { name: vi ? "Mô phỏng thanh toán thất bại" : "Simulate a failed payment" }).click();
     await expect(page.getByTestId("payment-failed")).toBeVisible();
+    await expect(page.getByTestId("payment-deadline")).toContainText(vi ? "Vui lòng thanh toán trước" : "Please pay by");
     await expect(page.getByTestId("order-status")).toHaveText(vi ? "Đã đặt, chờ thanh toán" : "Placed, awaiting payment");
     expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE token = '${token}'`)).toBe("placed/failed");
     expect(stockOf(lune)).toBe(luneStock - 2);
@@ -374,6 +375,99 @@ test("the cart caps quantity at stock, refuses a non-positive quantity and a dra
 
   await line.getByRole("button", { name: /^Bỏ / }).click();
   await expect(page.getByTestId("cart-lines")).toHaveCount(0);
+});
+
+test("an unpaid order retains stock after failed payment, can be paid before due, and expires/restocks once after due", async ({ page, browser }) => {
+  const vintage = vintageId("colle-vento-rosso", 2021, 750);
+  const originalStock = stockOf(vintage);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const token = await consentAndPlace(page, "");
+  const id = Number(sql(`SELECT id FROM orders WHERE token = '${token}'`));
+  const count = orderCount();
+  expect(sql(`SELECT payment_due_at IS NOT NULL FROM orders WHERE id = ${id}`)).toBe("t");
+  expect(stockOf(vintage)).toBe(originalStock - 1);
+
+  await page.getByRole("button", { name: "Mô phỏng thanh toán thất bại" }).click();
+  await expect(page.getByTestId("payment-failed")).toBeVisible();
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("placed/failed");
+  expect(stockOf(vintage)).toBe(originalStock - 1);
+  let paymentPost: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
+  await page.route(`/don-hang/${token}`, async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const request = route.request();
+    const headers = Object.fromEntries(Object.entries(await request.allHeaders()).filter(([key]) => !["host", "content-length", "cookie"].includes(key)));
+    paymentPost = { url: request.url(), headers, body: request.postDataBuffer()! };
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "Mô phỏng thanh toán thành công" }).click();
+  await expect.poll(() => paymentPost).toBeDefined();
+  await page.unroute(`/don-hang/${token}`);
+  const retry = await page.request.post(paymentPost!.url, { headers: paymentPost!.headers, data: paymentPost!.body, maxRedirects: 0 });
+  expect(retry.status()).toBe(200);
+  expect(retry.headers()["x-action-redirect"]).toContain(`/don-hang/${token}`);
+  await page.goto(`/don-hang/${token}`);
+  await expect(page.getByTestId("order-status")).toHaveText("Đã thanh toán");
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("paid/paid");
+
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const secondToken = await consentAndPlace(page, "");
+  const secondId = Number(sql(`SELECT id FROM orders WHERE token = '${secondToken}'`));
+  expect(stockOf(vintage)).toBe(originalStock - 2);
+
+  let captured: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
+  const actionPath = `/don-hang/${secondToken}`;
+  await page.route(actionPath, async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST") return route.continue();
+    const headers = Object.fromEntries(Object.entries(await request.allHeaders()).filter(([key]) => !["host", "content-length", "cookie"].includes(key)));
+    captured = { url: request.url(), headers, body: request.postDataBuffer()! };
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "Mô phỏng thanh toán thành công" }).click();
+  await expect.poll(() => captured).toBeDefined();
+  await page.unroute(actionPath);
+
+  const concurrentPage = await newPage(browser);
+  await declareAdult(concurrentPage, "/ruou-vang/colle-vento-rosso");
+  sql("CREATE TABLE expiry_claim_attempts (order_id integer NOT NULL)");
+  sql(`CREATE FUNCTION record_expiry_claim() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF OLD.status = 'placed' AND NEW.status = 'expired' THEN INSERT INTO expiry_claim_attempts VALUES (NEW.id); PERFORM pg_sleep(8); END IF; RETURN NEW; END $$`);
+  sql("CREATE TRIGGER record_expiry_claim BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION record_expiry_claim()");
+  sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${secondId}`);
+  await Promise.all([page.goto("/ruou-vang/colle-vento-rosso"), concurrentPage.goto("/ruou-vang/colle-vento-rosso")]);
+  expect(sql("SELECT count(*) FROM expiry_claim_attempts")).toBe("1");
+  sql("DROP TRIGGER record_expiry_claim ON orders");
+  sql("DROP FUNCTION record_expiry_claim()");
+  sql("DROP TABLE expiry_claim_attempts");
+  expect(sql(`SELECT status FROM orders WHERE id = ${secondId}`)).toBe("expired");
+  expect(stockOf(vintage)).toBe(originalStock - 1);
+
+  await page.goto(actionPath);
+  await expect(page.getByTestId("order-status")).toHaveText("Hết hạn thanh toán");
+  await expect(page.getByTestId("payment-expired")).toContainText("Tồn kho đã được trả lại");
+  await expect(page.locator("input[name=method]")).toHaveCount(0);
+  await expect(page.locator("form[action]")).toHaveCount(0);
+
+  const payment = await page.request.post(captured!.url, { headers: captured!.headers, data: captured!.body, maxRedirects: 0 });
+  expect(payment.status()).toBe(200);
+  expect(payment.headers()["x-action-redirect"]).toContain("payment=expired");
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${secondId}`)).toBe("expired/unpaid");
+
+  await page.goto("/ruou-vang/colle-vento-rosso");
+  expect(stockOf(vintage)).toBe(originalStock - 1);
+  expect(sql(`SELECT count(*) FROM orders WHERE id = ${secondId}`)).toBe("1");
+  sql("TRUNCATE users CASCADE");
+  const admin = page.request;
+  expect((await admin.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } })).ok()).toBe(true);
+  expect((await admin.post("/api/users/login", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } })).ok()).toBe(true);
+  const deletion = await admin.delete(`/api/orders/${secondId}`);
+  expect(deletion.ok(), `expired-order DELETE ${deletion.status()}`).toBe(false);
+  const reopen = await admin.patch(`/api/orders/${secondId}`, { data: { status: "packed" } });
+  expect(reopen.ok(), `expired-order reopen ${reopen.status()}`).toBe(false);
+  expect(sql(`SELECT status FROM orders WHERE id = ${secondId}`)).toBe("expired");
+  expect(orderCount()).toBe(count + 1);
 });
 
 test("a quantity above stock at placement is refused with a field error", async ({ page }) => {
@@ -730,9 +824,16 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   const adminDelete = await admin.delete(`/api/orders/${id}`);
   expect(adminDelete.ok(), `admin DELETE ${adminDelete.status()}`).toBe(false);
   expect(orderCount()).toBe(count);
+  const expireAttempt = await admin.patch(`/api/orders/${id}`, { data: { status: "expired" } });
+  expect(expireAttempt.ok(), `admin PATCH expired ${expireAttempt.status()}`).toBe(true);
+  expect((await expireAttempt.json()).doc.status).toBe("placed");
+  expect(sql(`SELECT status FROM orders WHERE id = ${id}`)).toBe("placed");
   const patch = await admin.patch(`/api/orders/${id}`, { data: { status: "packed", totals: { totalVnd: 1 } } });
   expect(patch.ok(), `admin PATCH ${patch.status()}`).toBe(true);
   expect(sql(`SELECT status || '|' || totals_total_vnd FROM orders WHERE id = ${id}`)).toBe("packed|750000");
+  const packedDelete = await admin.delete(`/api/orders/${id}`);
+  expect(packedDelete.ok(), `admin DELETE packed ${packedDelete.status()}`).toBe(false);
+  expect(orderCount()).toBe(count);
 
   const external = await blockThirdParty(page);
   await page.goto("/admin/collections/orders");

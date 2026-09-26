@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, seedCatalogue, sql } from "./support";
+import { blockThirdParty, seedCatalogue, sql, vintageWineNames } from "./support";
 
 const EMAIL = "admin@xenia.test";
 const PASSWORD = "e2e-dev-only-password";
@@ -72,6 +72,25 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
     await page.goto(`/admin/collections/${collection}`);
     await expect(page.locator(".collection-list table")).toContainText(row);
     await page.waitForLoadState("networkidle");
+  }
+
+  // Relationship labels resolve lazily only after their cells enter the viewport. Compare every row
+  // to the independent vintage→localized-wine mapping from the scratch database.
+  const expectedWineByVintage = vintageWineNames("vi");
+  await page.goto("/admin/collections/vintages?limit=100");
+  await page.waitForLoadState("networkidle");
+  const vintageRows = page.locator(".collection-list tbody tr");
+  await expect(vintageRows).toHaveCount(expectedWineByVintage.size);
+  for (const row of await vintageRows.all()) {
+    const rowLink = row.locator('a[href^="/admin/collections/vintages/"]').first();
+    const href = await rowLink.getAttribute("href");
+    const id = Number(href?.split("/").pop());
+    const expectedWine = expectedWineByVintage.get(id);
+    expect(expectedWine, `vintage ${id} must have an independent SQL wine mapping`).toBeDefined();
+    const wineCell = row.locator(".cell-wine");
+    await wineCell.scrollIntoViewIfNeeded();
+    await expect(wineCell).toHaveText(expectedWine!);
+    await expect(wineCell).not.toContainText("<No Wine>");
   }
 
   // The derived ≥15% ABV indicator, filtered on the stored abvPct (the wine column's relationship

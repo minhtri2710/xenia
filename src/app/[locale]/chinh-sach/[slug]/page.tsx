@@ -9,7 +9,7 @@ import { DELIVERY_WINDOWS, HORIZON_DAYS } from "@/lib/delivery";
 import { MAX_MESSAGE_CODE_POINTS } from "@/lib/gift";
 import { CART_COOKIE } from "@/lib/cart";
 import { DRAFT_TTL_HOURS } from "@/lib/checkout-drafts";
-import { ORDER_RETENTION_YEARS, PAYMENT_METHODS } from "@/lib/order";
+import { ORDER_RETENTION_YEARS, PAYMENT_HOLD_MINUTES, PAYMENT_METHODS } from "@/lib/order";
 import { isPolicySlug, policyPath } from "@/lib/policies";
 import { VAT_RATE_PCT, VND_FORMAT } from "@/lib/order-totals";
 import { CHECKOUT_COOKIE } from "@/lib/checkout";
@@ -86,7 +86,7 @@ export default async function PolicyPage({ params }: Props) {
         {factList(sections.parties, [copy("termsParties"), copy("ageFact", { age: LEGAL_AGE }), copy("cookieAge", { name: AGE_COOKIE })])}
         {factList(sections.order, [copy("termsOrder")])}
         {factList(sections.delivery, [copy("termsDelivery")])}
-        {factList(sections.payment, [copy("termsPayment"), copy("paymentList", { methods }), copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}
+        {factList(sections.payment, [copy("termsPayment", { minutes: PAYMENT_HOLD_MINUTES }), copy("paymentList", { methods }), copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}
         {factList(sections.retention, [copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}
         {factList(sections.pending, [copy("termsPending")])}
       </>;
@@ -115,7 +115,7 @@ export default async function PolicyPage({ params }: Props) {
       break;
     case "thanh-toan":
       content = <>
-        {factList(sections.methods, [copy("paymentMethods"), copy("paymentList", { methods })])}
+        {factList(sections.methods, [copy("paymentMethods", { minutes: PAYMENT_HOLD_MINUTES }), copy("paymentList", { methods })])}
         {factList(sections.refund, [copy("refundMethod"), copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}
         {factList(sections.security, [copy("paymentSecurity")])}
       </>;
