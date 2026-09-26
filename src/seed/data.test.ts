@@ -1,9 +1,25 @@
 import { describe, expect, it } from "vitest";
 
 import { BOTTLE_SIZES, isAdRestricted } from "../lib/catalogue";
-import { type Localized, producers, seedCatalogue, wines } from "./data";
+import { SAMPLE_OWNER, type Localized, producers, seedCatalogue, wines } from "./data";
 
 const localized = (l: Localized) => l.vi.trim() !== "" && l.en.trim() !== "";
+
+describe("sample site settings", () => {
+  it("provides visibly fictional required owner details with no notification link", () => {
+    expect(SAMPLE_OWNER).toEqual({
+      legalName: "Xenia Sample Trading Company (SAMPLE DATA)",
+      headOffice: "Sample address, District 1, Ho Chi Minh City (SAMPLE DATA)",
+      legalRepresentative: "Sample Representative (SAMPLE DATA)",
+      businessRegistration: { number: "SAMPLE-BUSINESS-REGISTRATION", date: "2026-01-15", place: "Sample issuing authority (SAMPLE DATA)" },
+      alcoholLicence: { number: "SAMPLE-ALCOHOL-LICENCE", issuer: "Sample licensing authority (SAMPLE DATA)", date: "2026-02-15" },
+      contactEmail: "contact@example.test",
+      contactPhone: "+84 000 000 0000 (SAMPLE DATA)",
+      notificationLink: "",
+    });
+  });
+
+});
 
 describe("seed catalogue", () => {
   it("has about 16 wines, 16 of them published", () => {

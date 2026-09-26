@@ -8,7 +8,7 @@ import { type Checkout, CHECKOUT_COOKIE, checkoutCookie, cookieOptions } from "@
 import { deleteDraft, readDraft, writeDraft } from "@/lib/checkout-drafts";
 import type { CardDoc, PackagingDoc } from "@/lib/gift";
 import type { Zone } from "@/lib/order";
-import type { Order } from "@/payload-types";
+import type { Order, SiteSetting } from "@/payload-types";
 
 const PRODUCTION = process.env.NODE_ENV === "production";
 const COOKIE_OPTIONS = cookieOptions(PRODUCTION);
@@ -105,6 +105,11 @@ export async function loadDeliverySettings(req?: Partial<PayloadRequest>): Promi
     zones: new Map((settings.zones ?? []).map((z) => [z.zone, { feeVnd: z.feeVnd, leadDays: z.leadDays }])),
     blackoutDates: (settings.blackoutDates ?? []).map((b) => b.date),
   };
+}
+
+export async function loadSiteSettings(req?: Partial<PayloadRequest>): Promise<SiteSetting> {
+  const payload = await getPayload({ config });
+  return payload.findGlobal({ slug: "site-settings", depth: 0, req });
 }
 
 type Localized = { vi: string; en: string };

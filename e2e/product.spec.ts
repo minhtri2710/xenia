@@ -154,6 +154,7 @@ for (const { locale, prefix } of LOCALES) {
         expect(response!.status(), slug).toBe(404);
         await expect(page.getByRole("heading", { level: 1 }), slug).toHaveText(vi ? "Không tìm thấy trang" : "Page not found");
         await expect(page.locator("main"), slug).not.toContainText("Steinbach Riesling Spätlese");
+        await expectNoSeriousA11yViolations(page, `${locale}/${slug}`);
       }
     });
   });

@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import en from "../../messages/en.json";
 import vi from "../../messages/vi.json";
+import { POLICY_SLUGS } from "../lib/policies";
 
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
 
@@ -24,6 +25,15 @@ describe("messages", () => {
     expect(vi.Notice.legal).toBe(LEGAL_NOTICE);
     expect(en.Notice.legal).toBe(LEGAL_NOTICE);
     expect(en.Notice.translation).toBeTruthy();
+  });
+
+  it("has translated links and page copy for every required policy slug", () => {
+    for (const slug of POLICY_SLUGS) {
+      expect(vi.Policy.links[slug], slug).toBeTruthy();
+      expect(en.Policy.links[slug], slug).toBeTruthy();
+      expect(vi.Policy.pages[slug].title, slug).toBeTruthy();
+      expect(en.Policy.pages[slug].title, slug).toBeTruthy();
+    }
   });
 });
 

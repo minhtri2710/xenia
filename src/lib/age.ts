@@ -50,7 +50,7 @@ export function parseDateOfBirth(value: string): CalendarDate | null {
 }
 
 /**
- * Whether someone born on `dob` is 18 or older on the Vietnamese calendar date at `now`.
+ * Whether someone born on `dob` is at least LEGAL_AGE on the Vietnamese calendar date at `now`.
  * The 18th birthday counts as adult. A 29 February birthday reaches 18 on 1 March
  * when the 18th year is not a leap year.
  */

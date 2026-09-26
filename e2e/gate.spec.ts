@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { expectNoSeriousA11yViolations, vietnamDateYearsAgo } from "./support";
+import { expectNoSeriousA11yViolations, POLICY_ROUTES, vietnamDateYearsAgo } from "./support";
 
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
 const EN_TRANSLATION = "No sale of alcohol or beer to anyone under 18";
@@ -110,9 +110,28 @@ test.describe("L19 notice and accessibility", () => {
       for (const path of [`${prefix}/xac-minh-tuoi`, `${prefix}/tam-biet`]) {
         await page.goto(path);
         await expect(page.getByTestId("age-notice")).toContainText(LEGAL_NOTICE);
-        if (locale === "en") await expect(page.getByTestId("age-notice")).toContainText(EN_TRANSLATION);
+        if (locale === "en") {
+          await expect(page.getByTestId("age-notice")).toContainText(EN_TRANSLATION);
+          await expect(page.locator("footer strong[lang=vi]")).toContainText(LEGAL_NOTICE);
+        }
+        await expect(page.getByTestId("footer-owner")).toBeVisible();
+        await expect(page.getByRole("navigation", { name: locale === "en" ? "Policies" : "Chính sách" }).getByRole("link")).toHaveCount(POLICY_ROUTES.length);
+        await expect(page.getByTestId("footer-owner")).toContainText("Xenia Sample Trading Company");
         await expectNoSeriousA11yViolations(page);
       }
+    });
+
+    test(`skip link and request-updated footer (${locale})`, async ({ page }) => {
+      await page.goto(`${prefix}/xac-minh-tuoi`);
+      const footer = page.locator("footer");
+      await expect(footer).toContainText("Xenia Sample Trading Company");
+      await expect(footer).toContainText("SAMPLE-BUSINESS-REGISTRATION");
+      await expect(footer.getByRole("link", { name: locale === "en" ? "E-commerce notification" : "Thông báo thương mại điện tử" })).toHaveCount(0);
+      const skip = page.getByRole("link", { name: locale === "en" ? "Skip navigation" : "Bỏ qua điều hướng" });
+      await skip.focus();
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#main-content")).toBeFocused();
+      await expectNoSeriousA11yViolations(page);
     });
 
     test(`home (${locale})`, async ({ page }) => {
@@ -125,6 +144,14 @@ test.describe("L19 notice and accessibility", () => {
       await expectNoSeriousA11yViolations(page);
     });
   }
+
+  test("language link keeps the path and query, and switches back", async ({ page }) => {
+    await page.goto("/xac-minh-tuoi?next=%2Fruou-vang%3Ftype%3Dred");
+    await page.getByRole("link", { name: "English" }).click();
+    await expect(page).toHaveURL("/en/xac-minh-tuoi?next=%2Fruou-vang%3Ftype%3Dred");
+    await page.getByRole("link", { name: "Tiếng Việt" }).click();
+    await expect(page).toHaveURL("/xac-minh-tuoi?next=%2Fruou-vang%3Ftype%3Dred");
+  });
 
   test("gate with field errors (vi)", async ({ page }) => {
     await page.goto("/xac-minh-tuoi");

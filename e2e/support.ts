@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { type APIRequestContext, expect, type Page } from "@playwright/test";
 
 import { databaseName } from "./database";
+import { POLICY_PATHS, POLICY_SLUGS } from "../src/lib/policies";
 
 const isLocal = (url: URL) => url.hostname === "localhost" || url.hostname === "127.0.0.1";
 
@@ -62,4 +63,27 @@ export async function expectNoSeriousA11yViolations(page: Page, label?: string) 
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const blocking = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`), label).toEqual([]);
+  await expectNoHorizontalOverflow(page, label);
 }
+
+export async function expectNoHorizontalOverflow(page: Page, label?: string) {
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error("A viewport is required for the responsive check.");
+  await page.setViewportSize({ width: 360, height: viewport.height });
+  const { viewportWidth, documentWidth, bodyWidth, overflowing } = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    bodyWidth: document.body.scrollWidth,
+    overflowing: [...document.querySelectorAll("body *")]
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.right > document.documentElement.clientWidth + 1 || rect.left < -1;
+      })
+      .slice(0, 8)
+      .map((element) => ({ tag: element.tagName, id: element.id, className: typeof element.className === "string" ? element.className : "", text: element.textContent?.trim().slice(0, 50) })),
+  }));
+  expect({ documentWidth, bodyWidth }, `${label ?? "page"}: ${JSON.stringify({ viewportWidth, overflowing })}`).toEqual({ documentWidth: viewportWidth, bodyWidth: viewportWidth });
+  await page.setViewportSize(viewport);
+}
+
+export const POLICY_ROUTES = POLICY_SLUGS.map((slug) => ({ slug, path: POLICY_PATHS[slug] }));

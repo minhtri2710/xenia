@@ -174,7 +174,7 @@ for (const { locale, prefix } of LOCALES) {
     await expectNoSeriousA11yViolations(page, "cart");
 
     // Step 1.
-    await page.getByRole("link", { name: vi ? "Thanh toán" : "Check out" }).click();
+    await page.locator("#main-content").getByRole("link", { name: vi ? "Thanh toán" : "Check out" }).click();
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan`);
     await expectNotice(page);
     await expectNoSeriousA11yViolations(page, "step 1");

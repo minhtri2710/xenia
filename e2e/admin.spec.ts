@@ -40,9 +40,22 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/create-first-user/);
   await waitForFormReady(page);
+  const finalFormState = page.waitForResponse((response) => {
+    const request = response.request();
+    const body = request.postData() ?? "";
+    return request.method() === "POST" &&
+      new URL(request.url()).pathname === "/admin/create-first-user" &&
+      Boolean(request.headers()["next-action"]) &&
+      body.includes('"name":"form-state"') &&
+      body.includes(EMAIL) &&
+      body.split(PASSWORD).length - 1 === 2;
+  });
   await page.locator("#field-email").fill(EMAIL);
   await page.locator("#field-password").fill(PASSWORD);
   await page.locator("#field-confirm-password").fill(PASSWORD);
+  const formStateResponse = await finalFormState;
+  await formStateResponse.finished();
+  expect(formStateResponse.status(), "Payload form-state response").toBeLessThan(300);
   await submit(page, "/api/users/first-register");
   await page.waitForLoadState("networkidle");
 

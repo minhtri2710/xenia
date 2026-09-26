@@ -837,6 +837,24 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface SiteSetting {
   id: number;
+  owner: {
+    legalName: string;
+    headOffice: string;
+    legalRepresentative: string;
+    businessRegistration: {
+      number: string;
+      date: string;
+      place: string;
+    };
+    alcoholLicence: {
+      number: string;
+      issuer: string;
+      date: string;
+    };
+    contactEmail: string;
+    contactPhone: string;
+    notificationLink?: string | null;
+  };
   /**
    * Delivery zones, their flat fee (whole VND, VAT included) and lead days (the earliest delivery date is today + lead days).
    */
@@ -865,6 +883,30 @@ export interface SiteSetting {
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
+  owner?:
+    | T
+    | {
+        legalName?: T;
+        headOffice?: T;
+        legalRepresentative?: T;
+        businessRegistration?:
+          | T
+          | {
+              number?: T;
+              date?: T;
+              place?: T;
+            };
+        alcoholLicence?:
+          | T
+          | {
+              number?: T;
+              issuer?: T;
+              date?: T;
+            };
+        contactEmail?: T;
+        contactPhone?: T;
+        notificationLink?: T;
+      };
   zones?:
     | T
     | {

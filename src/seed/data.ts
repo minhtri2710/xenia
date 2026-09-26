@@ -42,6 +42,17 @@ export type SeedWine = {
 /** Fictional importer of record for every seeded vintage. */
 export const IMPORTER = "Công ty TNHH Xenia Nhập khẩu (dữ liệu mẫu)";
 
+export const SAMPLE_OWNER = {
+  legalName: "Xenia Sample Trading Company (SAMPLE DATA)",
+  headOffice: "Sample address, District 1, Ho Chi Minh City (SAMPLE DATA)",
+  legalRepresentative: "Sample Representative (SAMPLE DATA)",
+  businessRegistration: { number: "SAMPLE-BUSINESS-REGISTRATION", date: "2026-01-15", place: "Sample issuing authority (SAMPLE DATA)" },
+  alcoholLicence: { number: "SAMPLE-ALCOHOL-LICENCE", issuer: "Sample licensing authority (SAMPLE DATA)", date: "2026-02-15" },
+  contactEmail: "contact@example.test",
+  contactPhone: "+84 000 000 0000 (SAMPLE DATA)",
+  notificationLink: "",
+} as const;
+
 /** Placeholder flat delivery fees per zone (whole VND, VAT included) for the `site-settings` global. */
 export const ZONE_FEES = [
   { zone: "hcmc", feeVnd: 30_000, leadDays: 1 },

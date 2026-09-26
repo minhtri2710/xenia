@@ -15,6 +15,30 @@ body {
   color: var(--color-ink);
 }
 
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--color-wine);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  z-index: 50;
+  top: 0.5rem;
+  left: 0.5rem;
+  transform: translateY(-200%);
+  background: var(--color-ink);
+  color: var(--color-ivory);
+  padding: 0.75rem 1rem;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+#main-content:focus {
+  outline: none;
+}
+
 /* Gift service placeholders, drawn in CSS by code: no images, no uploads. */
 .packaging-swatch {
   display: block;

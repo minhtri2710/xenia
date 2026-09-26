@@ -9,7 +9,8 @@ import type { BasePayload, PayloadRequest } from "payload";
 
 import { type Checkout, newHandle, parseCheckout } from "./checkout";
 
-export const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+export const DRAFT_TTL_HOURS = 24;
+export const DRAFT_TTL_MS = DRAFT_TTL_HOURS * 60 * 60 * 1000;
 
 type Store = Pick<BasePayload, "find" | "create" | "update" | "delete">;
 

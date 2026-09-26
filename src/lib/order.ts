@@ -6,6 +6,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
 export const PAYMENT_METHODS = ["vietqr_mock", "card_mock"] as const;
+export const ORDER_RETENTION_YEARS = 3;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_STATUSES = ["unpaid", "failed", "paid"] as const;

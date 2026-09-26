@@ -18,8 +18,8 @@ function assertInteger(value: number, what: string, min: number) {
 }
 
 /**
- * The VAT contained in a VAT-inclusive amount at 10%: amount × 10 / 110, rounded to the nearest
- * whole VND. A tie cannot occur: amount / 11 is never a half for a whole amount.
+ * The VAT contained in a VAT-inclusive amount at VAT_RATE_PCT: amount × rate / (100 + rate),
+ * rounded to the nearest whole VND. A tie cannot occur for whole-VND amounts at this rate.
  */
 export function includedVat(amountVnd: number): number {
   assertInteger(amountVnd, "amount", 0);

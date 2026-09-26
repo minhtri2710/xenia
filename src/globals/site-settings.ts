@@ -3,11 +3,42 @@ import type { GlobalConfig } from "payload";
 import { wholeVnd } from "@/collections/orders";
 import { isIsoDate } from "@/lib/delivery";
 import { ZONES } from "@/lib/order";
+import { validateContactEmail, validateContactPhone, validateOptionalHttpsUrl, validateRequiredText, validateSettingsDate } from "@/lib/site-settings";
 
 export const SiteSettings: GlobalConfig = {
   slug: "site-settings",
   // Admin-only like the catalogue: the storefront reads it through the Local API.
   fields: [
+    {
+      name: "owner",
+      type: "group",
+      fields: [
+        { name: "legalName", type: "text", required: true, validate: validateRequiredText },
+        { name: "headOffice", type: "textarea", required: true, validate: validateRequiredText },
+        { name: "legalRepresentative", type: "text", required: true, validate: validateRequiredText },
+        {
+          name: "businessRegistration",
+          type: "group",
+          fields: [
+            { name: "number", type: "text", required: true, validate: validateRequiredText },
+            { name: "date", type: "text", required: true, validate: validateSettingsDate },
+            { name: "place", type: "text", required: true, validate: validateRequiredText },
+          ],
+        },
+        {
+          name: "alcoholLicence",
+          type: "group",
+          fields: [
+            { name: "number", type: "text", required: true, validate: validateRequiredText },
+            { name: "issuer", type: "text", required: true, validate: validateRequiredText },
+            { name: "date", type: "text", required: true, validate: validateSettingsDate },
+          ],
+        },
+        { name: "contactEmail", type: "text", required: true, validate: validateContactEmail },
+        { name: "contactPhone", type: "text", required: true, validate: validateContactPhone },
+        { name: "notificationLink", type: "text", validate: validateOptionalHttpsUrl },
+      ],
+    },
     {
       name: "zones",
       type: "array",

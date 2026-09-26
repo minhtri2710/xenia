@@ -7,7 +7,7 @@
 import { getPayload } from "payload";
 
 import config from "../payload.config";
-import { CARD_DESIGNS, IMPORTER, PACKAGING, producers, wines, ZONE_FEES } from "./data";
+import { CARD_DESIGNS, IMPORTER, PACKAGING, producers, SAMPLE_OWNER, wines, ZONE_FEES } from "./data";
 
 const payload = await getPayload({ config });
 
@@ -71,7 +71,7 @@ for (const c of CARD_DESIGNS) {
   await payload.update({ collection: "card-designs", id: doc.id, locale: "en", data: { name: c.name.en } });
 }
 
-await payload.updateGlobal({ slug: "site-settings", data: { zones: ZONE_FEES.map((z) => ({ ...z })), blackoutDates: [] } });
+await payload.updateGlobal({ slug: "site-settings", data: { owner: SAMPLE_OWNER, zones: ZONE_FEES.map((z) => ({ ...z })), blackoutDates: [] } });
 
 const counts = await Promise.all(
   (["producers", "wines", "vintages", "packaging", "card-designs"] as const).map(async (c) => `${c}=${(await payload.count({ collection: c })).totalDocs}`),

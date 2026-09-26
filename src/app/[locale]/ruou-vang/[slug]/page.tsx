@@ -16,7 +16,7 @@ const PROFILE_AXES = ["body", "tannin", "sweetness", "acidity"] as const;
 
 function Spec({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {
   return (
-    <div data-spec={id} className="grid grid-cols-[11rem_1fr] gap-4 border-b border-ink/10 py-2">
+    <div data-spec={id} className="grid grid-cols-[minmax(0,11rem)_minmax(0,1fr)] gap-4 border-b border-ink/10 py-2">
       <dt className="text-muted">{label}</dt>
       <dd>{children}</dd>
     </div>
@@ -198,7 +198,7 @@ export default async function WinePage({ params, searchParams }: Props) {
         <dl className="mt-2" data-testid="profile">
           {PROFILE_AXES.map((axis) => (
             <Spec key={axis} id={axis} label={t(`axes.${axis}`)}>
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-center gap-3">
                 <span aria-hidden="true" className="flex gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <span key={n} className={`h-2 w-5 ${n <= wine.profile[axis] ? "bg-wine" : "bg-ink/15"}`} />
