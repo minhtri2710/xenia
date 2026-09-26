@@ -60,7 +60,7 @@ async function releaseExpiredInTransaction(
     });
     for (const line of lines) {
       const vintageId = typeof line.vintage === "number" ? line.vintage : line.vintage?.id;
-      if (vintageId === undefined || vintageId === null) throw new Error(`Expired order ${order.id} has a line without a vintage.`);
+      if (vintageId === undefined || vintageId === null) continue;
       await payload.db.updateOne({
         collection: "vintages",
         id: vintageId,

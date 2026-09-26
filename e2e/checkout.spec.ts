@@ -1,6 +1,6 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, sql, vietnamDateYearsAgo } from "./support";
+import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, spawnPsqlTransaction, sql, vietnamDateYearsAgo } from "./support";
 
 // Every money value below is written by hand from `src/seed/data.ts` (vintage prices) and its
 // `ZONE_FEES` (HCMC 30 000, Hà Nội 45 000), never computed with `computeTotals` or the pages' code.
@@ -439,7 +439,7 @@ test("an unpaid order retains stock after failed payment, can be paid before due
 
   const concurrentPage = await newPage(browser);
   await declareAdult(concurrentPage, "/ruou-vang/colle-vento-rosso");
-  sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${secondId}`);
+  sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${secondId}`);
   const payment = await page.request.post(captured!.url, { headers: captured!.headers, data: captured!.body, maxRedirects: 0 });
   expect(payment.status()).toBe(200);
   expect(payment.headers()["x-action-redirect"]).toContain("payment=expired");
@@ -465,7 +465,7 @@ test("an unpaid order retains stock after failed payment, can be paid before due
     sql("CREATE TABLE expiry_claim_attempts (order_id integer NOT NULL)");
     sql(`CREATE FUNCTION record_expiry_claim() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF OLD.status = 'placed' AND NEW.status = 'expired' THEN INSERT INTO expiry_claim_attempts VALUES (NEW.id); PERFORM pg_sleep(8); END IF; RETURN NEW; END $$`);
     sql("CREATE TRIGGER record_expiry_claim BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION record_expiry_claim()");
-    sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${raceId}`);
+    sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${raceId}`);
     await Promise.all([page.goto("/ruou-vang/colle-vento-rosso"), concurrentPage.goto("/ruou-vang/colle-vento-rosso")]);
     expect(sql("SELECT count(*) FROM expiry_claim_attempts")).toBe("1");
     expect(sql(`SELECT status FROM orders WHERE id = ${raceId}`)).toBe("expired");
@@ -485,6 +485,219 @@ test("an unpaid order retains stock after failed payment, can be paid before due
   expect(reopen.ok(), `expired-order reopen ${reopen.status()}`).toBe(false);
   expect(sql(`SELECT status FROM orders WHERE id = ${secondId}`)).toBe("expired");
   expect(orderCount()).toBe(count + 3);
+});
+
+test("a release committing between the payment read and success update prevents payment and restocks once", async ({ page }) => {
+  const vintage = vintageId("colle-vento-rosso", 2021, 750);
+  sql(`UPDATE vintages SET stock = 1 WHERE id = ${vintage}`);
+  expect(stockOf(vintage)).toBe(1);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const token = await consentAndPlace(page, "");
+  const id = Number(sql(`SELECT id FROM orders WHERE token = '${token}'`));
+  expect(stockOf(vintage)).toBe(0);
+  expect(sql(`SELECT status || '/' || payment_status || '/' || (payment_due_at > NOW()) FROM orders WHERE id = ${id}`)).toBe("placed/unpaid/true");
+
+  const actionPath = `/don-hang/${token}`;
+  let paymentPost: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
+  await page.route(actionPath, async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST") return route.continue();
+    const headers = Object.fromEntries(Object.entries(await request.allHeaders()).filter(([key]) => !["host", "content-length", "cookie"].includes(key)));
+    paymentPost = { url: request.url(), headers, body: request.postDataBuffer()! };
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "Mô phỏng thanh toán thành công" }).click();
+  await expect.poll(() => paymentPost).toBeDefined();
+  await page.unroute(actionPath);
+
+  const holderApp = "xenia-r3-m6-release-holder";
+  const holder = spawnPsqlTransaction(
+    `DO $$ BEGIN UPDATE orders SET status = 'expired', updated_at = NOW() WHERE id = ${id} AND status = 'placed' AND payment_status <> 'paid'; IF NOT FOUND THEN RAISE EXCEPTION 'expected an unpaid placed order'; END IF; UPDATE vintages v SET stock = v.stock + l.qty FROM orders_lines l WHERE l._parent_id = ${id} AND v.id = l.vintage_id; PERFORM pg_sleep(5); END $$;`,
+    holderApp,
+  );
+  let paymentResponse: ReturnType<typeof page.request.post> | undefined;
+  let holderExit: Awaited<typeof holder.exited> | undefined;
+  try {
+    const holderPidQuery = `SELECT pid FROM pg_stat_activity WHERE application_name = '${holderApp}' AND state = 'active' AND query LIKE '%UPDATE orders%' AND query LIKE '%pg_sleep(5)%'`;
+    await expect.poll(() => sql(holderPidQuery), { timeout: 8_000, intervals: [100, 200] }).toMatch(/^[1-9][0-9]*$/);
+    const holderPid = Number(sql(holderPidQuery));
+    expect(sql(`SELECT count(*) FROM pg_locks WHERE pid = ${holderPid} AND relation = 'orders'::regclass AND mode = 'RowExclusiveLock' AND granted`)).toBe("1");
+    expect(sql(`SELECT count(*) FROM pg_locks WHERE pid = ${holderPid} AND locktype = 'transactionid' AND granted`)).toBe("1");
+    expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("placed/unpaid");
+
+    paymentResponse = page.request.post(paymentPost!.url, { headers: paymentPost!.headers, data: paymentPost!.body, maxRedirects: 0 });
+    await expect.poll(
+      () => sql(`SELECT count(*) FROM pg_stat_activity WHERE ${holderPid} = ANY(pg_blocking_pids(pid)) AND query LIKE '%UPDATE orders%' AND wait_event_type = 'Lock'`),
+      { timeout: 4_000, intervals: [50, 100, 150] },
+    ).toBe("1");
+  } finally {
+    holderExit = await holder.exited;
+  }
+  expect(holderExit?.error).toBeUndefined();
+  expect(holderExit?.code).toBe(0);
+  const payment = await paymentResponse!;
+  expect(payment.status()).toBe(200);
+  expect(payment.headers()["x-action-redirect"]).toContain("payment=expired");
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("expired/unpaid");
+  expect(stockOf(vintage)).toBe(1);
+  sql(`UPDATE vintages SET stock = 40 WHERE id = ${vintage}`);
+});
+
+test("the first cart read after a due order releases stock before cart normalization", async ({ page }) => {
+  const vintage = vintageId("colle-vento-rosso", 2021, 750);
+  sql(`UPDATE vintages SET stock = 1 WHERE id = ${vintage}`);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const token = await consentAndPlace(page, "");
+  const id = Number(sql(`SELECT id FROM orders WHERE token = '${token}'`));
+  expect(stockOf(vintage)).toBe(0);
+
+  await page.context().addCookies([{
+    name: "xenia_cart",
+    value: encodeURIComponent(JSON.stringify([{ v: vintage, q: 1 }])),
+    url: test.info().project.use.baseURL!,
+    httpOnly: true,
+    sameSite: "Lax",
+  }]);
+  sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${id}`);
+  await page.goto("/gio-hang");
+
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("expired/unpaid");
+  expect(stockOf(vintage)).toBe(1);
+  const line = page.locator(`[data-vintage="${vintage}"]`);
+  await expect(line).toBeVisible();
+  await expect(line.locator("input[name=qty]")).toHaveAttribute("max", "1");
+  await expect(line).toContainText("Colle del Vento Rosso");
+  expect(await digits(page, '[data-testid="cart-goods"]')).toBe(720_000);
+  sql(`UPDATE vintages SET stock = 40 WHERE id = ${vintage}`);
+});
+
+test("placement releases a due order before checking the buyer's last bottle", async ({ page, browser }) => {
+  const vintage = vintageId("colle-vento-rosso", 2021, 750);
+  const holder = await newPage(browser);
+  try {
+    sql(`UPDATE vintages SET stock = 1 WHERE id = ${vintage}`);
+    await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+    await addToCart(page, "", "colle-vento-rosso");
+    await toReview(page, "", "hcmc");
+    expect(stockOf(vintage)).toBe(1);
+
+    await declareAdult(holder, "/ruou-vang/colle-vento-rosso");
+    await addToCart(holder, "", "colle-vento-rosso");
+    await toReview(holder, "", "hcmc");
+    const holdingToken = await consentAndPlace(holder, "");
+    const holdingId = Number(sql(`SELECT id FROM orders WHERE token = '${holdingToken}'`));
+    expect(stockOf(vintage)).toBe(0);
+
+    const before = orderCount();
+    const buyerKey = await page.locator("input[name=clientKey]").inputValue();
+    const { replay } = await capturePlacePost(page);
+    sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${holdingId}`);
+    const placement = await replay();
+    expect(placement.status()).toBe(200);
+    const buyerToken = sql(`SELECT token FROM orders WHERE client_key = '${buyerKey}'`);
+    expect(buyerToken, "buyer B's reviewed order must be placed after stock release").toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(placement.headers()["x-action-redirect"]).toContain(`/don-hang/${buyerToken}`);
+    const buyerId = Number(sql(`SELECT id FROM orders WHERE token = '${buyerToken}'`));
+    expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${holdingId}`)).toBe("expired/unpaid");
+    expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${buyerId}`)).toBe("placed/unpaid");
+    expect(orderCount()).toBe(before + 1);
+    expect(stockOf(vintage)).toBe(0);
+  } finally {
+    sql(`UPDATE vintages SET stock = 39 WHERE id = ${vintage}`);
+    await holder.context().close();
+  }
+});
+
+test("a due order with a deleted vintage releases its remaining lines on the catalogue read", async ({ page }) => {
+  const seededVintage = vintageId("colle-vento-rosso", 2021, 750);
+  const slug = `r3-deleted-vintage-${Date.now()}`;
+  let wineId: number | undefined;
+  let vintageIdToDelete: number | undefined;
+  const admin = page.request;
+
+  sql(`UPDATE vintages SET stock = 1 WHERE id = ${seededVintage}`);
+  sql("TRUNCATE users CASCADE");
+  try {
+    const registration = await admin.post("/api/users/first-register", {
+      data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD },
+    });
+    expect(registration.ok(), `admin registration ${registration.status()}`).toBe(true);
+    const login = await admin.post("/api/users/login", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } });
+    expect(login.ok(), `admin login ${login.status()}`).toBe(true);
+
+    const producer = Number(sql("SELECT id FROM producers WHERE name = 'Tenuta Colle del Vento'"));
+    const wineResponse = await admin.post("/api/wines?locale=vi", {
+      data: {
+        slug,
+        producer,
+        name: "Rượu kiểm thử R3",
+        type: "red",
+        country: "IT",
+        region: "Tuscany",
+        grapes: [{ grape: "Sangiovese", pct: 100 }],
+        tasting: { nose: "Mùi kiểm thử.", palate: "Vị kiểm thử.", finish: "Dư vị kiểm thử." },
+        profile: { body: 3, tannin: 3, sweetness: 1, acidity: 3 },
+        pairings: ["beef"],
+        servingTempC: 16,
+        occasions: ["dinner"],
+        status: "published",
+      },
+    });
+    expect(wineResponse.ok(), `test wine creation ${wineResponse.status()}`).toBe(true);
+    wineId = (await wineResponse.json()).doc.id;
+    const translation = await admin.patch(`/api/wines/${wineId}?locale=en`, {
+      data: { name: "R3 Test Wine", tasting: { nose: "Test nose.", palate: "Test palate.", finish: "Test finish." } },
+    });
+    expect(translation.ok(), `test wine translation ${translation.status()}`).toBe(true);
+
+    const createdVintage = await admin.post("/api/vintages", {
+      data: {
+        wine: wineId,
+        year: 2020,
+        bottleMl: "750",
+        abvPct: 13,
+        priceVnd: 700_000,
+        stock: 1,
+        importer: "R3 test data",
+        status: "published",
+      },
+    });
+    expect(createdVintage.ok(), `test vintage creation ${createdVintage.status()}`).toBe(true);
+    vintageIdToDelete = (await createdVintage.json()).doc.id;
+
+    await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+    await addToCart(page, "", "colle-vento-rosso");
+    await addToCart(page, "", slug);
+    await toReview(page, "", "hcmc");
+    const token = await consentAndPlace(page, "");
+    const id = Number(sql(`SELECT id FROM orders WHERE token = '${token}'`));
+    expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("placed/unpaid");
+    expect(stockOf(seededVintage)).toBe(0);
+    expect(stockOf(vintageIdToDelete!)).toBe(0);
+
+    const deletion = await admin.delete(`/api/vintages/${vintageIdToDelete}`);
+    expect(deletion.ok(), `test vintage deletion ${deletion.status()}`).toBe(true);
+    vintageIdToDelete = undefined;
+    expect(sql(`SELECT count(*) FROM orders_lines WHERE _parent_id = ${id} AND vintage_id IS NULL`)).toBe("1");
+    sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${id}`);
+
+    const catalogue = await page.goto("/ruou-vang");
+    expect(catalogue?.status()).toBe(200);
+    expect(sql(`SELECT status FROM orders WHERE id = ${id}`)).toBe("expired");
+    expect(stockOf(seededVintage)).toBe(1);
+    const secondCatalogue = await page.goto("/ruou-vang");
+    expect(secondCatalogue?.status()).toBe(200);
+    expect(stockOf(seededVintage)).toBe(1);
+  } finally {
+    if (vintageIdToDelete !== undefined) await admin.delete(`/api/vintages/${vintageIdToDelete}`);
+    if (wineId !== undefined) await admin.delete(`/api/wines/${wineId}`);
+    sql(`UPDATE vintages SET stock = 40 WHERE id = ${seededVintage}`);
+    sql("TRUNCATE users CASCADE");
+  }
 });
 
 test("a quantity above stock at placement is refused with a field error", async ({ page }) => {
@@ -844,9 +1057,11 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   const expireAttempt = await admin.patch(`/api/orders/${id}`, { data: { status: "expired" } });
   expect(expireAttempt.ok(), `admin PATCH expired ${expireAttempt.status()}`).toBe(false);
   expect(sql(`SELECT status FROM orders WHERE id = ${id}`)).toBe("placed");
-  const patch = await admin.patch(`/api/orders/${id}`, { data: { status: "packed", totals: { totalVnd: 1 } } });
+  const originalDueAt = sql(`SELECT payment_due_at::text FROM orders WHERE id = ${id}`);
+  const patch = await admin.patch(`/api/orders/${id}`, { data: { status: "packed", paymentDueAt: "2000-01-01T00:00:00.000Z", totals: { totalVnd: 1 } } });
   expect(patch.ok(), `admin PATCH ${patch.status()}`).toBe(true);
   expect(sql(`SELECT status || '|' || totals_total_vnd FROM orders WHERE id = ${id}`)).toBe("packed|750000");
+  expect(sql(`SELECT payment_due_at::text FROM orders WHERE id = ${id}`)).toBe(originalDueAt);
   const packedDelete = await admin.delete(`/api/orders/${id}`);
   expect(packedDelete.ok(), `admin DELETE packed ${packedDelete.status()}`).toBe(false);
   expect(orderCount()).toBe(count);
@@ -857,7 +1072,7 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   const expiredId = Number(sql(`SELECT id FROM orders WHERE token = '${expiredToken}'`));
   const expiredNumber = sql(`SELECT number FROM orders WHERE id = ${expiredId}`);
   expect((await admin.get(`/api/orders/${expiredId}`)).ok()).toBe(true);
-  sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${expiredId}`);
+  sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${expiredId}`);
   await page.goto(`/don-hang/${expiredToken}`);
   await expect(page.getByTestId("order-status")).toHaveText("Hết hạn thanh toán");
   expect(sql(`SELECT status FROM orders WHERE id = ${expiredId}`)).toBe("expired");

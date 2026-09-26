@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 
 import AxeBuilder from "@axe-core/playwright";
 import { type APIRequestContext, expect, type Page } from "@playwright/test";
@@ -33,6 +33,18 @@ export async function blockThirdParty(page: Page): Promise<string[]> {
 /** Runs one SQL statement in the e2e database and returns its unaligned, tuples-only output. */
 export function sql(query: string): string {
   return execFileSync("docker", ["exec", "xenia-dev-postgres", "psql", "-U", "xenia", "-d", databaseName(), "-tAc", query], { encoding: "utf8" }).trim();
+}
+
+export function spawnPsqlTransaction(statement: string, applicationName: string): { child: ChildProcess; exited: Promise<{ code: number | null; signal: NodeJS.Signals | null; error?: Error }> } {
+  const child = spawn("docker", [
+    "exec", "xenia-dev-postgres", "psql", "-X", "-qAt", "-U", "xenia", "-d", databaseName(),
+    "-v", "ON_ERROR_STOP=1", "-c", `SET application_name = '${applicationName}'; ${statement}`,
+  ], { stdio: "ignore" });
+  const exited = new Promise<{ code: number | null; signal: NodeJS.Signals | null; error?: Error }>((resolve) => {
+    child.once("error", (error) => resolve({ code: null, signal: null, error }));
+    child.once("exit", (code, signal) => resolve({ code, signal }));
+  });
+  return { child, exited };
 }
 
 /** The hand-independent vintage → localized wine title oracle for an admin list locale. */
