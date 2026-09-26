@@ -96,6 +96,15 @@ for (const { locale, prefix, draft } of LOCALES) {
       expect(external).toEqual([]);
     });
 
+    test("an unknown policy slug returns the localized not-found page", async ({ page }) => {
+      const context = page.context();
+      await context.addCookies([{ name: "xenia_age_ok", value: "1", url: "http://localhost:3417", httpOnly: true, sameSite: "Lax" }]);
+      const response = await page.goto(`${prefix}/chinh-sach/not-a-policy`);
+      expect(response?.status()).toBe(404);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(locale === "en" ? "Page not found" : "Không tìm thấy trang");
+      await expect(page.locator("main")).not.toContainText("xac-minh-tuoi");
+    });
+
     test("policy delivery fees read the current settings on each request", async ({ page }) => {
       const external = await blockThirdParty(page);
       await enterAdult(page, prefix, "/chinh-sach/gia");

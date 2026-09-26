@@ -235,6 +235,8 @@ for (const { locale, prefix } of LOCALES) {
 
     // Status page before payment; stock is reserved at placement.
     await expect(page.getByTestId("order-status")).toHaveText(vi ? "Đã đặt, chờ thanh toán" : "Placed, awaiting payment");
+    await expect(page.locator('head meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+    await expect(page.locator('head meta[name="referrer"]')).toHaveAttribute("content", "no-referrer");
     expect(stockOf(lune)).toBe(luneStock - 2);
     expect(stockOf(colle)).toBe(colleStock - 1);
     const methods = page.locator("input[name=method]");
@@ -1233,6 +1235,40 @@ for (const { locale, prefix } of LOCALES) {
     expect(external).toEqual([]);
   });
 }
+
+test("changing delivery mode clears step 3 gift choices while resubmitting the same mode keeps them", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/lune-grise-rouge");
+  await addToCart(page, "", "lune-grise-rouge");
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+  await submitGiftDelivery(page, "", "hcmc");
+  await submitGiftOptions(page, "", { packaging: "box-2" });
+
+  // Re-saving the existing gift delivery mode keeps every non-default step 3 choice.
+  await page.getByRole("link", { name: "Sửa giao hàng" }).click();
+  await submitGiftDelivery(page, "", "hcmc");
+  await expect(page.locator('input[name=packaging][value="box-2"]')).toBeChecked();
+  await expect(page.locator('input[name=card][value="tet"]')).toBeChecked();
+  await expect(page.locator("#gift-message")).toHaveValue(MESSAGE);
+  await expect(page.locator("#gift-sender")).toHaveValue("Nguyễn Văn An");
+  await expect(page.locator('input[name=hidePrices]')).toBeChecked();
+  await submitGift(page, "");
+
+  // Switching to self clears gift-only choices and resets packaging to the self-mode default.
+  await page.getByRole("link", { name: "Sửa giao hàng" }).click();
+  await page.locator('input[name=mode][value="self"]').check();
+  await page.locator("form button[type=submit]").click();
+  const handle = (await page.context().cookies()).find((cookie) => cookie.name === "xenia_checkout")!.value;
+  expect(sql(`SELECT concat_ws('|', gift_saved::text, coalesce(gift_packaging, 'null'), coalesce(gift_card, 'null'), coalesce(gift_message, ''), coalesce(gift_sender, 'null'), coalesce(gift_hide_prices::text, 'null')) FROM checkout_drafts WHERE handle = '${handle}' AND delivery_mode = 'self'`)).toBe("false|null|null||null|null");
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
+  await expect(page.locator('input[name=packaging][value="none"]')).toBeChecked();
+  for (const name of ["card", "message", "sender", "anonymous", "hidePrices"]) await expect(page.locator(`[name=${name}]`)).toHaveCount(0);
+  await submitGift(page, "");
+  await expect(page.getByTestId("review-gift")).toHaveCount(0);
+  await expect(page.getByTestId("review-wrap")).toContainText("Không gói quà");
+});
 
 test("the checkout cookie holds only the draft handle, HttpOnly, SameSite=Lax, path /", async ({ page }) => {
   await declareAdult(page, "/ruou-vang/colle-vento-rosso");
