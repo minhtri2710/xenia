@@ -1,6 +1,10 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { POLICY_ROUTES, blockThirdParty, expectNoSeriousA11yViolations, sql, vietnamDateYearsAgo } from "./support";
+import { POLICY_ROUTES, blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, sql, vietnamDateYearsAgo } from "./support";
+
+test.beforeAll(async ({ request }) => {
+  await seedCatalogue(request);
+});
 
 const LOCALES = [
   { locale: "vi", prefix: "", draft: "Bản dự thảo trước khi khai trương" },
@@ -54,6 +58,7 @@ for (const { locale, prefix, draft } of LOCALES) {
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "pending legal review" : "đang chờ luật sư rà soát");
         }
         if (slug === "dieu-khoan") {
+          await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Current age threshold: 18+." : "Ngưỡng tuổi hiện tại: 18+.");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Current order retention period: 3 years." : "Thời hạn lưu giữ đơn hàng hiện tại: 3 năm.");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Cash on delivery" : "tiền mặt khi nhận hàng");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "shows ID" : "xuất trình giấy tờ");
@@ -159,7 +164,9 @@ for (const { locale, prefix } of LOCALES) {
     await page.locator("form button[type=submit]").click();
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan`);
 
-    const consent = page.getByRole("link", { name: prefix ? "privacy policy" : "chính sách bảo mật" });
+    const termsConsent = page.locator("#main-content").getByRole("link", { name: prefix ? "terms of sale" : "điều khoản mua bán" });
+    await expect(termsConsent).toHaveAttribute("href", `${prefix}/chinh-sach/dieu-khoan`);
+    const consent = page.locator("#main-content").getByRole("link", { name: prefix ? "privacy policy" : "chính sách bảo mật" });
     await expect(consent).toHaveAttribute("href", `${prefix}/chinh-sach/bao-mat`);
     await consent.click();
     await expect(page.getByTestId("policy-page")).toHaveAttribute("data-policy", "bao-mat");

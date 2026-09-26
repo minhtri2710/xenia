@@ -4,12 +4,13 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { Link } from "@/i18n/navigation";
+import { policyPath } from "@/lib/policies";
 
 import { type ReviewState, submitOrder } from "../actions";
 
 const CONSENTS = [
-  { name: "terms", href: "/chinh-sach/dieu-khoan" },
-  { name: "privacy", href: "/chinh-sach/bao-mat" },
+  { name: "terms", slug: "dieu-khoan" },
+  { name: "privacy", slug: "bao-mat" },
 ] as const;
 
 export function ReviewForm({
@@ -48,7 +49,7 @@ export function ReviewForm({
           {t("expired")}
         </p>
       )}
-      {CONSENTS.map(({ name, href }) => (
+      {CONSENTS.map(({ name, slug }) => (
         <div key={name}>
           <label className="flex items-start gap-3">
             <input
@@ -62,7 +63,7 @@ export function ReviewForm({
             <span>
               {t.rich(`consent.${name}`, {
                 link: (chunks) => (
-                  <Link href={href} className="text-wine underline underline-offset-4">
+                  <Link href={policyPath(slug)} className="text-wine underline underline-offset-4">
                     {chunks}
                   </Link>
                 ),

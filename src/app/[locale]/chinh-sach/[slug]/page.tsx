@@ -10,7 +10,7 @@ import { MAX_MESSAGE_CODE_POINTS } from "@/lib/gift";
 import { CART_COOKIE } from "@/lib/cart";
 import { DRAFT_TTL_HOURS } from "@/lib/checkout-drafts";
 import { ORDER_RETENTION_YEARS, PAYMENT_METHODS } from "@/lib/order";
-import { POLICY_PATHS, isPolicySlug } from "@/lib/policies";
+import { isPolicySlug, policyPath } from "@/lib/policies";
 import { VAT_RATE_PCT, VND_FORMAT } from "@/lib/order-totals";
 import { CHECKOUT_COOKIE } from "@/lib/checkout";
 import { loadSiteSettings } from "@/lib/shop-data";
@@ -85,7 +85,7 @@ export default async function PolicyPage({ params }: Props) {
       content = <>
         {factList(sections.parties, [copy("termsParties"), copy("ageFact", { age: LEGAL_AGE }), copy("cookieAge", { name: AGE_COOKIE })])}
         {factList(sections.order, [copy("termsOrder")])}
-        {factList(sections.delivery, [copy("termsDelivery", { age: LEGAL_AGE })])}
+        {factList(sections.delivery, [copy("termsDelivery")])}
         {factList(sections.payment, [copy("termsPayment"), copy("paymentList", { methods }), copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}
         {factList(sections.retention, [copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}
         {factList(sections.pending, [copy("termsPending")])}
@@ -124,7 +124,7 @@ export default async function PolicyPage({ params }: Props) {
       content = <>
         {factList(sections.method, [copy("shippingMethod"), copy("geoLimit"), ...zones.map((zone) => copy("deliveryFact", zone))])}
         {factList(sections.timing, [copy("horizonFact", { days: HORIZON_DAYS }), copy("windowFact", { windows }), copy("draftFact", { hours: DRAFT_TTL_HOURS })])}
-        {factList(sections.age, [copy("deliveryAge", { age: LEGAL_AGE })])}
+        {factList(sections.age, [copy("deliveryAge")])}
         {factList(sections.inspection, [copy("inspection")])}
       </>;
       break;
@@ -145,7 +145,7 @@ export default async function PolicyPage({ params }: Props) {
       <p className="mt-4 text-lg text-muted">{p("intro")}</p>
       {content}
       <p className="mt-8 text-sm text-wine">{t("pending")}</p>
-      <p className="mt-4"><LocalizedLink href={POLICY_PATHS["thong-tin-doanh-nghiep"]} className="text-wine underline underline-offset-4">{t("links.thong-tin-doanh-nghiep")}</LocalizedLink></p>
+      <p className="mt-4"><LocalizedLink href={policyPath("thong-tin-doanh-nghiep")} className="text-wine underline underline-offset-4">{t("links.thong-tin-doanh-nghiep")}</LocalizedLink></p>
     </article>
   );
 }

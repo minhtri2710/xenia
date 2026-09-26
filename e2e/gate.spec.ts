@@ -1,6 +1,10 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { expectNoSeriousA11yViolations, POLICY_ROUTES, vietnamDateYearsAgo } from "./support";
+import { expectNoSeriousA11yViolations, POLICY_ROUTES, seedCatalogue, vietnamDateYearsAgo } from "./support";
+
+test.beforeAll(async ({ request }) => {
+  await seedCatalogue(request);
+});
 
 const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
 const EN_TRANSLATION = "No sale of alcohol or beer to anyone under 18";
@@ -115,7 +119,11 @@ test.describe("L19 notice and accessibility", () => {
           await expect(page.locator("footer strong[lang=vi]")).toContainText(LEGAL_NOTICE);
         }
         await expect(page.getByTestId("footer-owner")).toBeVisible();
-        await expect(page.getByRole("navigation", { name: locale === "en" ? "Policies" : "Chính sách" }).getByRole("link")).toHaveCount(POLICY_ROUTES.length);
+        const policyLinks = page.getByRole("navigation", { name: locale === "en" ? "Policies" : "Chính sách" }).getByRole("link");
+        await expect(policyLinks).toHaveCount(POLICY_ROUTES.length);
+        for (const [index, route] of POLICY_ROUTES.entries()) {
+          await expect(policyLinks.nth(index)).toHaveAttribute("href", `${prefix}${route.path}`);
+        }
         await expect(page.getByTestId("footer-owner")).toContainText("Xenia Sample Trading Company");
         await expectNoSeriousA11yViolations(page);
       }

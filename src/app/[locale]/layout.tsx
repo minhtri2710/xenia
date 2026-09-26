@@ -12,7 +12,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { POLICY_PATHS, POLICY_SLUGS } from "@/lib/policies";
+import { POLICY_SLUGS, policyPath } from "@/lib/policies";
 import { loadSiteSettings } from "@/lib/shop-data";
 
 import { LanguageLink } from "./language-link";
@@ -64,7 +64,7 @@ async function SiteFooter() {
         <nav aria-labelledby="footer-policies">
           <h2 id="footer-policies" className="font-display text-xl font-semibold">{t("policies")}</h2>
           <ul className="mt-3 grid gap-2">
-            {POLICY_SLUGS.map((slug) => <li key={slug}><Link className="text-wine underline underline-offset-4" href={POLICY_PATHS[slug]}>{p(slug)}</Link></li>)}
+            {POLICY_SLUGS.map((slug) => <li key={slug}><Link className="text-wine underline underline-offset-4" href={policyPath(slug)}>{p(slug)}</Link></li>)}
           </ul>
         </nav>
       </div>
