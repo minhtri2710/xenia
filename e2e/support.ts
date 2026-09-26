@@ -41,7 +41,7 @@ export function sql(query: string): string {
  */
 export async function seedCatalogue(request: APIRequestContext) {
   expect((await request.get("/api/users/init")).ok()).toBe(true);
-  execFileSync("pnpm", ["-s", "seed"], { stdio: "inherit" });
+  execFileSync("pnpm", ["seed"], { stdio: "inherit" });
 }
 
 /** An ISO date `yearsAgo` years before today's Vietnamese calendar date. */
