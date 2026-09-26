@@ -430,19 +430,22 @@ test("an unpaid order retains stock after failed payment, can be paid before due
   await expect.poll(() => captured).toBeDefined();
   await page.unroute(actionPath);
 
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const futureToken = await consentAndPlace(page, "");
+  const futureId = Number(sql(`SELECT id FROM orders WHERE token = '${futureToken}'`));
+  expect(sql(`SELECT status || '/' || payment_status || '/' || (payment_due_at > NOW()) FROM orders WHERE id = ${futureId}`)).toBe("placed/unpaid/true");
+  expect(stockOf(vintage)).toBe(originalStock - 3);
+
   const concurrentPage = await newPage(browser);
   await declareAdult(concurrentPage, "/ruou-vang/colle-vento-rosso");
-  sql("CREATE TABLE expiry_claim_attempts (order_id integer NOT NULL)");
-  sql(`CREATE FUNCTION record_expiry_claim() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF OLD.status = 'placed' AND NEW.status = 'expired' THEN INSERT INTO expiry_claim_attempts VALUES (NEW.id); PERFORM pg_sleep(8); END IF; RETURN NEW; END $$`);
-  sql("CREATE TRIGGER record_expiry_claim BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION record_expiry_claim()");
   sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${secondId}`);
-  await Promise.all([page.goto("/ruou-vang/colle-vento-rosso"), concurrentPage.goto("/ruou-vang/colle-vento-rosso")]);
-  expect(sql("SELECT count(*) FROM expiry_claim_attempts")).toBe("1");
-  sql("DROP TRIGGER record_expiry_claim ON orders");
-  sql("DROP FUNCTION record_expiry_claim()");
-  sql("DROP TABLE expiry_claim_attempts");
-  expect(sql(`SELECT status FROM orders WHERE id = ${secondId}`)).toBe("expired");
-  expect(stockOf(vintage)).toBe(originalStock - 1);
+  const payment = await page.request.post(captured!.url, { headers: captured!.headers, data: captured!.body, maxRedirects: 0 });
+  expect(payment.status()).toBe(200);
+  expect(payment.headers()["x-action-redirect"]).toContain("payment=expired");
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${secondId}`)).toBe("expired/unpaid");
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${futureId}`)).toBe("placed/unpaid");
+  expect(stockOf(vintage)).toBe(originalStock - 2);
 
   await page.goto(actionPath);
   await expect(page.getByTestId("order-status")).toHaveText("Hết hạn thanh toán");
@@ -450,14 +453,28 @@ test("an unpaid order retains stock after failed payment, can be paid before due
   await expect(page.locator("input[name=method]")).toHaveCount(0);
   await expect(page.locator("form[action]")).toHaveCount(0);
 
-  const payment = await page.request.post(captured!.url, { headers: captured!.headers, data: captured!.body, maxRedirects: 0 });
-  expect(payment.status()).toBe(200);
-  expect(payment.headers()["x-action-redirect"]).toContain("payment=expired");
-  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${secondId}`)).toBe("expired/unpaid");
-
-  await page.goto("/ruou-vang/colle-vento-rosso");
-  expect(stockOf(vintage)).toBe(originalStock - 1);
   expect(sql(`SELECT count(*) FROM orders WHERE id = ${secondId}`)).toBe("1");
+
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const raceToken = await consentAndPlace(page, "");
+  const raceId = Number(sql(`SELECT id FROM orders WHERE token = '${raceToken}'`));
+  expect(stockOf(vintage)).toBe(originalStock - 3);
+
+  try {
+    sql("CREATE TABLE expiry_claim_attempts (order_id integer NOT NULL)");
+    sql(`CREATE FUNCTION record_expiry_claim() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF OLD.status = 'placed' AND NEW.status = 'expired' THEN INSERT INTO expiry_claim_attempts VALUES (NEW.id); PERFORM pg_sleep(8); END IF; RETURN NEW; END $$`);
+    sql("CREATE TRIGGER record_expiry_claim BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION record_expiry_claim()");
+    sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${raceId}`);
+    await Promise.all([page.goto("/ruou-vang/colle-vento-rosso"), concurrentPage.goto("/ruou-vang/colle-vento-rosso")]);
+    expect(sql("SELECT count(*) FROM expiry_claim_attempts")).toBe("1");
+    expect(sql(`SELECT status FROM orders WHERE id = ${raceId}`)).toBe("expired");
+    expect(stockOf(vintage)).toBe(originalStock - 2);
+  } finally {
+    sql("DROP TRIGGER IF EXISTS record_expiry_claim ON orders");
+    sql("DROP FUNCTION IF EXISTS record_expiry_claim()");
+    sql("DROP TABLE IF EXISTS expiry_claim_attempts");
+  }
   sql("TRUNCATE users CASCADE");
   const admin = page.request;
   expect((await admin.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } })).ok()).toBe(true);
@@ -467,7 +484,7 @@ test("an unpaid order retains stock after failed payment, can be paid before due
   const reopen = await admin.patch(`/api/orders/${secondId}`, { data: { status: "packed" } });
   expect(reopen.ok(), `expired-order reopen ${reopen.status()}`).toBe(false);
   expect(sql(`SELECT status FROM orders WHERE id = ${secondId}`)).toBe("expired");
-  expect(orderCount()).toBe(count + 1);
+  expect(orderCount()).toBe(count + 3);
 });
 
 test("a quantity above stock at placement is refused with a field error", async ({ page }) => {
@@ -825,8 +842,7 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   expect(adminDelete.ok(), `admin DELETE ${adminDelete.status()}`).toBe(false);
   expect(orderCount()).toBe(count);
   const expireAttempt = await admin.patch(`/api/orders/${id}`, { data: { status: "expired" } });
-  expect(expireAttempt.ok(), `admin PATCH expired ${expireAttempt.status()}`).toBe(true);
-  expect((await expireAttempt.json()).doc.status).toBe("placed");
+  expect(expireAttempt.ok(), `admin PATCH expired ${expireAttempt.status()}`).toBe(false);
   expect(sql(`SELECT status FROM orders WHERE id = ${id}`)).toBe("placed");
   const patch = await admin.patch(`/api/orders/${id}`, { data: { status: "packed", totals: { totalVnd: 1 } } });
   expect(patch.ok(), `admin PATCH ${patch.status()}`).toBe(true);
@@ -834,6 +850,27 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   const packedDelete = await admin.delete(`/api/orders/${id}`);
   expect(packedDelete.ok(), `admin DELETE packed ${packedDelete.status()}`).toBe(false);
   expect(orderCount()).toBe(count);
+
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const expiredToken = await consentAndPlace(page, "");
+  const expiredId = Number(sql(`SELECT id FROM orders WHERE token = '${expiredToken}'`));
+  const expiredNumber = sql(`SELECT number FROM orders WHERE id = ${expiredId}`);
+  expect((await admin.get(`/api/orders/${expiredId}`)).ok()).toBe(true);
+  sql(`UPDATE orders SET payment_due_at = NOW() - INTERVAL '1 millisecond' WHERE id = ${expiredId}`);
+  await page.goto(`/don-hang/${expiredToken}`);
+  await expect(page.getByTestId("order-status")).toHaveText("Hết hạn thanh toán");
+  expect(sql(`SELECT status FROM orders WHERE id = ${expiredId}`)).toBe("expired");
+  const reopenExpired = await admin.patch(`/api/orders/${expiredId}`, { data: { status: "packed" } });
+  expect(reopenExpired.ok(), `expired order PATCH ${reopenExpired.status()}`).toBe(false);
+  expect(sql(`SELECT status FROM orders WHERE id = ${expiredId}`)).toBe("expired");
+
+  await page.goto("/admin/collections/orders");
+  const expiredRow = page.locator(".collection-list tbody tr").filter({ hasText: expiredNumber });
+  await expect(expiredRow).toContainText("expired");
+  await page.goto(`/admin/collections/orders/${expiredId}`);
+  await expect(page.locator('form[data-form-ready="true"]')).toBeVisible({ timeout: 90_000 });
+  await expect(page.locator("#field-status")).toContainText("expired");
 
   const external = await blockThirdParty(page);
   await page.goto("/admin/collections/orders");

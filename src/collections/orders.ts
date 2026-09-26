@@ -1,11 +1,11 @@
-import type { CollectionConfig, Field, FieldAccess, Validate } from "payload";
+import type { CollectionConfig, Field, FieldAccess, Option, Validate } from "payload";
 
 import { MAX_NAME_LENGTH } from "@/lib/age";
 import { MAX_ADDRESS_LENGTH, MAX_EMAIL_LENGTH } from "@/lib/buyer";
 import { BOTTLE_SIZES } from "@/lib/catalogue";
 import { DELIVERY_MODES, DELIVERY_WINDOWS } from "@/lib/delivery";
 import { MAX_MESSAGE_CODE_POINTS } from "@/lib/gift";
-import { ADMIN_ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, ZONES } from "@/lib/order";
+import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, ZONES } from "@/lib/order";
 
 // Access: like the catalogue, Payload's default applies (every operation needs an authenticated
 // admin) with two narrowings. Nobody creates an order over `/api` or in the admin: placement is a
@@ -13,7 +13,6 @@ import { ADMIN_ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, ZONES } from "
 // the Local API neither (Law 122 Art. 16.2b retention): `beforeDelete` refuses every delete.
 
 const neverUpdate: FieldAccess = () => false;
-const statusUpdate: FieldAccess = ({ data, doc, req }) => Boolean(req.user) && doc?.status !== "expired" && data?.status !== "expired";
 
 /** A snapshot field: written once at placement (Local API), never edited afterwards. */
 const snapshot = <F extends Field>(field: F): F => ({ ...field, access: { update: neverUpdate } }) as F;
@@ -35,12 +34,9 @@ export const Orders: CollectionConfig = {
     delete: () => false,
   },
   hooks: {
-    beforeChange: [({ data, originalDoc }) => {
-      if (data.status === "expired" && originalDoc?.status !== "expired") {
-        throw new Error("Only the payment-expiry release can expire an order.");
-      }
-      if (originalDoc?.status === "expired" && data.status && data.status !== "expired") {
-        throw new Error("An expired order cannot be reopened.");
+    beforeChange: [({ originalDoc }) => {
+      if (originalDoc?.status === "expired") {
+        throw new Error("An expired order cannot be changed.");
       }
     }],
     beforeDelete: [
@@ -56,8 +52,8 @@ export const Orders: CollectionConfig = {
       type: "select",
       required: true,
       defaultValue: "placed",
-      options: [...ADMIN_ORDER_STATUSES],
-      access: { update: statusUpdate },
+      options: [...ORDER_STATUSES],
+      filterOptions: ({ options }) => options.filter((option: Option) => (typeof option === "string" ? option : option.value) !== "expired"),
       index: true,
     },
     // The status link's secret: shown to nobody in the admin, never logged.

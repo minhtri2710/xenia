@@ -309,7 +309,15 @@ export interface Order {
   id: number;
   number: string;
   status:
-    'placed' | 'paid' | 'packed' | 'out_for_delivery' | 'delivered' | 'id_check_failed' | 'cancelled' | 'returned' | 'expired';
+    | 'placed'
+    | 'paid'
+    | 'packed'
+    | 'out_for_delivery'
+    | 'delivered'
+    | 'id_check_failed'
+    | 'cancelled'
+    | 'returned'
+    | 'expired';
   token: string;
   clientKey: string;
   paymentDueAt: string;
