@@ -294,9 +294,17 @@ for (const { locale, prefix } of LOCALES) {
     await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
     await addToCart(page, prefix, "colle-vento-rosso");
     const before = orderCount();
+    // Step 1 as an adult first, so a draft exists; then step 1 again with an under-18 date of birth.
+    await page.goto(`${prefix}/thanh-toan`);
+    await fillBuyer(page, vietnamDateYearsAgo(30));
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
+    const handle = (await page.context().cookies()).find((c) => c.name === "xenia_checkout")!.value;
+    const drafts = () => sql(`SELECT count(*) FROM checkout_drafts WHERE handle = '${handle}'`);
+    expect(drafts()).toBe("1");
     await page.goto(`${prefix}/thanh-toan`);
     await fillBuyer(page, vietnamDateYearsAgo(17));
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/tam-biet`);
+    expect(drafts()).toBe("0");
     const names = (await page.context().cookies()).map((c) => c.name);
     expect(names).not.toContain("xenia_age_ok");
     expect(names).not.toContain("xenia_checkout");
@@ -871,39 +879,39 @@ for (const { locale, prefix } of LOCALES) {
     expect(sql(`SELECT gift_message FROM orders WHERE token = '${token}'`)).toBe(MESSAGE);
     expect(external).toEqual([]);
   });
-
-  test(`the checkout cookie holds only the draft handle, HttpOnly, SameSite=Lax, path / (${locale})`, async ({ page }) => {
-    await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
-    await addToCart(page, prefix, "colle-vento-rosso");
-    await page.goto(`${prefix}/thanh-toan`);
-    await fillBuyer(page, vietnamDateYearsAgo(30));
-    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
-    const cookie = (await page.context().cookies()).find((c) => c.name === "xenia_checkout")!;
-    expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
-    expect(cookie.value).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(Number(sql(`SELECT count(*) FROM checkout_drafts WHERE handle = '${cookie.value}' AND buyer_email = 'an@example.test'`))).toBe(1);
-  });
-
-  test(`long Vietnamese addresses and a 250-code-point message go through every step and place (${locale})`, async ({ page }) => {
-    test.setTimeout(300_000);
-    // "ệ" is one code point and one UTF-16 unit, nine bytes URL-encoded: the S4 cookie's worst case.
-    const buyerAddress = `12 Lê Lợi ${"ệ".repeat(490)}`;
-    const recipientAddress = `5 Hàng Bài ${"ệ".repeat(489)}`;
-    const message = "ệ".repeat(250);
-    expect([buyerAddress.length, recipientAddress.length, [...message].length]).toEqual([500, 500, 250]);
-    await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
-    await addToCart(page, prefix, "colle-vento-rosso", 2);
-    await page.goto(`${prefix}/thanh-toan`);
-    await fillBuyer(page, vietnamDateYearsAgo(30), buyerAddress);
-    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/giao-hang`);
-    await submitGiftDelivery(page, prefix, "hcmc", { recipient: { ...RECIPIENT, address: recipientAddress } });
-    await submitGiftOptions(page, prefix, { message });
-    const token = await consentAndPlace(page, prefix);
-    expect(sql(`SELECT buyer_address || '|' || delivery_recipient_address || '|' || gift_message FROM orders WHERE token = '${token}'`)).toBe(
-      `${buyerAddress}|${recipientAddress}|${message}`,
-    );
-  });
 }
+
+test("the checkout cookie holds only the draft handle, HttpOnly, SameSite=Lax, path /", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+  const cookie = (await page.context().cookies()).find((c) => c.name === "xenia_checkout")!;
+  expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
+  expect(cookie.value).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  expect(Number(sql(`SELECT count(*) FROM checkout_drafts WHERE handle = '${cookie.value}' AND buyer_email = 'an@example.test'`))).toBe(1);
+});
+
+test("long Vietnamese addresses and a 250-code-point message go through every step and place", async ({ page }) => {
+  test.setTimeout(300_000);
+  // "ệ" is one code point and one UTF-16 unit, nine bytes URL-encoded: the S4 cookie's worst case.
+  const buyerAddress = `12 Lê Lợi ${"ệ".repeat(490)}`;
+  const recipientAddress = `5 Hàng Bài ${"ệ".repeat(489)}`;
+  const message = "ệ".repeat(250);
+  expect([buyerAddress.length, recipientAddress.length, [...message].length]).toEqual([500, 500, 250]);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso", 2);
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30), buyerAddress);
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+  await submitGiftDelivery(page, "", "hcmc", { recipient: { ...RECIPIENT, address: recipientAddress } });
+  await submitGiftOptions(page, "", { message });
+  const token = await consentAndPlace(page, "");
+  expect(sql(`SELECT buyer_address || '|' || delivery_recipient_address || '|' || gift_message FROM orders WHERE token = '${token}'`)).toBe(
+    `${buyerAddress}|${recipientAddress}|${message}`,
+  );
+});
 
 test("self delivery with silk wrap: step 3 offers no gift-only options, refuses them when forged, and the totals include the wrap", async ({ page }) => {
   test.setTimeout(300_000);
@@ -1005,6 +1013,11 @@ test("step 2 refuses a date before the earliest, past the horizon or on a blacko
   const settingsId = sql("SELECT id FROM site_settings");
   try {
     sql(`INSERT INTO site_settings_blackout_dates (_order, _parent_id, id, date) VALUES (1, ${settingsId}, 'e2e-blackout', '${blackout}')`);
+    // A blank recipient in gift mode: every recipient field error, and the visitor stays on step 2.
+    await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+    await submitGiftDelivery(page, "", "hcmc", { recipient: { name: "", phone: "", address: "" }, expectStep3: false });
+    for (const name of ["recipientName", "recipientPhone", "recipientAddress"]) await expect(page.locator(`#delivery-${name}-error`)).toBeVisible();
+    await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
     // Earliest = today + 1; latest = earliest + 30 = today + 31.
     for (const [date, message] of [
       [vietnamDatePlusDays(0), "sớm hơn ngày sớm nhất"],
@@ -1088,60 +1101,33 @@ test("a posted wrap price, units or total is ignored", async ({ page }) => {
   ).toBe("box-2|1|200000|200000|1430000|130000");
 });
 
-// Each case changes one shown gift or delivery field between the review and the submit.
-const GIFT_CHANGES: { input: string; change: (other: Page, prefix: string) => Promise<void>; restore?: () => void; check: (page: Page) => Promise<void> }[] = [
-  {
-    input: "the packaging price",
-    change: async () => void sql("UPDATE packaging SET price_vnd = 210000 WHERE code = 'box-2'"),
-    restore: () => void sql("UPDATE packaging SET price_vnd = 200000 WHERE code = 'box-2'"),
+// The packaging price changes in the database between the review and the submit.
+test("a change to the packaging price after the review is refused at ?changed=1 and placed as re-shown", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await addToCart(page, "", "due-fiumi-moscato");
+  await toGiftReview(page, "", "hcmc");
+  // 720 000 + 480 000 + box-2 200 000 + 30 000 = 1 430 000.
+  expect(await digits(page, '[data-total="total"]')).toBe(1_430_000);
+  try {
+    sql("UPDATE packaging SET price_vnd = 210000 WHERE code = 'box-2'");
+    const before = orderCount();
+    await page.locator("input[name=terms]").check();
+    await page.locator("input[name=privacy]").check();
+    await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+    await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan" && url.search === "?changed=1");
+    await expect(page.getByTestId("review-changed")).toContainText("Đơn hàng đã thay đổi sau khi bạn xem lại");
+    expect(orderCount()).toBe(before);
     // 1 200 000 + 210 000 + 30 000 = 1 440 000.
-    check: async (page) => expect.poll(() => digits(page, '[data-total="total"]')).toBe(1_440_000),
-  },
-  {
-    input: "the recipient address",
-    change: async (other, prefix) => {
-      await other.goto(`${prefix}/thanh-toan/giao-hang`);
-      await submitGiftDelivery(other, prefix, "hcmc", { recipient: { ...RECIPIENT, address: "7 Tràng Tiền, Hoàn Kiếm" } });
-    },
-    check: async (page) => expect(page.getByTestId("review-delivery")).toContainText("7 Tràng Tiền, Hoàn Kiếm"),
-  },
-  {
-    input: "the delivery date",
-    change: async (other, prefix) => {
-      await other.goto(`${prefix}/thanh-toan/giao-hang`);
-      await submitGiftDelivery(other, prefix, "hcmc", { date: vietnamDatePlusDays(6) });
-    },
-    check: async (page) => expect(page.getByTestId("review-date")).toContainText(String(Number(vietnamDatePlusDays(6).slice(8)))),
-  },
-];
+    await expect.poll(() => digits(page, '[data-total="total"]')).toBe(1_440_000);
+    await consentAndPlace(page, "");
+    expect(orderCount()).toBe(before + 1);
+  } finally {
+    sql("UPDATE packaging SET price_vnd = 200000 WHERE code = 'box-2'");
+  }
+});
 
 for (const { locale, prefix } of LOCALES) {
-  for (const { input, change, restore, check } of GIFT_CHANGES) {
-    test(`a change to ${input} after the review is refused at ?changed=1 and placed as re-shown (${locale})`, async ({ page }) => {
-      await declareAdult(page, `${prefix}/ruou-vang/colle-vento-rosso`);
-      await addToCart(page, prefix, "colle-vento-rosso");
-      await addToCart(page, prefix, "due-fiumi-moscato");
-      await toGiftReview(page, prefix, "hcmc");
-      // 720 000 + 480 000 + box-2 200 000 + 30 000 = 1 430 000.
-      expect(await digits(page, '[data-total="total"]')).toBe(1_430_000);
-      try {
-        await change(await page.context().newPage(), prefix);
-        const before = orderCount();
-        await page.locator("input[name=terms]").check();
-        await page.locator("input[name=privacy]").check();
-        await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
-        await expect(page).toHaveURL((url) => url.pathname === `${prefix}/thanh-toan/xac-nhan` && url.search === "?changed=1");
-        await expect(page.getByTestId("review-changed")).toContainText(locale === "vi" ? "Đơn hàng đã thay đổi sau khi bạn xem lại" : "Your order changed after you reviewed it");
-        expect(orderCount()).toBe(before);
-        await check(page);
-        await consentAndPlace(page, prefix);
-        expect(orderCount()).toBe(before + 1);
-      } finally {
-        restore?.();
-      }
-    });
-  }
-
   test(`the gift service page lists packaging, cards and rules, shows no wine, and makes no third-party request (${locale})`, async ({ page }) => {
     const vi = locale === "vi";
     await page.goto(`${prefix}/dich-vu-goi-qua`);

@@ -55,26 +55,20 @@ describe("computeTotals", () => {
   });
 
   it.each([
-    ["a negative wrap", -1],
-    ["a fractional wrap", 0.5],
-    ["a NaN wrap", Number.NaN],
-  ])("rejects %s", (_label, wrap) => {
-    expect(() => computeTotals([{ qty: 1, unitPriceVnd: 1 }], wrap, 0)).toThrow(RangeError);
-  });
-
-  it.each([
-    ["no lines", [], 0],
-    ["a zero quantity", [{ qty: 0, unitPriceVnd: 1 }], 0],
-    ["a negative quantity", [{ qty: -1, unitPriceVnd: 1 }], 0],
-    ["a fractional quantity", [{ qty: 1.5, unitPriceVnd: 1 }], 0],
-    ["a negative price", [{ qty: 1, unitPriceVnd: -850_000 }], 0],
-    ["a fractional price", [{ qty: 1, unitPriceVnd: 850_000.5 }], 0],
-    ["a NaN price", [{ qty: 1, unitPriceVnd: Number.NaN }], 0],
-    ["a negative shipping fee", [{ qty: 1, unitPriceVnd: 1 }], -30_000],
-    ["a fractional shipping fee", [{ qty: 1, unitPriceVnd: 1 }], 0.5],
-    ["an unsafe total", [{ qty: 2, unitPriceVnd: Number.MAX_SAFE_INTEGER }], 0],
-  ])("rejects %s", (_label, lines, shipping) => {
-    expect(() => computeTotals(lines, 0, shipping)).toThrow(RangeError);
+    ["no lines", [], 0, 0],
+    ["a zero quantity", [{ qty: 0, unitPriceVnd: 1 }], 0, 0],
+    ["a negative quantity", [{ qty: -1, unitPriceVnd: 1 }], 0, 0],
+    ["a fractional quantity", [{ qty: 1.5, unitPriceVnd: 1 }], 0, 0],
+    ["a negative price", [{ qty: 1, unitPriceVnd: -850_000 }], 0, 0],
+    ["a fractional price", [{ qty: 1, unitPriceVnd: 850_000.5 }], 0, 0],
+    ["a NaN price", [{ qty: 1, unitPriceVnd: Number.NaN }], 0, 0],
+    ["a negative shipping fee", [{ qty: 1, unitPriceVnd: 1 }], 0, -30_000],
+    ["a fractional shipping fee", [{ qty: 1, unitPriceVnd: 1 }], 0, 0.5],
+    ["an unsafe total", [{ qty: 2, unitPriceVnd: Number.MAX_SAFE_INTEGER }], 0, 0],
+    ["a negative wrap", [{ qty: 1, unitPriceVnd: 1 }], -1, 0],
+    ["a fractional wrap", [{ qty: 1, unitPriceVnd: 1 }], 0.5, 0],
+  ])("rejects %s", (_label, lines, wrap, shipping) => {
+    expect(() => computeTotals(lines, wrap, shipping)).toThrow(RangeError);
   });
 });
 

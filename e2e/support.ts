@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 import AxeBuilder from "@axe-core/playwright";
 import { type APIRequestContext, expect, type Page } from "@playwright/test";
 
+import { databaseName } from "./database";
+
 const isLocal = (url: URL) => url.hostname === "localhost" || url.hostname === "127.0.0.1";
 
 /**
@@ -26,18 +28,6 @@ export async function blockThirdParty(page: Page): Promise<string[]> {
     },
   );
   return external;
-}
-
-/**
- * The database the e2e run uses: the path of `DATABASE_URI`, which `playwright.config.ts` loads
- * from `.env` unless the shell already sets it. Missing either fails the run.
- */
-function databaseName(): string {
-  const uri = process.env.DATABASE_URI;
-  if (!uri) throw new Error("DATABASE_URI is not set");
-  const name = decodeURIComponent(new URL(uri).pathname.slice(1));
-  if (!name) throw new Error("DATABASE_URI names no database");
-  return name;
 }
 
 /** Runs one SQL statement in the e2e database and returns its unaligned, tuples-only output. */

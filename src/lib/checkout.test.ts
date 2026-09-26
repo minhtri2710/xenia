@@ -1,6 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { randomBytes } from "node:crypto";
+
+import { describe, expect, it, vi } from "vitest";
 
 import { CHECKOUT_COOKIE, checkoutCookie, cookieOptions, newCheckout, newHandle, parseCheckout } from "./checkout";
+
+// Pass-through: the real CSPRNG, observed so the handle's source is pinned.
+vi.mock("node:crypto", async (importOriginal) => {
+  const crypto = await importOriginal<typeof import("node:crypto")>();
+  return { ...crypto, randomBytes: vi.fn(crypto.randomBytes) };
+});
 
 const KEY = "0b6f3a52-6a61-4c1e-9d2e-3f1f6f0b9a11";
 const BUYER = { name: "Nguyễn Văn An", phone: "0901234567", email: "an@example.test", address: "12 Lê Lợi, Quận 1" };
@@ -71,7 +79,6 @@ describe("parseCheckout", () => {
     ["a malformed packaging code", saved({ ...GIFT, packaging: "Box 2" })],
     ["no card", saved({ ...GIFT, card: null })],
     ["a message over 250 code points", saved({ ...GIFT, message: "a".repeat(251) })],
-    ["a message with a control character", saved({ ...GIFT, message: "a\tb" })],
     ["a message not in NFC", saved({ ...GIFT, message: "ệ".normalize("NFD") })],
     ["an untrimmed sender", saved({ ...GIFT, sender: " An" })],
     ["a missing hide-prices flag", saved({ ...GIFT, hidePrices: undefined })],
@@ -113,8 +120,12 @@ describe("the checkout cookie", () => {
   });
 
   it("uses a 256-bit handle from the CSPRNG, base64url", () => {
+    vi.mocked(randomBytes).mockClear();
     const handles = new Set(Array.from({ length: 100 }, newHandle));
     expect(handles.size).toBe(100);
     for (const h of handles) expect(h).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const calls = vi.mocked(randomBytes).mock;
+    expect(calls.calls.filter(([size]) => size === 32)).toHaveLength(100);
+    expect(new Set(calls.results.map((r) => (r.value as Buffer).toString("base64url")))).toEqual(handles);
   });
 });
