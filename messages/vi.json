@@ -12,8 +12,7 @@
   },
   "Notice": {
     "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi",
-    "skip": "Bỏ qua điều hướng",
-    "draft": "Bản dự thảo trước khi khai trương — đang chờ luật sư rà soát. Nội dung này chưa phải ý kiến pháp lý."
+    "skip": "Bỏ qua điều hướng"
   },
   "Gate": {
     "title": "Xác minh tuổi",
@@ -461,10 +460,10 @@
       "privacyPurpose": "Thông tin khai báo tại cổng tuổi chỉ được kiểm tra ở máy chủ; tên và ngày sinh không được ghi vào cơ sở dữ liệu, cookie, nhật ký ứng dụng hay phân tích. Cửa hàng không gọi dịch vụ phân tích hoặc nhúng bên thứ ba.",
       "privacyFlows": "Cookie đánh dấu tuổi chỉ chứa giá trị cố định. Cookie giỏ hàng chỉ chứa mã phiên bản và số lượng. Cookie thanh toán chỉ chứa mã handle ngẫu nhiên của bản nháp phía máy chủ, không chứa thông tin cá nhân. Bản nháp có thể chứa thông tin người mua, người nhận và lời nhắn; đơn hàng sau khi đặt lưu ảnh chụp thông tin giao dịch và liên hệ.",
       "privacyRetention": "Bản nháp thanh toán bị xóa khi đặt hàng, khi từ chối do chưa đủ tuổi, hoặc khi hết hạn. Cửa hàng không xóa đơn hàng. Thời hạn áp dụng cho doanh nghiệp siêu nhỏ đang chờ luật sư rà soát.",
-      "privacyAccess": "Dữ liệu đơn hàng và bản nháp không được công khai qua API; nhân sự quản trị có quyền truy cập. Ứng dụng không ghi thông tin cá nhân vào nhật ký. Cookie được đặt HttpOnly và SameSite=Lax; cookie chỉ được bảo vệ Secure trong môi trường production.",
+      "privacyAccess": "Dữ liệu đơn hàng và bản nháp không được công khai qua API; nhân sự quản trị có quyền truy cập. Ứng dụng không ghi thông tin cá nhân vào nhật ký.",
       "privacyRights": "Để yêu cầu xem, sửa hoặc nêu thắc mắc về dữ liệu, liên hệ địa chỉ email ở chân trang. Quy trình xác minh yêu cầu và thời hạn xử lý cần được xác nhận trước khai trương.",
       "privacyPending": "Bản nháp phía máy chủ có thể lưu dữ liệu người mua trước khi đồng ý ở bước xác nhận, tối đa theo thời hạn hiển thị bên dưới. Cơ sở thông báo và xử lý điểm này đang chờ luật sư rà soát.",
-      "termsParties": "Người mua chỉ tiếp tục khi khai báo tuổi từ đủ 18. Cửa hàng hiện yêu cầu tên, ngày sinh, điện thoại, email và địa chỉ cư trú; ngày sinh được kiểm tra nhưng không lưu. Dữ liệu pháp nhân hiện trên trang thông tin doanh nghiệp chỉ là mẫu.",
+      "termsParties": "Người mua chỉ tiếp tục khi khai báo tuổi bằng hoặc cao hơn ngưỡng được nêu bên dưới. Cửa hàng hiện yêu cầu tên, ngày sinh, điện thoại, email và địa chỉ cư trú; ngày sinh được kiểm tra nhưng không lưu. Dữ liệu pháp nhân hiện trên trang thông tin doanh nghiệp chỉ là mẫu.",
       "termsOrder": "Đơn chỉ được tạo sau khi người mua xem lại hàng hóa, số lượng, cách và thời điểm giao, các khoản tiền và phương thức thanh toán, rồi đánh dấu đồng ý với điều khoản và bảo mật. Giá, tồn kho và phí được máy chủ tính lại lúc đặt.",
       "termsDelivery": "Người giao chỉ trao rượu cho người từ đủ tuổi theo quy tắc dưới đây và xuất trình giấy tờ. Đơn quà được giao cho người nhận; không có giấy tờ thì không trao. Kết quả xử lý nếu kiểm tra giấy tờ không thành công đang chờ luật sư rà soát.",
       "termsPayment": "Hiện chỉ có các lựa chọn mô phỏng nêu dưới đây; không có tiền mặt khi nhận hàng, cổng thanh toán thật hoặc yêu cầu số thẻ/số tài khoản. Đơn hàng không bị cửa hàng xóa. Thời hạn áp dụng cho doanh nghiệp siêu nhỏ đang chờ rà soát.",

@@ -13,8 +13,7 @@
   "Notice": {
     "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi",
     "translation": "No sale of alcohol or beer to anyone under 18",
-    "skip": "Skip navigation",
-    "draft": "Pre-launch draft — awaiting legal review. This is not a legal opinion."
+    "skip": "Skip navigation"
   },
   "Gate": {
     "title": "Age verification",
@@ -462,7 +461,7 @@
       "privacyPurpose": "The age-gate declaration is checked on the server; the name and date of birth are not written to the database, cookies, application logs or analytics. The shop makes no analytics or third-party embed calls.",
       "privacyFlows": "The age marker cookie contains a fixed value. The cart cookie contains only vintage identifiers and quantities. The checkout cookie contains only a random server-draft handle, not personal information. A draft can contain buyer, recipient and message details; a placed order stores a snapshot of transaction and contact details.",
       "privacyRetention": "A checkout draft becomes unavailable when placed, after an under-age refusal, or when it expires. The shop never deletes orders. The period for a micro business is pending legal review.",
-      "privacyAccess": "Order and draft data are not publicly available through the API; administrators can access them. The application does not log personal data. Cookies are HttpOnly and SameSite=Lax; Secure is set only in production.",
+      "privacyAccess": "Order and draft data are not publicly available through the API; administrators can access them. The application does not log personal data.",
       "privacyRights": "To request access, correction or help with personal data, contact the email in the footer. Request verification and response times need confirmation before launch.",
       "privacyPending": "The server-side draft may hold buyer information before consent at the review step, for up to the period shown below. Its notice and legal basis are pending legal review.",
       "termsParties": "A buyer may continue only after declaring an age at or above the threshold shown below. The shop currently asks for name, date of birth, phone, email and residential address; the date of birth is checked but not stored. Business details on the business information page are samples.",

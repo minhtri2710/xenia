@@ -4,7 +4,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { type APIRequestContext, expect, type Page } from "@playwright/test";
 
 import { databaseName } from "./database";
-import { POLICY_PATHS, POLICY_SLUGS } from "../src/lib/policies";
 
 const isLocal = (url: URL) => url.hostname === "localhost" || url.hostname === "127.0.0.1";
 
@@ -86,4 +85,14 @@ export async function expectNoHorizontalOverflow(page: Page, label?: string) {
   await page.setViewportSize(viewport);
 }
 
-export const POLICY_ROUTES = POLICY_SLUGS.map((slug) => ({ slug, path: POLICY_PATHS[slug] }));
+export const POLICY_ROUTES = [
+  { slug: "thong-tin-doanh-nghiep", path: "/chinh-sach/thong-tin-doanh-nghiep" },
+  { slug: "bao-mat", path: "/chinh-sach/bao-mat" },
+  { slug: "dieu-khoan", path: "/chinh-sach/dieu-khoan" },
+  { slug: "khieu-nai", path: "/chinh-sach/khieu-nai" },
+  { slug: "gia", path: "/chinh-sach/gia" },
+  { slug: "dieu-kien-ban-hang", path: "/chinh-sach/dieu-kien-ban-hang" },
+  { slug: "thanh-toan", path: "/chinh-sach/thanh-toan" },
+  { slug: "giao-hang", path: "/chinh-sach/giao-hang" },
+  { slug: "doi-tra-hoan-tien", path: "/chinh-sach/doi-tra-hoan-tien" },
+] as const;

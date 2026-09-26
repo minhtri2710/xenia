@@ -45,8 +45,8 @@ for (const { locale, prefix, draft } of LOCALES) {
           await expect(page.locator("#main-content")).toContainText("contact@example.test");
         }
         if (slug === "bao-mat") {
-          await expect(page.locator("#main-content")).toContainText("3");
-          await expect(page.locator("#main-content")).toContainText("24");
+          await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Current order retention period: 3 years." : "Thời hạn lưu giữ đơn hàng hiện tại: 3 năm.");
+          await expect(page.locator("#main-content")).toContainText(locale === "en" ? "A checkout draft expires 24 hours after its last write." : "Bản nháp checkout hết hạn sau 24 giờ kể từ lần ghi cuối.");
           await expect(page.locator("#main-content")).toContainText("xenia_age_ok");
           await expect(page.locator("#main-content")).toContainText("xenia_cart");
           await expect(page.locator("#main-content")).toContainText("xenia_checkout");
@@ -54,7 +54,7 @@ for (const { locale, prefix, draft } of LOCALES) {
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "pending legal review" : "đang chờ luật sư rà soát");
         }
         if (slug === "dieu-khoan") {
-          await expect(page.locator("#main-content")).toContainText("3");
+          await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Current order retention period: 3 years." : "Thời hạn lưu giữ đơn hàng hiện tại: 3 năm.");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "Cash on delivery" : "tiền mặt khi nhận hàng");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "shows ID" : "xuất trình giấy tờ");
           await expect(page.locator("#main-content")).toContainText(locale === "en" ? "pending legal review" : "đang chờ luật sư rà soát");
