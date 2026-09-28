@@ -132,17 +132,6 @@ test.beforeAll(async ({ request }) => {
   await seedCatalogue(request);
 });
 
-test.describe("gate", () => {
-  for (const { prefix } of LOCALES) {
-    for (const path of ["/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/goi-qua", "/thanh-toan/xac-nhan", `/don-hang/${"A".repeat(43)}`]) {
-      test(`${prefix}${path} redirects an undeclared visitor to the gate`, async ({ page }) => {
-        await page.goto(prefix + path);
-        await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi` && url.searchParams.get("next") === prefix + path);
-      });
-    }
-  }
-});
-
 for (const { locale, prefix } of LOCALES) {
   const vi = locale === "vi";
   // vi delivers to HCMC, en to Hà Nội, so both fees are exercised.

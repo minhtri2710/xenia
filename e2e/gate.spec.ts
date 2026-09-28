@@ -34,6 +34,18 @@ test.describe("unverified visitor", () => {
       await expect(page.locator("#gate-name")).toBeVisible();
     });
   }
+
+  for (const prefix of ["", "/en"]) {
+    for (const path of ["/ruou-vang?type=red", "/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/goi-qua", "/thanh-toan/xac-nhan", `/don-hang/${"A".repeat(43)}`]) {
+      test(`is redirected by the server from ${prefix}${path} to the gate`, async ({ request }) => {
+        const response = await request.get(prefix + path, { maxRedirects: 0 });
+        expect(response.status()).toBe(307);
+        const location = new URL(response.headers()["location"], "http://x");
+        expect(location.pathname).toBe(`${prefix}/xac-minh-tuoi`);
+        expect(location.searchParams.get("next")).toBe(prefix + path);
+      });
+    }
+  }
 });
 
 test("an under-18 declaration lands on the exit page and / stays gated", async ({ page, context }) => {

@@ -129,19 +129,6 @@ test.describe("catalogue access without admin auth (D4: /api is outside the age 
   });
 });
 
-test.describe("unverified visitor", () => {
-  for (const { prefix } of LOCALES) {
-    test(`is redirected from ${prefix}/ruou-vang to the gate`, async ({ request }) => {
-      const path = `${prefix}/ruou-vang?type=red`;
-      const response = await request.get(path, { maxRedirects: 0 });
-      expect(response.status()).toBe(307);
-      const location = new URL(response.headers()["location"], "http://x");
-      expect(location.pathname).toBe(`${prefix}/xac-minh-tuoi`);
-      expect(location.searchParams.get("next")).toBe(path);
-    });
-  }
-});
-
 for (const { locale, prefix } of LOCALES) {
   test.describe(`collection page (${locale})`, () => {
     test("lists the seeded published wines with name, producer, type, region and a from-price", async ({ page }) => {
