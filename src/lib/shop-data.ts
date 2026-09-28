@@ -4,8 +4,9 @@ import { getPayload, type PayloadRequest } from "payload";
 
 import { CART_COOKIE, type CartLine, type CartStock, normalizeCart, parseCart, serializeCart } from "@/lib/cart";
 import type { BottleSize } from "@/lib/catalogue";
-import { type Checkout, CHECKOUT_COOKIE, checkoutCookie, cookieOptions } from "@/lib/checkout";
+import { type Checkout, CHECKOUT_COOKIE, checkoutCookie } from "@/lib/checkout";
 import { deleteDraft, readDraft, writeDraft } from "@/lib/checkout-drafts";
+import { cookieOptions } from "@/lib/cookies";
 import type { CardDoc, PackagingDoc } from "@/lib/gift";
 import type { Zone } from "@/lib/order";
 import { releaseExpiredOrders } from "@/lib/order-expiry";

@@ -7,6 +7,7 @@ import { hasLocale } from "next-intl";
 import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { checkDeclaration, type DeclarationError } from "@/lib/age";
+import { cookieOptions } from "@/lib/cookies";
 import { AGE_COOKIE, AGE_COOKIE_VALUE, EXIT_PATH } from "@/lib/gate";
 import { safeReturnPath } from "@/lib/return-path";
 
@@ -36,11 +37,6 @@ export async function declareAge(_previous: GateState, formData: FormData): Prom
     redirect(getPathname({ href: EXIT_PATH, locale }));
   }
 
-  cookieStore.set(AGE_COOKIE, AGE_COOKIE_VALUE, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  });
+  cookieStore.set(AGE_COOKIE, AGE_COOKIE_VALUE, cookieOptions(process.env.NODE_ENV === "production"));
   redirect(safeReturnPath(field(formData, "next"), getPathname({ href: "/", locale })));
 }

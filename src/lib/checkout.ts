@@ -9,6 +9,7 @@ import { randomBytes } from "node:crypto";
 
 import { MAX_NAME_LENGTH } from "./age";
 import { type Buyer, checkContact, checkRecipient, type Recipient } from "./buyer";
+import { cookieOptions } from "./cookies";
 import { type DeliveryMode, type DeliveryWindow, isDeliveryMode, isDeliveryWindow, isIsoDate } from "./delivery";
 import { checkMessage, isCode } from "./gift";
 import { isClientKey, isZone, newClientKey, type Zone } from "./order";
@@ -26,9 +27,6 @@ export const newCheckout = (): Checkout => ({ clientKey: newClientKey() });
 
 /** The draft handle, the only cookie value: 32 bytes from the CSPRNG as base64url (43 characters). */
 export const newHandle = (): string => randomBytes(32).toString("base64url");
-
-/** The cart and checkout cookies: HttpOnly, SameSite=Lax, Path=/, Secure in production, browser session. */
-export const cookieOptions = (production: boolean) => ({ httpOnly: true, sameSite: "lax", secure: production, path: "/" }) as const;
 
 /** The checkout cookie: the handle and nothing else. */
 export const checkoutCookie = (handle: string, production: boolean) => ({ name: CHECKOUT_COOKIE, value: handle, ...cookieOptions(production) });

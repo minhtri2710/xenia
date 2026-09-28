@@ -1,8 +1,9 @@
 /**
  * `pnpm seed`: replaces the catalogue (vintages, wines, producers), the packaging and the card
  * designs with the fictional seed in `data.ts`, and sets the delivery zones (fee and lead days) and
- * an empty blackout list in the `site-settings` global. It never touches `users`, `orders`,
- * `checkout-drafts` or any other collection. Same data on every run.
+ * an empty blackout list in the `site-settings` global. It writes no other collection and creates
+ * or deletes no `users`, `orders` or `checkout-drafts` row, but deleting the old vintages clears
+ * `vintage` on existing order lines, which keep their snapshots. Same data on every run.
  */
 import { getPayload } from "payload";
 

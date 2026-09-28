@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { CHECKOUT_COOKIE, checkoutCookie, cookieOptions, newCheckout, newHandle, parseCheckout } from "./checkout";
+import { CHECKOUT_COOKIE, checkoutCookie, newCheckout, newHandle, parseCheckout } from "./checkout";
 
 // Pass-through: the real CSPRNG, observed so the handle's source is pinned.
 vi.mock("node:crypto", async (importOriginal) => {
@@ -113,9 +113,7 @@ describe("the checkout cookie", () => {
     expect(Object.keys(cookie).sort()).toEqual(["httpOnly", "name", "path", "sameSite", "secure", "value"]);
   });
 
-  it("is HttpOnly, SameSite=Lax, Path=/, and Secure in production only", () => {
-    expect(cookieOptions(true)).toEqual({ httpOnly: true, sameSite: "lax", secure: true, path: "/" });
-    expect(cookieOptions(false)).toEqual({ httpOnly: true, sameSite: "lax", secure: false, path: "/" });
+  it("carries the shared cookie options, Secure in production", () => {
     expect(checkoutCookie(newHandle(), true)).toMatchObject({ httpOnly: true, sameSite: "lax", secure: true, path: "/" });
   });
 

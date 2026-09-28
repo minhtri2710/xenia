@@ -82,7 +82,7 @@ test("an adult declaration on their 18th birthday returns the visitor to /", asy
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rượu vang cho những dịp đáng nhớ");
 
   const marker = (await context.cookies()).find((c) => c.name === "xenia_age_ok");
-  expect(marker).toMatchObject({ value: "1", httpOnly: true, sameSite: "Lax" });
+  expect(marker).toMatchObject({ value: "1", httpOnly: true, sameSite: "Lax", path: "/", expires: -1 });
   expect(JSON.stringify(await context.cookies())).not.toMatch(/Nguy|\d{4}-\d{2}-\d{2}/);
 });
 

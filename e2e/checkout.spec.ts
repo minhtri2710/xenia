@@ -1516,3 +1516,27 @@ test("gift collections, site settings and checkout drafts are admin-only over RE
   }
   expect(counts()).toBe(before);
 });
+
+test("pnpm seed changes no user, order or checkout draft and clears the vintage on existing order lines", async ({ page, request }) => {
+  sql("TRUNCATE users CASCADE");
+  expect((await request.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } })).ok()).toBe(true);
+  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
+  await addToCart(page, "", "colle-vento-rosso");
+  await toReview(page, "", "hcmc");
+  const token = await consentAndPlace(page, "");
+  await addToCart(page, "", "colle-vento-rosso");
+  await page.goto("/thanh-toan");
+  await fillBuyer(page, vietnamDateYearsAgo(30));
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+
+  const rows = () => sql("SELECT (SELECT count(*) FROM users) || '|' || (SELECT count(*) FROM orders) || '|' || (SELECT count(*) FROM checkout_drafts)");
+  const line = () =>
+    sql(`SELECT concat_ws('|', l.vintage_id IS NULL, l.wine_name_vi, l.unit_price_vnd, l.qty) FROM orders_lines l JOIN orders o ON o.id = l._parent_id WHERE o.token = '${token}'`);
+  const before = rows();
+  expect(before.split("|").map(Number).every((n) => n >= 1)).toBe(true);
+  expect(line()).toBe("f|Colle del Vento Rosso|720000|1");
+
+  await seedCatalogue(request);
+  expect(rows()).toBe(before);
+  expect(line()).toBe("t|Colle del Vento Rosso|720000|1");
+});
