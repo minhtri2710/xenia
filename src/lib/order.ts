@@ -24,7 +24,6 @@ export const ORDER_STATUSES = [
   "returned",
   "expired",
 ] as const;
-export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 /** Delivery zones with a flat fee each; the fees live in the `site-settings` global. */
 export const ZONES = ["hcmc", "hanoi"] as const;
