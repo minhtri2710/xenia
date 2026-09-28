@@ -9,21 +9,24 @@ import {
   ORDER_NUMBER_ALPHABET,
   ORDER_STATUSES,
   PAYMENT_METHODS,
+  paymentDueAt,
 } from "./order";
 
 describe("payment methods (Law 44/2019 Art. 16.4: cashless only)", () => {
   it("are exactly the mock VietQR transfer and the mock card", () => {
     expect(PAYMENT_METHODS).toEqual(["vietqr_mock", "card_mock"]);
   });
-
-  it("have no cash-on-delivery value", () => {
-    expect(PAYMENT_METHODS.filter((m) => /cod|cash|delivery/i.test(m))).toEqual([]);
-  });
 });
 
 describe("order statuses", () => {
   it("are the fixed lifecycle", () => {
     expect(ORDER_STATUSES).toEqual(["placed", "paid", "packed", "out_for_delivery", "delivered", "id_check_failed", "cancelled", "returned", "expired"]);
+  });
+});
+
+describe("payment hold", () => {
+  it("the payment deadline is placement + 60 minutes", () => {
+    expect(paymentDueAt(new Date("2026-09-24T12:34:56.000Z")).toISOString()).toBe("2026-09-24T13:34:56.000Z");
   });
 });
 

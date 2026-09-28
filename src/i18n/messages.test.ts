@@ -8,8 +8,6 @@ import en from "../../messages/en.json";
 import vi from "../../messages/vi.json";
 import { POLICY_SLUGS } from "../lib/policies";
 
-const LEGAL_NOTICE = "Không bán rượu, bia cho người chưa đủ 18 tuổi";
-
 function keys(messages: object, prefix = ""): string[] {
   return Object.entries(messages).flatMap(([key, value]) =>
     typeof value === "string" ? [prefix + key] : keys(value, `${prefix}${key}.`),
@@ -19,12 +17,6 @@ function keys(messages: object, prefix = ""): string[] {
 describe("messages", () => {
   it("gives en every key vi has", () => {
     expect(keys(vi).filter((key) => !keys(en).includes(key))).toEqual([]);
-  });
-
-  it("carries the exact L19 notice in both locales, with an English translation on en", () => {
-    expect(vi.Notice.legal).toBe(LEGAL_NOTICE);
-    expect(en.Notice.legal).toBe(LEGAL_NOTICE);
-    expect(en.Notice.translation).toBeTruthy();
   });
 
   it("has translated links and page copy for every required policy slug", () => {

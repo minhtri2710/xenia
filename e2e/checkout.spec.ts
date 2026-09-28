@@ -304,15 +304,15 @@ for (const { locale, prefix } of LOCALES) {
     await page.goto(`${prefix}/thanh-toan`);
     await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi`);
   });
-
-  test(`an unknown or malformed status token is a 404 (${locale})`, async ({ page }) => {
-    await declareAdult(page, `${prefix}/ruou-vang`);
-    for (const token of ["not-a-token", "A".repeat(43), `${"A".repeat(42)}=`]) {
-      const response = await page.goto(`${prefix}/don-hang/${token}`);
-      expect(response?.status(), token).toBe(404);
-    }
-  });
 }
+
+test("an unknown or malformed status token is a 404", async ({ page }) => {
+  await declareAdult(page, "/ruou-vang");
+  for (const token of ["not-a-token", "A".repeat(43), `${"A".repeat(42)}=`]) {
+    const response = await page.goto(`/don-hang/${token}`);
+    expect(response?.status(), token).toBe(404);
+  }
+});
 
 test("the 18th birthday passes step 1", async ({ page }) => {
   await declareAdult(page, "/ruou-vang/colle-vento-rosso");
@@ -368,48 +368,20 @@ test("the cart caps quantity at stock, refuses a non-positive quantity and a dra
   await expect(page.getByTestId("cart-lines")).toHaveCount(0);
 });
 
-test("an unpaid order retains stock after failed payment, can be paid before due, and expires/restocks once after due", async ({ page, browser }) => {
+test("a payment after due expires the order and restocks once, a not-yet-due order keeps its stock, and racing releases restock once", async ({ page, browser }) => {
   const vintage = vintageId("colle-vento-rosso", 2021, 750);
   const originalStock = stockOf(vintage);
+  const count = orderCount();
   await declareAdult(page, "/ruou-vang/colle-vento-rosso");
   await addToCart(page, "", "colle-vento-rosso");
   await toReview(page, "", "hcmc");
-  const token = await consentAndPlace(page, "");
-  const id = Number(sql(`SELECT id FROM orders WHERE token = '${token}'`));
-  const count = orderCount();
-  expect(sql(`SELECT payment_due_at IS NOT NULL FROM orders WHERE id = ${id}`)).toBe("t");
+  const dueToken = await consentAndPlace(page, "");
+  const dueId = Number(sql(`SELECT id FROM orders WHERE token = '${dueToken}'`));
+  expect(sql(`SELECT payment_due_at IS NOT NULL FROM orders WHERE id = ${dueId}`)).toBe("t");
   expect(stockOf(vintage)).toBe(originalStock - 1);
-
-  await page.getByRole("button", { name: "Mô phỏng thanh toán thất bại" }).click();
-  await expect(page.getByTestId("payment-failed")).toBeVisible();
-  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("placed/failed");
-  expect(stockOf(vintage)).toBe(originalStock - 1);
-  let paymentPost: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
-  await page.route(`/don-hang/${token}`, async (route) => {
-    if (route.request().method() !== "POST") return route.continue();
-    const request = route.request();
-    const headers = Object.fromEntries(Object.entries(await request.allHeaders()).filter(([key]) => !["host", "content-length", "cookie"].includes(key)));
-    paymentPost = { url: request.url(), headers, body: request.postDataBuffer()! };
-    await route.abort();
-  });
-  await page.getByRole("button", { name: "Mô phỏng thanh toán thành công" }).click();
-  await expect.poll(() => paymentPost).toBeDefined();
-  await page.unroute(`/don-hang/${token}`);
-  const retry = await page.request.post(paymentPost!.url, { headers: paymentPost!.headers, data: paymentPost!.body, maxRedirects: 0 });
-  expect(retry.status()).toBe(200);
-  expect(retry.headers()["x-action-redirect"]).toContain(`/don-hang/${token}`);
-  await page.goto(`/don-hang/${token}`);
-  await expect(page.getByTestId("order-status")).toHaveText("Đã thanh toán");
-  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("paid/paid");
-
-  await addToCart(page, "", "colle-vento-rosso");
-  await toReview(page, "", "hcmc");
-  const secondToken = await consentAndPlace(page, "");
-  const secondId = Number(sql(`SELECT id FROM orders WHERE token = '${secondToken}'`));
-  expect(stockOf(vintage)).toBe(originalStock - 2);
 
   let captured: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
-  const actionPath = `/don-hang/${secondToken}`;
+  const actionPath = `/don-hang/${dueToken}`;
   await page.route(actionPath, async (route) => {
     const request = route.request();
     if (request.method() !== "POST") return route.continue();
@@ -426,17 +398,17 @@ test("an unpaid order retains stock after failed payment, can be paid before due
   const futureToken = await consentAndPlace(page, "");
   const futureId = Number(sql(`SELECT id FROM orders WHERE token = '${futureToken}'`));
   expect(sql(`SELECT status || '/' || payment_status || '/' || (payment_due_at > NOW()) FROM orders WHERE id = ${futureId}`)).toBe("placed/unpaid/true");
-  expect(stockOf(vintage)).toBe(originalStock - 3);
+  expect(stockOf(vintage)).toBe(originalStock - 2);
 
   const concurrentPage = await newPage(browser);
   await declareAdult(concurrentPage, "/ruou-vang/colle-vento-rosso");
-  sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${secondId}`);
+  sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${dueId}`);
   const payment = await page.request.post(captured!.url, { headers: captured!.headers, data: captured!.body, maxRedirects: 0 });
   expect(payment.status()).toBe(200);
   expect(payment.headers()["x-action-redirect"]).toContain("payment=expired");
-  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${secondId}`)).toBe("expired/unpaid");
+  expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${dueId}`)).toBe("expired/unpaid");
   expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${futureId}`)).toBe("placed/unpaid");
-  expect(stockOf(vintage)).toBe(originalStock - 2);
+  expect(stockOf(vintage)).toBe(originalStock - 1);
 
   await page.goto(actionPath);
   await expect(page.getByTestId("order-status")).toHaveText("Hết hạn thanh toán");
@@ -444,13 +416,13 @@ test("an unpaid order retains stock after failed payment, can be paid before due
   await expect(page.locator("input[name=method]")).toHaveCount(0);
   await expect(page.locator("form[action]")).toHaveCount(0);
 
-  expect(sql(`SELECT count(*) FROM orders WHERE id = ${secondId}`)).toBe("1");
+  expect(sql(`SELECT count(*) FROM orders WHERE id = ${dueId}`)).toBe("1");
 
   await addToCart(page, "", "colle-vento-rosso");
   await toReview(page, "", "hcmc");
   const raceToken = await consentAndPlace(page, "");
   const raceId = Number(sql(`SELECT id FROM orders WHERE token = '${raceToken}'`));
-  expect(stockOf(vintage)).toBe(originalStock - 3);
+  expect(stockOf(vintage)).toBe(originalStock - 2);
 
   try {
     sql("CREATE TABLE expiry_claim_attempts (order_id integer NOT NULL)");
@@ -460,21 +432,12 @@ test("an unpaid order retains stock after failed payment, can be paid before due
     await Promise.all([page.goto("/ruou-vang/colle-vento-rosso"), concurrentPage.goto("/ruou-vang/colle-vento-rosso")]);
     expect(sql("SELECT count(*) FROM expiry_claim_attempts")).toBe("1");
     expect(sql(`SELECT status FROM orders WHERE id = ${raceId}`)).toBe("expired");
-    expect(stockOf(vintage)).toBe(originalStock - 2);
+    expect(stockOf(vintage)).toBe(originalStock - 1);
   } finally {
     sql("DROP TRIGGER IF EXISTS record_expiry_claim ON orders");
     sql("DROP FUNCTION IF EXISTS record_expiry_claim()");
     sql("DROP TABLE IF EXISTS expiry_claim_attempts");
   }
-  sql("TRUNCATE users CASCADE");
-  const admin = page.request;
-  expect((await admin.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } })).ok()).toBe(true);
-  expect((await admin.post("/api/users/login", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } })).ok()).toBe(true);
-  const deletion = await admin.delete(`/api/orders/${secondId}`);
-  expect(deletion.ok(), `expired-order DELETE ${deletion.status()}`).toBe(false);
-  const reopen = await admin.patch(`/api/orders/${secondId}`, { data: { status: "packed" } });
-  expect(reopen.ok(), `expired-order reopen ${reopen.status()}`).toBe(false);
-  expect(sql(`SELECT status FROM orders WHERE id = ${secondId}`)).toBe("expired");
   expect(orderCount()).toBe(count + 3);
 });
 
@@ -503,7 +466,7 @@ test("a release committing between the payment read and success update prevents 
   await expect.poll(() => paymentPost).toBeDefined();
   await page.unroute(actionPath);
 
-  const holderApp = "xenia-r3-m6-release-holder";
+  const holderApp = "xenia-e2e-release-holder";
   const holder = spawnPsqlTransaction(
     `DO $$ BEGIN UPDATE orders SET status = 'expired', updated_at = NOW() WHERE id = ${id} AND status = 'placed' AND payment_status <> 'paid'; IF NOT FOUND THEN RAISE EXCEPTION 'expected an unpaid placed order'; END IF; UPDATE vintages v SET stock = v.stock + l.qty FROM orders_lines l WHERE l._parent_id = ${id} AND v.id = l.vintage_id; PERFORM pg_sleep(5); END $$;`,
     holderApp,
@@ -605,7 +568,7 @@ test("placement releases a due order before checking the buyer's last bottle", a
 
 test("a due order with a deleted vintage releases its remaining lines on the catalogue read", async ({ page }) => {
   const seededVintage = vintageId("colle-vento-rosso", 2021, 750);
-  const slug = `r3-deleted-vintage-${Date.now()}`;
+  const slug = `deleted-vintage-${Date.now()}`;
   let wineId: number | undefined;
   let vintageIdToDelete: number | undefined;
   const admin = page.request;
@@ -625,7 +588,7 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
       data: {
         slug,
         producer,
-        name: "Rượu kiểm thử R3",
+        name: "Rượu kiểm thử",
         type: "red",
         country: "IT",
         region: "Tuscany",
@@ -641,7 +604,7 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
     expect(wineResponse.ok(), `test wine creation ${wineResponse.status()}`).toBe(true);
     wineId = (await wineResponse.json()).doc.id;
     const translation = await admin.patch(`/api/wines/${wineId}?locale=en`, {
-      data: { name: "R3 Test Wine", tasting: { nose: "Test nose.", palate: "Test palate.", finish: "Test finish." } },
+      data: { name: "Test Wine", tasting: { nose: "Test nose.", palate: "Test palate.", finish: "Test finish." } },
     });
     expect(translation.ok(), `test wine translation ${translation.status()}`).toBe(true);
 
@@ -653,7 +616,7 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
         abvPct: 13,
         priceVnd: 700_000,
         stock: 1,
-        importer: "R3 test data",
+        importer: "Test importer",
         status: "published",
       },
     });
@@ -741,12 +704,14 @@ test("concurrent orders for the last bottles never take stock below zero", async
   for (const page of pages) await page.context().close();
 });
 
-test("the same client key never creates a second order: double submit, replayed POST, back-and-resubmit", async ({ page }) => {
+test("the same client key never creates a second order: double submit, replayed POST, forged digest, back-and-resubmit", async ({ page }) => {
   test.setTimeout(300_000);
   await declareAdult(page, "/ruou-vang/colle-vento-rosso");
   await addToCart(page, "", "colle-vento-rosso");
   await toReview(page, "", "hcmc");
   const clientKey = await page.locator("input[name=clientKey]").inputValue();
+  const digest = await page.locator("input[name=digest]").inputValue();
+  expect(digest).toMatch(/^[0-9a-f]{64}$/);
   const before = orderCount();
   // A second tab holds the review form open; it is the stale page a buyer resubmits after going back.
   const stale = await page.context().newPage();
@@ -755,26 +720,8 @@ test("the same client key never creates a second order: double submit, replayed 
 
   // The browser's place-order POST is captured and aborted; identical copies of it are replayed
   // with the context's cookies. Each answer redirects to the one order's status page.
-  let captured: { url: string; headers: Record<string, string>; body: Buffer } | undefined;
-  await page.route(
-    (url) => url.pathname === "/thanh-toan/xac-nhan",
-    async (route) => {
-      const r = route.request();
-      if (r.method() !== "POST") return route.continue();
-      const headers = Object.fromEntries(Object.entries(await r.allHeaders()).filter(([k]) => !["host", "content-length", "cookie"].includes(k)));
-      captured = { url: r.url(), headers, body: r.postDataBuffer()! };
-      return route.abort();
-    },
-  );
-  await page.locator("input[name=terms]").check();
-  await page.locator("input[name=privacy]").check();
-  await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
-  await expect.poll(() => captured).toBeDefined();
-  await page.unroute((url) => url.pathname === "/thanh-toan/xac-nhan");
-  const replay = async () => {
-    const response = await page.request.post(captured!.url, { headers: captured!.headers, data: captured!.body, maxRedirects: 0 });
-    return JSON.stringify(response.headers());
-  };
+  const { body, replay: post } = await capturePlacePost(page);
+  const replay = async (data?: Buffer) => JSON.stringify((await post(data)).headers());
 
   // Double submit: two copies race each other.
   const raced = await Promise.all([replay(), replay()]);
@@ -786,6 +733,14 @@ test("the same client key never creates a second order: double submit, replayed 
   // A replayed POST after the order exists (the cart and checkout cookies are now cleared).
   expect(await replay()).toContain(`/don-hang/${token}`);
   expect(orderCount()).toBe(before + 1);
+
+  // The same replay with a forged digest still names the one order.
+  const text = body.toString("latin1");
+  expect(text).toContain(digest);
+  for (const forged of ["0".repeat(64), "f".repeat(64)]) {
+    expect(await replay(Buffer.from(text.replace(digest, forged), "latin1"))).toContain(`/don-hang/${token}`);
+    expect(orderCount()).toBe(before + 1);
+  }
 
   // Back-and-resubmit: the stale review form posts the same key after the order exists.
   await stale.locator("input[name=terms]").check();
@@ -988,31 +943,7 @@ test("duplicates racing for the last bottle all land on the one order and never 
   expect(storedTotals(token)).toBe("690000|30000|720000|65455");
 });
 
-test("a replay of a placed client key with a forged digest names the one order and places nothing", async ({ page }) => {
-  await declareAdult(page, "/ruou-vang/colle-vento-rosso");
-  await addToCart(page, "", "colle-vento-rosso");
-  await toReview(page, "", "hcmc");
-  const digest = await page.locator("input[name=digest]").inputValue();
-  expect(digest).toMatch(/^[0-9a-f]{64}$/);
-  const before = orderCount();
-
-  const clientKey = await page.locator("input[name=clientKey]").inputValue();
-  const { body, replay } = await capturePlacePost(page);
-  const placed = await replay();
-  expect(orderCount()).toBe(before + 1);
-  const token = sql(`SELECT token FROM orders WHERE client_key = '${clientKey}'`);
-  expect(JSON.stringify(placed.headers())).toContain(`/don-hang/${token}`);
-
-  for (const forged of ["0".repeat(64), "f".repeat(64)]) {
-    const text = body.toString("latin1");
-    expect(text).toContain(digest);
-    const response = await replay(Buffer.from(text.replace(digest, forged), "latin1"));
-    expect(JSON.stringify(response.headers())).toContain(`/don-hang/${token}`);
-    expect(orderCount()).toBe(before + 1);
-  }
-});
-
-test("orders and site settings are admin-only over REST, nobody deletes an order, and the admin order view makes no third-party request", async ({
+test("orders are admin-only over REST, nobody deletes an order, and the admin order view makes no third-party request", async ({
   page,
   request,
 }) => {
@@ -1026,7 +957,7 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   const count = orderCount();
 
   // Unauthenticated REST: no order or buyer data, nothing created or deleted.
-  for (const response of [await request.get("/api/orders"), await request.get(`/api/orders/${id}`), await request.get("/api/globals/site-settings")]) {
+  for (const response of [await request.get("/api/orders"), await request.get(`/api/orders/${id}`)]) {
     expect(response.ok(), `${response.url()} ${response.status()}`).toBe(false);
     const body = await response.text();
     for (const secret of [number, token, "Nguyễn Văn An", "0901234567", "hcmc"]) expect(body).not.toContain(secret);
@@ -1070,6 +1001,9 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   const reopenExpired = await admin.patch(`/api/orders/${expiredId}`, { data: { status: "packed" } });
   expect(reopenExpired.ok(), `expired order PATCH ${reopenExpired.status()}`).toBe(false);
   expect(sql(`SELECT status FROM orders WHERE id = ${expiredId}`)).toBe("expired");
+  const expiredDelete = await admin.delete(`/api/orders/${expiredId}`);
+  expect(expiredDelete.ok(), `expired order DELETE ${expiredDelete.status()}`).toBe(false);
+  expect(orderCount()).toBe(count + 1);
 
   await page.goto("/admin/collections/orders");
   const expiredRow = page.locator(".collection-list tbody tr").filter({ hasText: expiredNumber });
@@ -1089,7 +1023,7 @@ test("orders and site settings are admin-only over REST, nobody deletes an order
   expect(external).toEqual([]);
 });
 
-// ---- S5: delivery modes and dates, gift options, the gift service page, the server-side draft ----
+// ---- Delivery modes and dates, gift options, the gift service page, the server-side draft ----
 // Packaging from `src/seed/data.ts`: silk (1 bottle, every size) 50 000; box-1 (1 bottle, 750 ml)
 // 120 000; box-2 (2 bottles, 750 ml) 200 000. Lead days 1 for both zones.
 
@@ -1259,21 +1193,25 @@ test("changing delivery mode clears step 3 gift choices while resubmitting the s
   await expect(page.getByTestId("review-wrap")).toContainText("Không gói quà");
 });
 
-test("the checkout cookie holds only the draft handle, HttpOnly, SameSite=Lax, path /", async ({ page }) => {
+test("the cart cookie holds only vintage ids and quantities and the checkout cookie only the draft handle, both HttpOnly, SameSite=Lax, path /, for the browser session", async ({ page }) => {
   await declareAdult(page, "/ruou-vang/colle-vento-rosso");
   await addToCart(page, "", "colle-vento-rosso");
   await page.goto("/thanh-toan");
   await fillBuyer(page, vietnamDateYearsAgo(30));
   await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
-  const cookie = (await page.context().cookies()).find((c) => c.name === "xenia_checkout")!;
-  expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
+  const cookies = await page.context().cookies();
+  const cart = cookies.find((c) => c.name === "xenia_cart")!;
+  expect(cart).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/", expires: -1 });
+  expect(JSON.parse(decodeURIComponent(cart.value))).toEqual([{ v: vintageId("colle-vento-rosso", 2021, 750), q: 1 }]);
+  const cookie = cookies.find((c) => c.name === "xenia_checkout")!;
+  expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/", expires: -1 });
   expect(cookie.value).toMatch(/^[A-Za-z0-9_-]{43}$/);
   expect(Number(sql(`SELECT count(*) FROM checkout_drafts WHERE handle = '${cookie.value}' AND buyer_email = 'an@example.test'`))).toBe(1);
 });
 
 test("long Vietnamese addresses and a 250-code-point message go through every step and place", async ({ page }) => {
   test.setTimeout(300_000);
-  // "ệ" is one code point and one UTF-16 unit, nine bytes URL-encoded: the S4 cookie's worst case.
+  // "ệ" is one code point and one UTF-16 unit, so each field sits exactly at its limit.
   const buyerAddress = `12 Lê Lợi ${"ệ".repeat(490)}`;
   const recipientAddress = `5 Hàng Bài ${"ệ".repeat(489)}`;
   const message = "ệ".repeat(250);

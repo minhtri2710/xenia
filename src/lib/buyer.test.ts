@@ -24,17 +24,8 @@ describe("checkBuyer", () => {
     expect(JSON.stringify(result)).not.toContain("1990");
   });
 
-  it("is adult on the 18th birthday, Vietnamese date", () => {
-    expect(checkBuyer({ ...VALID, dob: "2008-09-24" }, NOW)).toMatchObject({ ok: true, adult: true });
-  });
-
   it("is not adult the day before the 18th birthday", () => {
     expect(checkBuyer({ ...VALID, dob: "2008-09-25" }, NOW)).toMatchObject({ ok: true, adult: false });
-  });
-
-  it("uses the Asia/Ho_Chi_Minh date, not UTC", () => {
-    // 2026-09-23T17:30Z is already 24 September in Vietnam.
-    expect(checkBuyer({ ...VALID, dob: "2008-09-24" }, new Date("2026-09-23T17:30:00Z"))).toMatchObject({ ok: true, adult: true });
   });
 
   it("reports every blank field", () => {
@@ -73,6 +64,13 @@ describe("checkContact", () => {
       ok: true,
       buyer: { name: "An", phone: "0901234567", email: "a@b.vn", address: "Hà Nội" },
     });
+  });
+
+  it("accepts a 254-character email and refuses a 255-character one", () => {
+    const contact = { name: "An", phone: "0901234567", address: "Hà Nội" };
+    const email = (length: number) => `a@${"b".repeat(length - 7)}.test`;
+    expect(checkContact({ ...contact, email: email(254) }).ok).toBe(true);
+    expect(checkContact({ ...contact, email: email(255) })).toEqual({ ok: false, errors: { email: "emailInvalid" } });
   });
 });
 

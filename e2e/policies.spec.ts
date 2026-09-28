@@ -23,13 +23,7 @@ async function enterAdult(page: Page, prefix: string, path: string) {
 
 for (const { locale, prefix, draft } of LOCALES) {
   test.describe(`policies (${locale})`, () => {
-    test("all nine pages are gated, drafted, complete and accessible without third-party requests", async ({ page, request }) => {
-      for (const { slug, path } of POLICY_ROUTES) {
-        const response = await request.get(`${prefix}${path}`, { maxRedirects: 0 });
-        expect(response.status(), slug).toBe(307);
-        expect(new URL(response.headers().location!, "http://localhost").pathname).toBe(`${prefix}/xac-minh-tuoi`);
-      }
-
+    test("all nine pages are drafted, complete and accessible without third-party requests", async ({ page }) => {
       const external = await blockThirdParty(page);
       for (const { slug, path } of POLICY_ROUTES) {
         await enterAdult(page, prefix, path);

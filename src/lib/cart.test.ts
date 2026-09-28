@@ -94,6 +94,11 @@ describe("line edits", () => {
     expect(addLine(cart, 7, 3, 2)).toEqual([...cart, { vintageId: 7, qty: 2 }]);
   });
 
+  it("appends no new line to a cart of MAX_CART_LINES lines", () => {
+    const full = Array.from({ length: MAX_CART_LINES }, (_, i) => ({ vintageId: i + 1, qty: 1 }));
+    expect(addLine(full, 99, 1, 5)).toEqual(full);
+  });
+
   it("sets a quantity, capped at stock", () => {
     expect(setLine(cart, 4, 9, 6)).toEqual([
       { vintageId: 1, qty: 2 },

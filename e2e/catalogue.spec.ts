@@ -129,6 +129,16 @@ test.describe("catalogue access without admin auth (D4: /api is outside the age 
   });
 });
 
+// Query values are locale-independent codes, so one locale covers the table.
+test("each facet and sort narrows or orders on the server, from the URL", async ({ page }) => {
+  await declareAdult(page);
+  for (const [query, { slugs, prices }] of Object.entries(EXPECTED)) {
+    await page.goto(`/ruou-vang?${query}`);
+    expect(await cardSlugs(page), query).toEqual(slugs);
+    if (prices) expect(await cardPrices(page), query).toEqual(prices);
+  }
+});
+
 for (const { locale, prefix } of LOCALES) {
   test.describe(`collection page (${locale})`, () => {
     test("lists the seeded published wines with name, producer, type, region and a from-price", async ({ page }) => {
@@ -150,15 +160,6 @@ for (const { locale, prefix } of LOCALES) {
       await expect(page.getByTestId("age-notice")).toContainText(LEGAL_NOTICE);
       await page.waitForLoadState("networkidle");
       expect(external).toEqual([]);
-    });
-
-    test("each facet and sort narrows or orders on the server, from the URL", async ({ page }) => {
-      await declareAdult(page, prefix);
-      for (const [query, { slugs, prices }] of Object.entries(EXPECTED)) {
-        await page.goto(`${prefix}/ruou-vang?${query}`);
-        expect(await cardSlugs(page), query).toEqual(slugs);
-        if (prices) expect(await cardPrices(page), query).toEqual(prices);
-      }
     });
 
     test("facet and sort links write their state to the URL", async ({ page }) => {

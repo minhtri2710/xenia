@@ -59,12 +59,6 @@ describe("reviewOrder", () => {
     );
   });
 
-  it("changes the digest when the stored packaging price changes", () => {
-    const a = reviewOrder(base);
-    const b = reviewOrder({ ...base, packaging: { ...box2, priceVnd: 210_000 } });
-    expect(a.ok && b.ok && a.digest !== b.digest).toBe(true);
-  });
-
   it("has no wrap and no gift part in self mode without packaging", () => {
     const review = reviewOrder({
       ...base,

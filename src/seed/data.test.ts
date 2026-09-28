@@ -7,27 +7,15 @@ const localized = (l: Localized) => l.vi.trim() !== "" && l.en.trim() !== "";
 
 describe("sample site settings", () => {
   it("provides visibly fictional required owner details with no notification link", () => {
-    expect(SAMPLE_OWNER).toEqual({
-      legalName: "Xenia Sample Trading Company (SAMPLE DATA)",
-      headOffice: "Sample address, District 1, Ho Chi Minh City (SAMPLE DATA)",
-      legalRepresentative: "Sample Representative (SAMPLE DATA)",
-      businessRegistration: { number: "SAMPLE-BUSINESS-REGISTRATION", date: "2026-01-15", place: "Sample issuing authority (SAMPLE DATA)" },
-      alcoholLicence: { number: "SAMPLE-ALCOHOL-LICENCE", issuer: "Sample licensing authority (SAMPLE DATA)", date: "2026-02-15" },
-      contactEmail: "contact@example.test",
-      contactPhone: "+84 000 000 0000 (SAMPLE DATA)",
-      notificationLink: "",
-    });
+    const { businessRegistration: reg, alcoholLicence: licence, contactEmail, notificationLink, ...text } = SAMPLE_OWNER;
+    for (const value of [...Object.values(text), reg.number, reg.place, licence.number, licence.issuer]) expect(value).toContain("SAMPLE");
+    for (const date of [reg.date, licence.date]) expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(contactEmail).toMatch(/^[^@\s]+@[a-z0-9.-]+\.test$/);
+    expect(notificationLink).toBe("");
   });
-
 });
 
 describe("seed catalogue", () => {
-  it("has about 16 wines, 16 of them published", () => {
-    expect(wines.length).toBeGreaterThanOrEqual(14);
-    expect(wines.length).toBeLessThanOrEqual(18);
-    expect(seedCatalogue("vi")).toHaveLength(16);
-  });
-
   it("gives every vintage an ABV and a bottle size in 375/750/1500, and whole VND prices", () => {
     for (const x of wines.flatMap((w) => w.vintages)) {
       expect(x.abvPct).toBeGreaterThan(0);

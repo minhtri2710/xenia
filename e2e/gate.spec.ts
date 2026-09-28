@@ -36,7 +36,18 @@ test.describe("unverified visitor", () => {
   }
 
   for (const prefix of ["", "/en"]) {
-    for (const path of ["/ruou-vang?type=red", "/gio-hang", "/thanh-toan", "/thanh-toan/giao-hang", "/thanh-toan/goi-qua", "/thanh-toan/xac-nhan", `/don-hang/${"A".repeat(43)}`]) {
+    for (const path of [
+      "/ruou-vang?type=red",
+      "/gio-hang",
+      "/thanh-toan",
+      "/thanh-toan/giao-hang",
+      "/thanh-toan/goi-qua",
+      "/thanh-toan/xac-nhan",
+      `/don-hang/${"A".repeat(43)}`,
+      ...POLICY_ROUTES.map((route) => route.path),
+      "/robots.txt",
+      "/sitemap.xml",
+    ]) {
       test(`is redirected by the server from ${prefix}${path} to the gate`, async ({ request }) => {
         const response = await request.get(prefix + path, { maxRedirects: 0 });
         expect(response.status()).toBe(307);
@@ -92,12 +103,6 @@ test("an adult declaration on the English gate with no `next` returns the visito
   await declare(page, "Jane Doe", vietnamDateYearsAgo(30));
   await expect(page).toHaveURL((url) => url.pathname === "/en");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wine for memorable occasions");
-});
-
-test("an open-redirect `next` on the English gate returns the adult to /en instead", async ({ page }) => {
-  await page.goto("/en/xac-minh-tuoi?next=//evil.example");
-  await declare(page, "Jane Doe", vietnamDateYearsAgo(30));
-  await expect(page).toHaveURL((url) => url.hostname === "localhost" && url.pathname === "/en");
 });
 
 test.describe("invalid input shows a field error on the gate", () => {

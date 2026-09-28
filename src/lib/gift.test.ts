@@ -72,6 +72,6 @@ describe("fitsEverySize", () => {
 
 describe("isCode", () => {
   it("accepts lower-case codes only", () => {
-    expect(["box-2", "chuc-mung", "silk", "", "Box", "a b", "x".repeat(41), 1].map(isCode)).toEqual([true, true, true, false, false, false, false, false]);
+    expect(["box-2", "chuc-mung", "silk", "x".repeat(40), "", "Box", "a b", "x".repeat(41), 1].map(isCode)).toEqual([true, true, true, true, false, false, false, false, false]);
   });
 });
