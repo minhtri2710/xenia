@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { CARD_DESIGNS, PACKAGING, wines as seedWines } from "../src/seed/data";
+import { CARD_DESIGNS, PACKAGING, producers as seedProducers, wines as seedWines } from "../src/seed/data";
 import { seedCatalogue, sql } from "./support";
 
 const ADMIN_EMAIL = "admin@xenia.test";
@@ -85,6 +85,11 @@ test("the seed upserts: seeded ids and order lines stay, referenced non-seed row
     sql(`UPDATE vintages SET bottle_ml = (CASE id WHEN ${lune2019(750)} THEN '1500' ELSE '750' END)::enum_vintages_bottle_ml WHERE id IN (${lune2019(750)}, ${lune2019(1500)})`);
     sql(`UPDATE vintages SET price_vnd = 1, stock = 0, status = 'draft' WHERE wine_id IN (SELECT id FROM wines WHERE slug IN (${seedWines.map((w) => `'${w.slug}'`).join(",")}))`);
     sql("UPDATE wines SET status = 'draft', region = 'drift' WHERE slug = 'lune-grise-rouge'");
+    // Stale English copy on a seeded wine and producer.
+    const driftWine = seedWines[0];
+    const driftProducer = seedProducers.find((p) => p.key === driftWine.producer)!;
+    sql(`UPDATE wines_locales SET name = 'stale', tasting_nose = 'stale', tasting_palate = 'stale', tasting_finish = 'stale' WHERE _locale = 'en' AND _parent_id = (SELECT id FROM wines WHERE slug = '${driftWine.slug}')`);
+    sql(`UPDATE producers_locales SET story = 'stale' WHERE _locale = 'en' AND _parent_id = (SELECT id FROM producers WHERE name = '${driftProducer.name.replaceAll("'", "''")}')`);
     const idsBefore = seededIds();
     expect(idsBefore.split(",")).toHaveLength(seedWines.flatMap((w) => w.vintages).length);
 
@@ -119,6 +124,15 @@ test("the seed upserts: seeded ids and order lines stay, referenced non-seed row
       expect(sql("SELECT status || '|' || region FROM wines WHERE slug = 'lune-grise-rouge'")).toBe(
         `${seedWines.find((w) => w.slug === "lune-grise-rouge")!.status}|${seedWines.find((w) => w.slug === "lune-grise-rouge")!.region}`,
       );
+      // Every field is refreshed in English too.
+      expect(
+        sql(`SELECT concat_ws('|', name, tasting_nose, tasting_palate, tasting_finish) FROM wines_locales WHERE _locale = 'en' AND _parent_id = (SELECT id FROM wines WHERE slug = '${driftWine.slug}')`),
+        `English wine copy after run ${run}`,
+      ).toBe([driftWine.name.en, driftWine.tasting.nose.en, driftWine.tasting.palate.en, driftWine.tasting.finish.en].join("|"));
+      expect(
+        sql(`SELECT story FROM producers_locales WHERE _locale = 'en' AND _parent_id = (SELECT id FROM producers WHERE name = '${driftProducer.name.replaceAll("'", "''")}')`),
+        `English producer story after run ${run}`,
+      ).toBe(driftProducer.story.en);
       expect(sql("SELECT count(*) FROM packaging")).toBe(String(PACKAGING.length));
       expect(sql("SELECT count(*) FROM card_designs")).toBe(String(CARD_DESIGNS.length));
     }

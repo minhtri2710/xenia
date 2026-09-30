@@ -77,7 +77,9 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   // Relationship labels resolve lazily only after their cells enter the viewport. Compare every row
   // to the independent vintage→localized-wine mapping from the scratch database.
   const expectedWineByVintage = vintageWineNames("vi");
-  await page.goto("/admin/collections/vintages?limit=100");
+  // One page holds every vintage, however many archived rows earlier runs left.
+  const limit = expectedWineByVintage.size;
+  await page.goto(`/admin/collections/vintages?limit=${limit}`);
   await page.waitForLoadState("networkidle");
   const vintageRows = page.locator(".collection-list tbody tr");
   await expect(vintageRows).toHaveCount(expectedWineByVintage.size);
@@ -96,15 +98,15 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   // The derived ≥15% ABV indicator, filtered on the stored abvPct (the wine column's relationship
   // cell is not a stable row key): the seed's only vintages at 15% or above are the two 20% tawnies.
   const cells = page.locator(".collection-list tbody tr .cell-adRestricted");
-  await page.goto("/admin/collections/vintages?limit=100&where[abvPct][greater_than_equal]=15");
+  await page.goto(`/admin/collections/vintages?limit=${limit}&where[abvPct][greater_than_equal]=15`);
   await expect(cells).toHaveText(["true", "true"]);
-  await page.goto("/admin/collections/vintages?limit=100&where[abvPct][less_than]=15");
+  await page.goto(`/admin/collections/vintages?limit=${limit}&where[abvPct][less_than]=15`);
   // The seed has 25 of them; archived non-seed vintages (an earlier spec's ordered rows) add more.
   await expect(page.locator(".collection-list tbody tr")).toHaveCount(Number(sql("SELECT count(*) FROM vintages WHERE abv_pct < 15")));
   expect(new Set(await cells.allTextContents())).toEqual(new Set(["false"]));
   await page.waitForLoadState("networkidle");
 
-  await page.goto("/admin/collections/vintages?limit=100&where[abvPct][greater_than_equal]=15");
+  await page.goto(`/admin/collections/vintages?limit=${limit}&where[abvPct][greater_than_equal]=15`);
   const tawny = page.locator(".collection-list tbody tr");
   await tawny.first().locator("a").first().click();
   await expect(page).toHaveURL(/\/admin\/collections\/vintages\/\d+/);
