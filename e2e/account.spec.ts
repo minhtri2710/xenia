@@ -162,7 +162,8 @@ test("registration, verification and sign-in; the session is the account cookie,
   await expect(page).toHaveURL((url) => url.pathname === "/tai-khoan");
   await expect(page.getByTestId("account-email")).toContainText(email);
   const cookie = (await accountCookie(context))!;
-  expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
+  // A session cookie: no Expires or Max-Age (Playwright reports -1); the JWT itself expires after SESSION_SECONDS.
+  expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/", expires: -1 });
   expect((await context.cookies()).map((c) => c.name)).not.toContain("payload-token");
   await expect(page.getByTestId("header-account")).toHaveAttribute("href", "/tai-khoan");
   const robots = await page.locator('meta[name="robots"]').getAttribute("content");
@@ -224,6 +225,7 @@ test("the verification mail can be sent again with the email and password, and t
   await declareAdult(page, "/tai-khoan/dang-ky");
   await register(page, "", email);
   await expect(page).toHaveURL(/notice=registered/);
+  const firstLink = lastMail(email)!.href;
   const consentAt = () => sql(`SELECT consents_at FROM customers WHERE email = '${email}'`);
   const consentedAt = consentAt();
   expect(consentedAt).not.toBe("");
@@ -237,8 +239,19 @@ test("the verification mail can be sent again with the email and password, and t
   expect(mailCount(email)).toBe(before + 1);
   // The replacement row keeps the consent record from registration: `consents.at` does not move to the resend.
   expect(consentAt()).toBe(consentedAt);
-  // The new link verifies the account.
+  // The first link is dead: it does not verify, the account stays unverified and sign-in is still refused.
+  const newLink = lastMail(email)!.href;
+  await page.goto(firstLink);
+  await page.locator("form button[type=submit]").click();
+  await expect(page.getByTestId("verify-failed")).toBeVisible();
+  expect(sql(`SELECT _verified FROM customers WHERE email = '${email}'`)).toBe("f");
+  await signInAs(page, "", email);
+  await expect(page.getByTestId("sign-in-failed")).toBeVisible();
+  expect(await accountCookie(page.context())).toBeUndefined();
+  expect(newLink).not.toBe(firstLink);
+  // The new link then verifies the account.
   await verifyFromMail(page, "", email);
+  expect(sql(`SELECT _verified FROM customers WHERE email = '${email}'`)).toBe("t");
 
   const unknown = mailbox("resend-nobody");
   await page.locator("#resend-email").fill(unknown);
@@ -408,4 +421,88 @@ test("the English account pages and mail are in English and link to /en", async 
   await signInAs(page, "/en", email);
   await expect(page).toHaveURL((url) => url.pathname === "/en/tai-khoan");
   await expect(page.getByTestId("header-account")).toHaveAttribute("href", "/en/tai-khoan");
+});
+
+test("an administrator's token in the account cookie is no account session: /tai-khoan goes to sign-in, the header link is the signed-out one and checkout step 4 is a guest order", async ({ page, playwright }) => {
+  test.setTimeout(300_000);
+  const anonymous = await playwright.request.newContext({ baseURL: "http://localhost:3417" });
+  sql("TRUNCATE users CASCADE");
+  const created = await anonymous.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } });
+  expect(created.ok()).toBe(true);
+  const login = await anonymous.post("/api/users/login", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } });
+  expect(login.ok()).toBe(true);
+  const adminToken = (await login.json()).token as string;
+  await anonymous.dispose();
+
+  await declareAdult(page, "/ruou-vang/lune-grise-rouge");
+  await page.context().addCookies([{ name: ACCOUNT_COOKIE_NAME, value: adminToken, url: "http://localhost:3417" }]);
+  expect((await accountCookie(page.context()))?.value).toBe(adminToken);
+
+  await page.goto("/tai-khoan");
+  await expect(page).toHaveURL((url) => url.pathname === "/tai-khoan/dang-nhap");
+  await expect(page.getByTestId("header-account")).toHaveAttribute("href", "/tai-khoan/dang-nhap");
+
+  // Checkout: nothing is prefilled and step 4 says guest, with the admin's email nowhere in it.
+  await page.goto("/ruou-vang/lune-grise-rouge");
+  await page.getByTestId("add-to-cart").locator("button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/gio-hang");
+  await page.goto("/thanh-toan");
+  await expect(page.locator("#buyer-email")).toHaveValue("");
+  await page.locator("#buyer-name").fill("Nguyễn Văn An");
+  await page.locator("#buyer-dob").fill(vietnamDateYearsAgo(30));
+  await page.locator("#buyer-phone").fill("090 123 4567");
+  await page.locator("#buyer-email").fill("an@example.test");
+  await page.locator("#buyer-address").fill("12 Lê Lợi, Quận 1");
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+  await page.locator("input[name=zone][value=hcmc]").check();
+  await page.locator("input[name=window][value=morning]").check();
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan");
+  await expect(page.getByTestId("review-account")).toHaveText("Đơn hàng này được đặt với tư cách khách, không có tài khoản.");
+  await expect(page.getByTestId("review-account")).not.toContainText(ADMIN_EMAIL);
+});
+
+test("V13: every account page, in both locales, signed out, with a token link and signed in, has no serious accessibility violation", async ({ page }) => {
+  test.setTimeout(300_000);
+  const email = mailbox("a11y");
+  await declareAdult(page, "/tai-khoan/dang-ky");
+  await register(page, "", email);
+  await expect(page).toHaveURL(/notice=registered/);
+  const verifyLink = lastMail(email)!.href;
+  await page.goto("/tai-khoan/quen-mat-khau");
+  await page.locator("#forgot-email").fill(email);
+  await page.locator("form button[type=submit]").click();
+  await expect(page.getByTestId("forgot-sent")).toBeVisible();
+  const resetLink = lastMail(email)!.href;
+  expect(verifyLink).toMatch(/^\/tai-khoan\/xac-minh\?token=/);
+  expect(resetLink).toMatch(/^\/tai-khoan\/dat-lai-mat-khau\?token=/);
+
+  // The links are locale-relative: the same token under /en.
+  for (const prefix of ["", "/en"]) {
+    for (const path of [
+      "/tai-khoan/dang-ky",
+      "/tai-khoan/dang-nhap",
+      "/tai-khoan/quen-mat-khau",
+      "/tai-khoan/xac-minh",
+      "/tai-khoan/dat-lai-mat-khau",
+      verifyLink,
+      resetLink,
+    ]) {
+      await page.goto(`${prefix}${path}`);
+      await expectNoSeriousA11yViolations(page, `${prefix}${path.split("?")[0]}${path.includes("?") ? " with a token" : ""}`);
+    }
+  }
+
+  await page.goto(verifyLink);
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/tai-khoan/dang-nhap");
+  await signInAs(page, "", email);
+  await expect(page).toHaveURL((url) => url.pathname === "/tai-khoan");
+  for (const path of ["/tai-khoan", "/en/tai-khoan"]) {
+    await page.goto(path);
+    await expectNoSeriousA11yViolations(page, `${path} signed in`);
+  }
 });

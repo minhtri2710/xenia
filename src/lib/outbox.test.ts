@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OUTBOX_TTL_HOURS } from "./accounts";
-import { type OutboxRow, sendToOutbox } from "./outbox";
+import { mockEmailAdapter, type OutboxRow, sendToOutbox } from "./outbox";
 
 const NOW = new Date("2026-09-30T05:00:00.000Z");
 
@@ -45,5 +45,30 @@ describe("sendToOutbox", () => {
     const s = store();
     await sendToOutbox(s, { to: [{ address: "a@example.com" }, "b@example.com"], subject: "x", text: "plain" }, { production: false, now: NOW });
     expect(s.rows[0]).toMatchObject({ to: "a@example.com, b@example.com", body: "plain" });
+  });
+});
+
+describe("mockEmailAdapter", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  const adapterWith = () => {
+    const payload = { delete: vi.fn(async () => ({})), create: vi.fn(async () => ({})) };
+    return { payload, adapter: mockEmailAdapter({ payload: payload as never }) };
+  };
+
+  it("refuses in production through the wiring Payload uses: nothing is deleted or written", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { payload, adapter } = adapterWith();
+    await expect(adapter.sendEmail({ to: "a@example.com", subject: "x", html: "<p>x</p>" })).rejects.toThrow(/production/);
+    expect(payload.delete).not.toHaveBeenCalled();
+    expect(payload.create).not.toHaveBeenCalled();
+  });
+
+  it("writes one row outside production", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { payload, adapter } = adapterWith();
+    await adapter.sendEmail({ to: "a@example.com", subject: "Hi", html: "<p>x</p>" });
+    expect(payload.create).toHaveBeenCalledTimes(1);
+    expect(payload.create).toHaveBeenCalledWith({ collection: "mock-outbox", data: expect.objectContaining({ to: "a@example.com", subject: "Hi", body: "<p>x</p>" }) });
   });
 });
