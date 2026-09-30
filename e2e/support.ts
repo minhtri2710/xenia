@@ -145,6 +145,13 @@ export function lastMail(email: string): { subject: string; body: string; href: 
   return { subject, body, href, token: new URL(href, "http://x").searchParams.get("token") ?? "" };
 }
 
+/** Whether any mock-outbox message to `email` holds the date of birth, in the ISO form the form takes or as day/month/year. */
+export function outboxHoldsDateOfBirth(email: string, dob: string): boolean {
+  const [year, month, day] = dob.split("-");
+  const holds = [dob, `${day}/${month}/${year}`].map((form) => `position('${form}' in subject || ' ' || body) > 0`).join(" OR ");
+  return sql(`SELECT count(*) FROM mock_outbox WHERE "to" = '${email}' AND (${holds})`) !== "0";
+}
+
 export const mailCount = (email: string) => Number(sql(`SELECT count(*) FROM mock_outbox WHERE "to" = '${email}'`));
 export const customerCount = (email: string) => Number(sql(`SELECT count(*) FROM customers WHERE email = '${email}'`));
 

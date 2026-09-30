@@ -49,7 +49,10 @@ describe("sendToOutbox", () => {
 });
 
 describe("mockEmailAdapter", () => {
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.useRealTimers();
+  });
 
   const adapterWith = () => {
     const payload = { delete: vi.fn(async () => ({})), create: vi.fn(async () => ({})) };
@@ -70,5 +73,18 @@ describe("mockEmailAdapter", () => {
     await adapter.sendEmail({ to: "a@example.com", subject: "Hi", html: "<p>x</p>" });
     expect(payload.create).toHaveBeenCalledTimes(1);
     expect(payload.create).toHaveBeenCalledWith({ collection: "mock-outbox", data: expect.objectContaining({ to: "a@example.com", subject: "Hi", body: "<p>x</p>" }) });
+  });
+
+  it("deletes what is older than the TTL at the fixed instant, and makes no network call", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const { payload, adapter } = adapterWith();
+    await adapter.sendEmail({ to: "a@example.com", subject: "Hi", html: "<p>x</p>" });
+    expect(payload.delete).toHaveBeenCalledTimes(1);
+    expect(payload.delete).toHaveBeenCalledWith({ collection: "mock-outbox", where: { sentAt: { less_than: "2026-09-29T05:00:00.000Z" } } });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });

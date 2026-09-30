@@ -63,14 +63,16 @@ test.describe("unverified visitor", () => {
   }
 });
 
-test("a token link survives the gate round trip: its query comes back intact after the declaration", async ({ page }) => {
+test("a verification link and a reset link survive the gate round trip: the query comes back intact after the declaration, in both locales", async ({ page }) => {
   for (const prefix of ["", "/en"]) {
-    const link = `${prefix}${ACCOUNT_ROUTES.reset}?token=abc123-_XYZ`;
-    await page.context().clearCookies();
-    await page.goto(link);
-    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi`);
-    await declare(page, "Nguyễn Văn An", vietnamDateYearsAgo(30));
-    await expect(page).toHaveURL((url) => url.pathname === `${prefix}${ACCOUNT_ROUTES.reset}` && url.searchParams.get("token") === "abc123-_XYZ");
+    for (const route of [ACCOUNT_ROUTES.verify, ACCOUNT_ROUTES.reset]) {
+      const link = `${prefix}${route}?token=abc123-_XYZ`;
+      await page.context().clearCookies();
+      await page.goto(link);
+      await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi`);
+      await declare(page, "Nguyễn Văn An", vietnamDateYearsAgo(30));
+      await expect(page).toHaveURL((url) => url.pathname === `${prefix}${route}` && url.searchParams.get("token") === "abc123-_XYZ");
+    }
   }
 });
 

@@ -1550,6 +1550,11 @@ const accountRun = Date.now().toString(36);
 const accountMailbox = (name: string) => `${name}.${accountRun}@example.test`;
 const customerOf = (token: string) => sql(`SELECT coalesce(customer_id::text, 'none') FROM orders WHERE token = '${token}'`);
 const customerId = (email: string) => sql(`SELECT id FROM customers WHERE email = '${email}'`);
+// An order as stored, without the account link: the row (number, buyer, delivery, gift, totals, consents, payment, timestamps) and its lines.
+const orderSnapshot = (token: string) =>
+  sql(
+    `SELECT (to_jsonb(o) - 'customer_id')::text || E'\\n' || coalesce((SELECT jsonb_agg(to_jsonb(l) ORDER BY l._order)::text FROM orders_lines l WHERE l._parent_id = o.id), '[]') FROM orders o WHERE token = '${token}'`,
+  );
 
 test("a signed-in order is saved to the account, prefilled from it; a guest order with the same email is never linked; another account sees nothing; deleting the account keeps the order, unlinked", async ({ page, browser }) => {
   test.setTimeout(300_000);
@@ -1577,6 +1582,11 @@ test("a signed-in order is saved to the account, prefilled from it; a guest orde
   const owned = await consentAndPlace(page, "");
   expect(customerOf(owned)).toBe(customerId(email));
   const ownedNumber = sql(`SELECT number FROM orders WHERE token = '${owned}'`);
+  const snapshotBefore = orderSnapshot(owned);
+  // The snapshot is not empty: the number, the buyer, a line with its quantity and unit price, and the totals are in it.
+  for (const part of [ownedNumber, '"buyer_name": "Nguyễn Văn An"', '"buyer_phone": "0901234567"', `"buyer_email": "${email}"`, '"buyer_address": "12 Lê Lợi, Quận 1"', '"unit_price_vnd"', '"qty": 1', '"totals_total_vnd"', '"wine_name_vi"']) {
+    expect(snapshotBefore, part).toContain(part);
+  }
 
   // A guest order with the very same email: never linked.
   const guest = await newPage(browser);
@@ -1603,11 +1613,22 @@ test("a signed-in order is saved to the account, prefilled from it; a guest orde
   await page.getByTestId("account-orders").getByRole("link").click();
   await expect(page).toHaveURL((url) => url.pathname === `/don-hang/${owned}`);
 
-  // Another account sees none of it.
+  // Another account sees none of it, and when it places an order of its own, each account lists only its own.
   const other = await newPage(browser);
   await newCustomerSession(other, "", accountMailbox("stranger"));
   await expect(other.getByTestId("account-no-orders")).toBeVisible();
+  await addToCart(other, "", "lune-grise-rouge");
+  await toReview(other, "", "hcmc");
+  const strangerToken = await consentAndPlace(other, "");
+  const strangerNumber = sql(`SELECT number FROM orders WHERE token = '${strangerToken}'`);
+  expect(strangerNumber).not.toBe(ownedNumber);
+  await other.goto("/tai-khoan");
+  await expect(other.getByTestId("account-orders").locator("li")).toHaveCount(1);
+  await expect(other.getByTestId("account-orders").locator("li")).toHaveAttribute("data-order", strangerNumber);
   await other.context().close();
+  await page.goto("/tai-khoan");
+  await expect(page.getByTestId("account-orders").locator("li")).toHaveCount(1);
+  await expect(page.getByTestId("account-orders").locator("li")).toHaveAttribute("data-order", ownedNumber);
 
   // Deleting the account removes the row; the order stays and loses the link.
   await page.goto("/tai-khoan");
@@ -1616,6 +1637,8 @@ test("a signed-in order is saved to the account, prefilled from it; a guest orde
   await expect(page).toHaveURL(/notice=deleted/);
   expect(sql(`SELECT count(*) FROM customers WHERE email = '${email}'`)).toBe("0");
   expect(sql(`SELECT count(*) || '|' || coalesce(max(customer_id::text), 'none') FROM orders WHERE token = '${owned}'`)).toBe("1|none");
+  // The snapshot is what it was, field for field, line for line; only the account link went.
+  expect(orderSnapshot(owned)).toBe(snapshotBefore);
 });
 
 test("signing in after the review re-shows step 4 at ?changed=1 and the order is then saved to the account; signing out after the review does the same the other way", async ({ page }) => {
@@ -1653,7 +1676,8 @@ test("signing in after the review re-shows step 4 at ?changed=1 and the order is
   await out.close();
   await page.locator("input[name=terms]").check();
   await page.locator("input[name=privacy]").check();
-  await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+  // The URL is the same before and after a refusal, so wait for the action's answer before reading the order count.
+  await Promise.all([page.waitForResponse((response) => response.request().method() === "POST"), page.locator("form:has(input[name=clientKey]) button[type=submit]").click()]);
   await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan" && url.searchParams.get("changed") === "1");
   expect(orderCount()).toBe(before);
   await expect(page.getByTestId("review-account")).not.toContainText(email);

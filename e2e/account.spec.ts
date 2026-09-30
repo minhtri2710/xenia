@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { ACCOUNT_COOKIE, MAX_LOGIN_ATTEMPTS } from "../src/lib/accounts";
 import config from "../src/payload.config";
 import {
   ACCOUNT_COOKIE_NAME,
@@ -13,6 +14,7 @@ import {
   mailCount,
   NEW_ACCOUNT_PASSWORD,
   newCustomerSession,
+  outboxHoldsDateOfBirth,
   register,
   seedCatalogue,
   signInAs,
@@ -109,6 +111,17 @@ test("V1: a customer's token, as a cookie or as a JWT header, gets nothing from 
   // The mock outbox is read-only for everyone.
   for (const op of ["create", "update", "delete"]) expect(of("mock-outbox", op).admin, `mock-outbox ${op} as admin`).toBeGreaterThanOrEqual(400);
 
+  // V2: nobody signed in gets anything from the two collections that hold personal data either.
+  const nobody = await playwright.request.newContext({ baseURL: "http://localhost:3417" });
+  for (const [slug, refused] of [["customers", 501], ["mock-outbox", 403]] as const) {
+    for (const path of [`/api/${slug}`, `/api/${slug}/999999`]) {
+      const response = await nobody.get(path);
+      expect(response.status(), `anonymous GET ${path}`).toBe(refused);
+      expect(await response.text(), `anonymous GET ${path} body`).not.toMatch(/"docs":\s*\[\s*\{|"email":|"to":/);
+    }
+  }
+  await nobody.dispose();
+
   // A customer cannot use /admin.
   const adminPage = await page.context().newPage();
   await adminPage.context().addCookies([{ name: "payload-token", value: token, url: "http://localhost:3417" }]);
@@ -127,9 +140,10 @@ test("V1: a customer's token, as a cookie or as a JWT header, gets nothing from 
 test("registration, verification and sign-in; the session is the account cookie, not payload-token", async ({ page, context }) => {
   const external = await blockThirdParty(page);
   const email = mailbox("flow");
+  const dob = vietnamDateYearsAgo(30);
   await declareAdult(page, "/tai-khoan/dang-ky");
   await expectNoSeriousA11yViolations(page, "register");
-  await register(page, "", email);
+  await register(page, "", email, { dob });
   await expect(page).toHaveURL((url) => url.pathname === "/tai-khoan/dang-nhap" && url.searchParams.get("notice") === "registered");
   await expect(page.getByTestId("account-notice")).toBeVisible();
 
@@ -137,7 +151,10 @@ test("registration, verification and sign-in; the session is the account cookie,
   expect(row).toBe("Nguyễn Văn An|false");
   // The date of birth is checked and never stored anywhere in the account row.
   expect(sql(`SELECT count(*) FROM information_schema.columns WHERE table_name = 'customers' AND column_name ~* '(dob|birth)'`)).toBe("0");
-  expect(sql(`SELECT count(*) FROM customers WHERE row_to_json(customers)::text LIKE '%${vietnamDateYearsAgo(30)}%'`)).toBe("0");
+  expect(sql(`SELECT count(*) FROM customers WHERE row_to_json(customers)::text LIKE '%${dob}%'`)).toBe("0");
+  // ... and in no outbox message: the verification mail is there, so this is not an empty search.
+  expect(mailCount(email)).toBe(1);
+  expect(outboxHoldsDateOfBirth(email, dob)).toBe(false);
 
   // Not verified: one generic failure, no session.
   await signInAs(page, "", email);
@@ -203,20 +220,23 @@ test("registration needs both consents unticked by default and asks for a long e
 
 test("registering an existing email answers exactly like a new one and sends a notice, not a second account", async ({ page, browser }) => {
   const email = mailbox("twice");
+  const dob = vietnamDateYearsAgo(30);
   await declareAdult(page, "/tai-khoan/dang-ky");
-  await register(page, "", email);
+  await register(page, "", email, { dob });
   await expect(page).toHaveURL(/notice=registered/);
   const first = await page.getByTestId("account-notice").textContent();
 
   const other = await browser.newContext();
   const page2 = await other.newPage();
   await declareAdult(page2, "/tai-khoan/dang-ky");
-  await register(page2, "", email);
+  await register(page2, "", email, { dob });
   await expect(page2).toHaveURL(/notice=registered/);
   expect(await page2.getByTestId("account-notice").textContent()).toBe(first);
   expect(customerCount(email)).toBe(1);
   expect(mailCount(email)).toBe(2);
   expect(lastMail(email)!.subject).toBe("Bạn đã có tài khoản");
+  // Neither the verification mail nor the notice holds the date of birth.
+  expect(outboxHoldsDateOfBirth(email, dob)).toBe(false);
   await other.close();
 });
 
@@ -229,13 +249,22 @@ test("the verification mail can be sent again with the email and password, and t
   const consentAt = () => sql(`SELECT consents_at FROM customers WHERE email = '${email}'`);
   const consentedAt = consentAt();
   expect(consentedAt).not.toBe("");
-  await page.goto("/tai-khoan/dang-nhap");
+  const resend = async (address: string, password: string) => {
+    await page.goto("/tai-khoan/dang-nhap");
+    await page.locator("#resend-email").fill(address);
+    await page.locator("#resend-password").fill(password);
+    await page.locator("#resend-email").locator("xpath=ancestor::form").locator("button[type=submit]").click();
+    await expect(page.getByTestId("account-notice")).toHaveAttribute("data-notice", "resent");
+    return page.getByTestId("account-notice").textContent();
+  };
+
+  // A wrong password for the real, unverified account gets the same answer and sends nothing.
   const before = mailCount(email);
-  await page.locator("#resend-email").fill(email);
-  await page.locator("#resend-password").fill(ACCOUNT_PASSWORD);
-  await page.locator("#resend-email").locator("xpath=ancestor::form").locator("button[type=submit]").click();
-  await expect(page.getByTestId("account-notice")).toHaveAttribute("data-notice", "resent");
-  const known = await page.getByTestId("account-notice").textContent();
+  const wrongPassword = await resend(email, "not the password, not at all");
+  expect(mailCount(email)).toBe(before);
+
+  const known = await resend(email, ACCOUNT_PASSWORD);
+  expect(known).toBe(wrongPassword);
   expect(mailCount(email)).toBe(before + 1);
   // The replacement row keeps the consent record from registration: `consents.at` does not move to the resend.
   expect(consentAt()).toBe(consentedAt);
@@ -254,25 +283,28 @@ test("the verification mail can be sent again with the email and password, and t
   expect(sql(`SELECT _verified FROM customers WHERE email = '${email}'`)).toBe("t");
 
   const unknown = mailbox("resend-nobody");
-  await page.locator("#resend-email").fill(unknown);
-  await page.locator("#resend-password").fill("whatever it is, wrong");
-  await page.locator("#resend-email").locator("xpath=ancestor::form").locator("button[type=submit]").click();
-  await expect(page.getByTestId("account-notice")).toHaveAttribute("data-notice", "resent");
-  expect(await page.getByTestId("account-notice").textContent()).toBe(known);
+  expect(await resend(unknown, "whatever it is, wrong")).toBe(known);
   expect(mailCount(unknown)).toBe(0);
+  // An account that is verified already, with its right password: the same answer, and no mail.
+  const verifiedMails = mailCount(email);
+  expect(await resend(email, ACCOUNT_PASSWORD)).toBe(known);
+  expect(mailCount(email)).toBe(verifiedMails);
 });
 
-test("five wrong passwords lock the account: even the right password fails until the lock ends", async ({ page }) => {
+test("the constant number of wrong passwords locks the account: even the right password fails until the lock ends", async ({ page }) => {
   const email = mailbox("lock");
   await newCustomerSession(page, "", email);
   await page.context().clearCookies({ name: ACCOUNT_COOKIE_NAME });
-  for (let i = 0; i < 5; i++) {
+  const locked = () => sql(`SELECT lock_until IS NOT NULL FROM customers WHERE email = '${email}'`);
+  for (let failures = 1; failures <= MAX_LOGIN_ATTEMPTS; failures++) {
     await signInAs(page, "", email, "not the password at all");
     await expect(page.getByTestId("sign-in-failed")).toBeVisible();
+    // The last allowed failure locks the account, and no earlier one does.
+    expect(locked(), `locked after ${failures} failures`).toBe(failures === MAX_LOGIN_ATTEMPTS ? "t" : "f");
   }
   await signInAs(page, "", email);
   await expect(page.getByTestId("sign-in-failed")).toBeVisible();
-  expect(sql(`SELECT lock_until IS NOT NULL FROM customers WHERE email = '${email}'`)).toBe("t");
+  expect(locked()).toBe("t");
   sql(`UPDATE customers SET lock_until = now() - interval '1 minute', login_attempts = 0 WHERE email = '${email}'`);
   await signInAs(page, "", email);
   await expect(page).toHaveURL((url) => url.pathname === "/tai-khoan");
@@ -359,6 +391,15 @@ test("changing the password ends the account's other sessions and keeps this one
   await page.locator("#password-new").fill(NEW_ACCOUNT_PASSWORD);
   await page.locator("#password-new").locator("xpath=ancestor::form").locator("button[type=submit]").click();
   await expect(page.getByTestId("password-changed")).toBeVisible();
+  // The password really changed: the new one signs in and the old one is refused.
+  const fresh = await browser.newContext();
+  const freshPage = await fresh.newPage();
+  await declareAdult(freshPage, "/tai-khoan");
+  await signInAs(freshPage, "", email, ACCOUNT_PASSWORD);
+  await expect(freshPage.getByTestId("sign-in-failed")).toBeVisible();
+  await signInAs(freshPage, "", email, NEW_ACCOUNT_PASSWORD);
+  await expect(freshPage).toHaveURL((url) => url.pathname === "/tai-khoan");
+  await fresh.close();
   await page.reload();
   await expect(page.getByTestId("account-email")).toBeVisible();
   await elsewhere.goto("/tai-khoan");
@@ -465,8 +506,30 @@ test("an administrator's token in the account cookie is no account session: /tai
   await expect(page.getByTestId("review-account")).not.toContainText(ADMIN_EMAIL);
 });
 
+test("D13.5: an administrator cannot unlock a locked customer over REST; the lock is unchanged", async ({ page, playwright }) => {
+  test.setTimeout(300_000);
+  const email = mailbox("unlock");
+  await newCustomerSession(page, "", email);
+  sql(`UPDATE customers SET lock_until = now() + interval '10 minutes', login_attempts = ${MAX_LOGIN_ATTEMPTS} WHERE email = '${email}'`);
+  const lockBefore = sql(`SELECT lock_until FROM customers WHERE email = '${email}'`);
+  expect(lockBefore).not.toBe("");
+
+  const admin = await playwright.request.newContext({ baseURL: "http://localhost:3417" });
+  sql("TRUNCATE users CASCADE");
+  const created = await admin.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } });
+  expect(created.ok()).toBe(true);
+  const login = await admin.post("/api/users/login", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } });
+  expect(login.ok()).toBe(true);
+  const unlock = await admin.post("/api/customers/unlock", { data: { email } });
+  expect(unlock.status(), "an administrator's unlock over REST").toBeGreaterThanOrEqual(400);
+  expect(sql(`SELECT lock_until FROM customers WHERE email = '${email}'`)).toBe(lockBefore);
+  expect(sql(`SELECT login_attempts FROM customers WHERE email = '${email}'`)).toBe(String(MAX_LOGIN_ATTEMPTS));
+  await admin.dispose();
+});
+
 test("V13: every account page, in both locales, signed out, with a token link and signed in, has no serious accessibility violation", async ({ page }) => {
   test.setTimeout(300_000);
+  const external = await blockThirdParty(page);
   const email = mailbox("a11y");
   await declareAdult(page, "/tai-khoan/dang-ky");
   await register(page, "", email);
@@ -505,4 +568,40 @@ test("V13: every account page, in both locales, signed out, with a token link an
     await page.goto(path);
     await expectNoSeriousA11yViolations(page, `${path} signed in`);
   }
+  // V9: no account page, in either locale, signed out, with a token or signed in, asked anything of a third party.
+  expect(external).toEqual([]);
+});
+
+test("V4: sign-in fails with the same text for an unknown email, a wrong password, an unverified account and a locked one", async ({ page }) => {
+  test.setTimeout(300_000);
+  const verified = mailbox("generic-verified");
+  await newCustomerSession(page, "", verified);
+  await page.context().clearCookies({ name: ACCOUNT_COOKIE_NAME });
+  const unverified = mailbox("generic-pending");
+  await register(page, "", unverified);
+  await expect(page).toHaveURL(/notice=registered/);
+
+  const failure = async (email: string, password = ACCOUNT_PASSWORD) => {
+    await signInAs(page, "", email, password);
+    const message = page.getByTestId("sign-in-failed");
+    await expect(message).toBeVisible();
+    expect(await accountCookie(page.context())).toBeUndefined();
+    return (await message.textContent())!.trim();
+  };
+  const unknown = await failure(mailbox("generic-nobody"));
+  expect(unknown).not.toBe("");
+  const wrongPassword = await failure(verified, "not the password at all");
+  const pending = await failure(unverified);
+  // One failure is already counted; the rest lock the account, and then even the right password fails.
+  for (let failures = 1; failures < MAX_LOGIN_ATTEMPTS; failures++) await failure(verified, "not the password at all");
+  expect(sql(`SELECT lock_until IS NOT NULL FROM customers WHERE email = '${verified}'`)).toBe("t");
+  const lockedOut = await failure(verified);
+  expect({ wrongPassword, pending, lockedOut }).toEqual({ wrongPassword: unknown, pending: unknown, lockedOut: unknown });
+});
+
+test("V12: the privacy draft names the account cookie by its constant, in both locales", async ({ page }) => {
+  await declareAdult(page, "/chinh-sach/bao-mat");
+  await expect(page.locator("#main-content")).toContainText(ACCOUNT_COOKIE);
+  await page.goto("/en/chinh-sach/bao-mat");
+  await expect(page.locator("#main-content")).toContainText(ACCOUNT_COOKIE);
 });
