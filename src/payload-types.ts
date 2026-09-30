@@ -446,7 +446,7 @@ export interface Order {
     hidePrices?: boolean | null;
   };
   lines: {
-    vintage?: (number | null) | Vintage;
+    vintage: number | Vintage;
     wineNameVi: string;
     wineNameEn: string;
     /**

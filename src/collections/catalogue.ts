@@ -1,4 +1,4 @@
-import type { CollectionConfig, SelectField, Validate } from "payload";
+import { APIError, type CollectionConfig, type SelectField, type Validate } from "payload";
 
 import { adminOnlyAccess } from "@/lib/access";
 import { BOTTLE_SIZES, COUNTRIES, isAdRestricted, OCCASIONS, PAIRINGS, STATUSES, WINE_TYPES } from "@/lib/catalogue";
@@ -102,6 +102,25 @@ export const Vintages: CollectionConfig = {
   admin: { defaultColumns: ["wine", "year", "bottleMl", "abvPct", "adRestricted", "priceVnd", "stock", "status"] },
   access: adminOnlyAccess,
   lockDocuments: false,
+  hooks: {
+    // The message for an admin; the guarantee is `orders_lines.vintage_id` NOT NULL in Postgres,
+    // which refuses the delete for every caller, this hook included.
+    beforeDelete: [
+      async ({ id, req }) => {
+        const referenced = await req.payload.find({
+          collection: "orders",
+          where: { "lines.vintage": { equals: id } },
+          depth: 0,
+          limit: 1,
+          pagination: false,
+          req,
+        });
+        if (referenced.docs.length > 0) {
+          throw new APIError("This vintage has order history and cannot be deleted. Set its status to draft to take it off sale.", 409, null, true);
+        }
+      },
+    ],
+  },
   fields: [
     { name: "wine", type: "relationship", relationTo: "wines", required: true, index: true },
     {

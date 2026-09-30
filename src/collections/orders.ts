@@ -129,7 +129,7 @@ export const Orders: CollectionConfig = {
       minRows: 1,
       admin: { readOnly: true },
       fields: [
-        { name: "vintage", type: "relationship", relationTo: "vintages" },
+        { name: "vintage", type: "relationship", relationTo: "vintages", required: true },
         { name: "wineNameVi", type: "text", required: true },
         { name: "wineNameEn", type: "text", required: true },
         { name: "year", type: "number", admin: { description: "Empty for NV." } },

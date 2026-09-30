@@ -61,7 +61,7 @@ export function vintageWineNames(locale: "vi" | "en"): Map<number, string> {
 }
 
 /**
- * Replaces the catalogue with the fixed seed (`pnpm seed`). The dev server pushes Payload's
+ * Upserts the catalogue to the fixed seed (`pnpm seed`). The dev server pushes Payload's
  * schema on its first request, so hit it first; the seed then finds the tables in place.
  */
 export async function seedCatalogue(request: APIRequestContext) {

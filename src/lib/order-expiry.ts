@@ -54,16 +54,12 @@ async function releaseExpiredInTransaction(
     });
     const order = docs[0];
     if (!order) throw new Error(`Expired order ${orderId} disappeared during stock release.`);
-    const lines = [...order.lines].sort((a, b) => {
-      const idOf = (vintage: number | { id: number } | null | undefined) => typeof vintage === "number" ? vintage : vintage?.id ?? 0;
-      return idOf(a.vintage) - idOf(b.vintage);
-    });
+    const lines = order.lines.map((line) => ({ vintageId: typeof line.vintage === "number" ? line.vintage : line.vintage.id, qty: line.qty }));
+    lines.sort((a, b) => a.vintageId - b.vintageId);
     for (const line of lines) {
-      const vintageId = typeof line.vintage === "number" ? line.vintage : line.vintage?.id;
-      if (vintageId === undefined || vintageId === null) continue;
       await payload.db.updateOne({
         collection: "vintages",
-        id: vintageId,
+        id: line.vintageId,
         data: { stock: { $inc: line.qty } },
         req,
         returning: false,

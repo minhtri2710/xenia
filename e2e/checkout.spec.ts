@@ -569,11 +569,12 @@ test("placement releases a due order before checking the buyer's last bottle", a
   }
 });
 
-test("a due order with a deleted vintage releases its remaining lines on the catalogue read", async ({ page }) => {
+test("a vintage with order history, even on an expired order, is never deleted: the admin gets the reason, Postgres refuses, and archiving keeps the line", async ({ page }) => {
   const seededVintage = vintageId("colle-vento-rosso", 2021, 750);
-  const slug = `deleted-vintage-${Date.now()}`;
+  const slug = `archived-vintage-${Date.now()}`;
+  const wineName = "Rượu kiểm thử";
   let wineId: number | undefined;
-  let vintageIdToDelete: number | undefined;
+  let orderedVintageId: number | undefined;
   const admin = page.request;
 
   sql(`UPDATE vintages SET stock = 1 WHERE id = ${seededVintage}`);
@@ -591,7 +592,7 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
       data: {
         slug,
         producer,
-        name: "Rượu kiểm thử",
+        name: wineName,
         type: "red",
         country: "IT",
         region: "Tuscany",
@@ -600,7 +601,7 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
         profile: { body: 3, tannin: 3, sweetness: 1, acidity: 3 },
         pairings: ["beef"],
         servingTempC: 16,
-        occasions: ["dinner"],
+        occasions: ["gift"],
         status: "published",
       },
     });
@@ -624,7 +625,7 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
       },
     });
     expect(createdVintage.ok(), `test vintage creation ${createdVintage.status()}`).toBe(true);
-    vintageIdToDelete = (await createdVintage.json()).doc.id;
+    orderedVintageId = (await createdVintage.json()).doc.id as number;
 
     await declareAdult(page, "/ruou-vang/colle-vento-rosso");
     await addToCart(page, "", "colle-vento-rosso");
@@ -634,24 +635,89 @@ test("a due order with a deleted vintage releases its remaining lines on the cat
     const id = Number(sql(`SELECT id FROM orders WHERE token = '${token}'`));
     expect(sql(`SELECT status || '/' || payment_status FROM orders WHERE id = ${id}`)).toBe("placed/unpaid");
     expect(stockOf(seededVintage)).toBe(0);
-    expect(stockOf(vintageIdToDelete!)).toBe(0);
+    expect(stockOf(orderedVintageId!)).toBe(0);
 
-    const deletion = await admin.delete(`/api/vintages/${vintageIdToDelete}`);
-    expect(deletion.ok(), `test vintage deletion ${deletion.status()}`).toBe(true);
-    vintageIdToDelete = undefined;
-    expect(sql(`SELECT count(*) FROM orders_lines WHERE _parent_id = ${id} AND vintage_id IS NULL`)).toBe("1");
+    // The order is due and unpaid: the catalogue read expires it and restocks every line.
     sql(`UPDATE orders SET payment_due_at = TIMESTAMPTZ '2026-01-01 00:00:00+00' WHERE id = ${id}`);
-
     const catalogue = await page.goto("/ruou-vang");
     expect(catalogue?.status()).toBe(200);
     expect(sql(`SELECT status FROM orders WHERE id = ${id}`)).toBe("expired");
     expect(stockOf(seededVintage)).toBe(1);
-    const secondCatalogue = await page.goto("/ruou-vang");
-    expect(secondCatalogue?.status()).toBe(200);
-    expect(stockOf(seededVintage)).toBe(1);
+    expect(stockOf(orderedVintageId!)).toBe(1);
+    const linesBefore = sql(`SELECT string_agg(vintage_id::text, ',' ORDER BY vintage_id) FROM orders_lines WHERE _parent_id = ${id}`);
+    expect(linesBefore).toBe([seededVintage, orderedVintageId].sort((a, b) => a! - b!).join(","));
+
+    // The expired order still blocks the delete: the admin gets the reason and the remedy.
+    const refused = await admin.delete(`/api/vintages/${orderedVintageId}`);
+    expect(refused.status()).toBe(409);
+    expect(await refused.text()).toContain("has order history and cannot be deleted. Set its status to draft");
+    expect(sql(`SELECT count(*) FROM vintages WHERE id = ${orderedVintageId}`)).toBe("1");
+    expect(sql(`SELECT string_agg(vintage_id::text, ',' ORDER BY vintage_id) FROM orders_lines WHERE _parent_id = ${id}`)).toBe(linesBefore);
+
+    // The admin UI shows the same reason, from the edit view and from the list's bulk delete.
+    const reason = /has order history and cannot be deleted\. Set its status to draft/;
+    await page.goto(`/admin/collections/vintages/${orderedVintageId}`);
+    await page.locator(".doc-controls__popup button.popup-button").click();
+    await page.locator("#action-delete").click();
+    await page.locator("#confirm-action").click();
+    await expect(page.locator("[data-sonner-toast]").filter({ hasText: reason })).toBeVisible();
+    await page.goto(`/admin/collections/vintages?where[id][equals]=${orderedVintageId}`);
+    await page.locator("tbody .row-1 input[type=checkbox]").check();
+    await page.locator(".list-selection .btn", { hasText: /delete/i }).click();
+    await page.locator("#confirm-action").click();
+    await expect(page.locator("[data-sonner-toast]").filter({ hasText: reason })).toBeVisible();
+    expect(sql(`SELECT count(*) FROM vintages WHERE id = ${orderedVintageId}`)).toBe("1");
+
+    // Postgres refuses it too, for a caller that skips Payload.
+    expect(() => sql(`DELETE FROM vintages WHERE id = ${orderedVintageId}`)).toThrow(/violates not-null constraint/);
+    expect(sql(`SELECT count(*) FROM vintages WHERE id = ${orderedVintageId}`)).toBe("1");
+    expect(() => sql(`UPDATE orders_lines SET vintage_id = NULL WHERE _parent_id = ${id}`)).toThrow(/violates not-null constraint/);
+
+    // A wine that has vintages and a producer that has wines are refused the same way (Postgres).
+    const wineDelete = await admin.delete(`/api/wines/${wineId}`);
+    expect(wineDelete.ok(), `wine with a vintage DELETE ${wineDelete.status()}`).toBe(false);
+    expect(sql(`SELECT count(*) FROM wines WHERE id = ${wineId}`)).toBe("1");
+    const producerDelete = await admin.delete(`/api/producers/${producer}`);
+    expect(producerDelete.ok(), `producer with wines DELETE ${producerDelete.status()}`).toBe(false);
+    expect(sql(`SELECT count(*) FROM producers WHERE id = ${producer}`)).toBe("1");
+
+    // An unreferenced vintage still deletes normally.
+    const spare = await admin.post("/api/vintages", {
+      data: { wine: wineId, year: 2019, bottleMl: "750", abvPct: 13, priceVnd: 700_000, stock: 1, importer: "Test importer", status: "draft" },
+    });
+    expect(spare.ok(), `unreferenced vintage creation ${spare.status()}`).toBe(true);
+    const spareId = (await spare.json()).doc.id as number;
+    expect((await admin.delete(`/api/vintages/${spareId}`)).status()).toBe(200);
+    expect(sql(`SELECT count(*) FROM vintages WHERE id = ${spareId}`)).toBe("0");
+
+    // Archive: published, it is on the product page, the collection, the gifts and the cart.
+    expect((await page.goto(`/ruou-vang/${slug}`))?.status()).toBe(200);
+    await expect(page.locator("#main-content")).toContainText(wineName);
+    await page.goto("/ruou-vang");
+    await expect(page.locator(`a[href="/ruou-vang/${slug}"]`).first()).toBeVisible();
+    await page.goto("/qua-tang");
+    await expect(page.locator(`a[href="/ruou-vang/${slug}"]`).first()).toBeVisible();
+    await addToCart(page, "", slug);
+    await expect(page.locator(`[data-vintage="${orderedVintageId}"]`)).toHaveCount(1);
+
+    const archived = await admin.patch(`/api/vintages/${orderedVintageId}`, { data: { status: "draft" } });
+    expect(archived.ok(), `archive ${archived.status()}`).toBe(true);
+
+    expect((await page.goto(`/ruou-vang/${slug}`))?.status()).toBe(404);
+    await page.goto("/ruou-vang");
+    await expect(page.locator(`a[href="/ruou-vang/${slug}"]`)).toHaveCount(0);
+    await page.goto("/qua-tang");
+    await expect(page.locator(`a[href="/ruou-vang/${slug}"]`)).toHaveCount(0);
+    await page.goto("/gio-hang");
+    await expect(page.locator(`[data-vintage="${orderedVintageId}"]`)).toHaveCount(0);
+    // The order keeps its line and its snapshot.
+    expect(sql(`SELECT string_agg(vintage_id::text, ',' ORDER BY vintage_id) FROM orders_lines WHERE _parent_id = ${id}`)).toBe(linesBefore);
+    await page.goto(`/don-hang/${token}`);
+    await expect(page.locator("#main-content")).toContainText(wineName);
   } finally {
-    if (vintageIdToDelete !== undefined) await admin.delete(`/api/vintages/${vintageIdToDelete}`);
-    if (wineId !== undefined) await admin.delete(`/api/wines/${wineId}`);
+    // A row that was ordered is archived, never deleted.
+    if (orderedVintageId !== undefined) await admin.patch(`/api/vintages/${orderedVintageId}`, { data: { status: "draft" } });
+    if (wineId !== undefined) await admin.patch(`/api/wines/${wineId}`, { data: { status: "draft" } });
     sql(`UPDATE vintages SET stock = 40 WHERE id = ${seededVintage}`);
     sql("TRUNCATE users CASCADE");
   }
@@ -1520,7 +1586,7 @@ test("gift collections, site settings and checkout drafts are admin-only over RE
   expect(counts()).toBe(before);
 });
 
-test("pnpm seed changes no user, order or checkout draft and clears the vintage on existing order lines", async ({ page, request }) => {
+test("pnpm seed changes no user, order or checkout draft and keeps the vintage on existing order lines", async ({ page, request }) => {
   sql("TRUNCATE users CASCADE");
   expect((await request.post("/api/users/first-register", { data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, "confirm-password": ADMIN_PASSWORD } })).ok()).toBe(true);
   await declareAdult(page, "/ruou-vang/colle-vento-rosso");
@@ -1539,9 +1605,11 @@ test("pnpm seed changes no user, order or checkout draft and clears the vintage 
   expect(before.split("|").map(Number).every((n) => n >= 1)).toBe(true);
   expect(line()).toBe("f|Colle del Vento Rosso|720000|1");
 
+  const linkedVintage = sql(`SELECT l.vintage_id FROM orders_lines l JOIN orders o ON o.id = l._parent_id WHERE o.token = '${token}'`);
   await seedCatalogue(request);
   expect(rows()).toBe(before);
-  expect(line()).toBe("t|Colle del Vento Rosso|720000|1");
+  expect(line()).toBe("f|Colle del Vento Rosso|720000|1");
+  expect(sql(`SELECT l.vintage_id FROM orders_lines l JOIN orders o ON o.id = l._parent_id WHERE o.token = '${token}'`)).toBe(linkedVintage);
 });
 
 // ── F8: the optional account at checkout (V7) ───────────────────────────────────────────────

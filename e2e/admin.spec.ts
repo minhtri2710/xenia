@@ -99,7 +99,8 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await page.goto("/admin/collections/vintages?limit=100&where[abvPct][greater_than_equal]=15");
   await expect(cells).toHaveText(["true", "true"]);
   await page.goto("/admin/collections/vintages?limit=100&where[abvPct][less_than]=15");
-  await expect(page.locator(".collection-list tbody tr")).toHaveCount(25);
+  // The seed has 25 of them; archived non-seed vintages (an earlier spec's ordered rows) add more.
+  await expect(page.locator(".collection-list tbody tr")).toHaveCount(Number(sql("SELECT count(*) FROM vintages WHERE abv_pct < 15")));
   expect(new Set(await cells.allTextContents())).toEqual(new Set(["false"]));
   await page.waitForLoadState("networkidle");
 
