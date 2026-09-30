@@ -640,7 +640,7 @@ export function seedCatalogue(locale: keyof Localized): CatalogueWine[] {
         region: w.region,
         grapes: w.grapes.map((g) => g.grape),
         occasions: w.occasions,
-        vintages: vintages.map(({ priceVnd, bottleMl, stock }) => ({ priceVnd, bottleMl, stock })),
+        vintages: vintages.map(({ priceVnd, bottleMl, stock, abvPct }) => ({ priceVnd, bottleMl, stock, abvPct })),
       },
     ];
   });

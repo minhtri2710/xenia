@@ -29,7 +29,7 @@ export async function loadCatalogue(locale: "vi" | "en"): Promise<CatalogueWine[
         region: w.region,
         grapes: w.grapes.map((g) => g.grape),
         occasions: w.occasions ?? [],
-        vintages: own.map((x) => ({ priceVnd: x.priceVnd, bottleMl: Number(x.bottleMl) as BottleSize, stock: x.stock })),
+        vintages: own.map((x) => ({ priceVnd: x.priceVnd, bottleMl: Number(x.bottleMl) as BottleSize, stock: x.stock, abvPct: x.abvPct })),
       },
     ];
   });

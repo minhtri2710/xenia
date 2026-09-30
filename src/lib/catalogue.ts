@@ -58,7 +58,7 @@ export type PriceBand = (typeof PRICE_BANDS)[number]["id"];
 export const SORTS = ["name", "price-asc", "price-desc"] as const;
 export type Sort = (typeof SORTS)[number];
 
-export type CatalogueVintage = { priceVnd: number; bottleMl: BottleSize; stock: number };
+export type CatalogueVintage = { priceVnd: number; bottleMl: BottleSize; stock: number; abvPct: number };
 
 /** A published wine with its published vintages, in the requested locale. */
 export type CatalogueWine = {
@@ -176,6 +176,30 @@ export function listWines(wines: CatalogueWine[], filters: Filters, locale: stri
     if (filters.sort === "price-desc") return b.fromPriceVnd - a.fromPriceVnd || byName(a, b);
     return byName(a, b);
   });
+}
+
+/**
+ * A surface that promotes a whole wine treats it as restricted when any of its published
+ * vintages is (Law 44/2019 Art. 5.7 and 5.9). The only place that reads `isAdRestricted` for a wine.
+ */
+export function isRestrictedWine(wine: Pick<CatalogueWine, "vintages">): boolean {
+  return wine.vintages.some((v) => isAdRestricted(v.abvPct));
+}
+
+/** The occasions that make a gift collection: the rest of `OCCASIONS` are browse occasions only. */
+export const GIFT_OCCASIONS = ["gift", "tet", "celebration"] as const satisfies readonly Occasion[];
+export type GiftOccasion = (typeof GIFT_OCCASIONS)[number];
+
+export type GiftCollection = { occasion: GiftOccasion; listings: Listing[] };
+
+/**
+ * The gift collections: one per gift occasion, from each wine's admin-set `occasions`, narrowed
+ * by an optional price band with `/ruou-vang`'s card semantics. A restricted wine appears in none,
+ * and a wine tagged with several gift occasions appears in each of them.
+ */
+export function giftCollections(wines: CatalogueWine[], price: PriceBand | undefined, locale: string): GiftCollection[] {
+  const promotable = wines.filter((w) => !isRestrictedWine(w));
+  return GIFT_OCCASIONS.map((occasion) => ({ occasion, listings: listWines(promotable, { sort: "name", occasion, price }, locale) }));
 }
 
 export type FacetOptions = {

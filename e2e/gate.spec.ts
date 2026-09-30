@@ -38,6 +38,7 @@ test.describe("unverified visitor", () => {
   for (const prefix of ["", "/en"]) {
     for (const path of [
       "/ruou-vang?type=red",
+      "/qua-tang",
       "/gio-hang",
       "/thanh-toan",
       "/thanh-toan/giao-hang",

@@ -8,6 +8,7 @@
     "cart": "Giỏ hàng",
     "wines": "Rượu vang",
     "giftService": "Dịch vụ gói quà",
+    "giftCollections": "Bộ sưu tập quà",
     "switchLocale": "English"
   },
   "Notice": {
@@ -398,6 +399,30 @@
     "noMessage": "(không có lời nhắn)",
     "yes": "Có",
     "no": "Không"
+  },
+  "GiftCollections": {
+    "title": "Bộ sưu tập quà",
+    "lead": "Các loại vang theo dịp tặng và theo ngân sách. Giá đã gồm VAT.",
+    "warning": "Người dưới 18 tuổi không được uống rượu, bia",
+    "budget": "Ngân sách",
+    "budgetAll": "Mọi mức giá",
+    "collections": {
+      "gift": {
+        "title": "Quà tặng",
+        "lead": "Các loại vang được ghi nhận để làm quà."
+      },
+      "tet": {
+        "title": "Tết",
+        "lead": "Các loại vang được ghi nhận cho dịp Tết."
+      },
+      "celebration": {
+        "title": "Tiệc mừng",
+        "lead": "Các loại vang được ghi nhận cho các buổi tiệc mừng."
+      }
+    },
+    "empty": "Chưa có loại vang nào trong bộ sưu tập này ở mức giá đã chọn.",
+    "giftServiceNote": "Gói quà là dịch vụ có tính phí, tính riêng cho từng đơn hàng.",
+    "giftServiceLink": "Xem dịch vụ gói quà"
   },
   "GiftService": {
     "title": "Dịch vụ gói quà",

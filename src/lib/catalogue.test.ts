@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { type CatalogueWine, facetOptions, type Filters, isAdRestricted, listWines, parseQuery, priceBandOf, toQuery } from "./catalogue";
+import {
+  type CatalogueWine,
+  facetOptions,
+  type Filters,
+  giftCollections,
+  isAdRestricted,
+  isRestrictedWine,
+  listWines,
+  parseQuery,
+  type PriceBand,
+  priceBandOf,
+  toQuery,
+} from "./catalogue";
 
 const wine = (slug: string, over: Partial<CatalogueWine> = {}): CatalogueWine => ({
   slug,
@@ -11,13 +23,13 @@ const wine = (slug: string, over: Partial<CatalogueWine> = {}): CatalogueWine =>
   region: "Bordeaux",
   grapes: ["Merlot"],
   occasions: ["dinner"],
-  vintages: [{ priceVnd: 500_000, bottleMl: 750, stock: 1 }],
+  vintages: [{ priceVnd: 500_000, bottleMl: 750, stock: 1, abvPct: 13 }],
   ...over,
 });
 
 const WINES = [
   wine("a-bordeaux"),
-  wine("b-burgundy", { region: "Burgundy", grapes: ["Pinot Noir"], vintages: [{ priceVnd: 1_500_000, bottleMl: 750, stock: 0 }] }),
+  wine("b-burgundy", { region: "Burgundy", grapes: ["Pinot Noir"], vintages: [{ priceVnd: 1_500_000, bottleMl: 750, stock: 0, abvPct: 13 }] }),
   wine("c-tuscany", { country: "IT", region: "Tuscany", grapes: ["Sangiovese", "Merlot"], occasions: ["gift"] }),
   wine("d-champagne", {
     type: "sparkling",
@@ -25,9 +37,9 @@ const WINES = [
     grapes: ["Chardonnay"],
     occasions: ["gift", "tet"],
     vintages: [
-      { priceVnd: 2_500_000, bottleMl: 750, stock: 5 },
-      { priceVnd: 1_300_000, bottleMl: 375, stock: 0 },
-      { priceVnd: 5_000_000, bottleMl: 1500, stock: 2 },
+      { priceVnd: 2_500_000, bottleMl: 750, stock: 5, abvPct: 12 },
+      { priceVnd: 1_300_000, bottleMl: 375, stock: 0, abvPct: 12 },
+      { priceVnd: 5_000_000, bottleMl: 1500, stock: 2, abvPct: 12 },
     ],
   }),
 ];
@@ -167,5 +179,79 @@ describe("isAdRestricted (Law 44/2019 Art. 5.7, 5.9: 15% ABV and above)", () => 
     [20, true],
   ])("ABV %s is restricted: %s", (abv, restricted) => {
     expect(isAdRestricted(abv)).toBe(restricted);
+  });
+});
+
+const vintage = (priceVnd: number, abvPct: number) => ({ priceVnd, bottleMl: 750 as const, stock: 1, abvPct });
+const gifted = (slug: string, vintages: CatalogueWine["vintages"], occasions: CatalogueWine["occasions"] = ["gift"]) => wine(slug, { occasions, vintages });
+const listed = (wines: CatalogueWine[], price?: PriceBand) => Object.fromEntries(giftCollections(wines, price, "en").map((c) => [c.occasion, c.listings.map((l) => l.wine.slug)]));
+
+describe("isRestrictedWine (a whole wine is restricted when any published vintage is)", () => {
+  it.each([
+    ["exactly 15", [vintage(1_000_000, 15)]],
+    ["above 15", [vintage(1_000_000, 15.1)]],
+    ["well above 15", [vintage(1_000_000, 20)]],
+  ])("drops a wine at %s", (_, vintages) => {
+    expect(isRestrictedWine({ vintages })).toBe(true);
+  });
+
+  it("keeps a wine whose vintages are all below 15", () => {
+    expect(isRestrictedWine({ vintages: [vintage(1_000_000, 14.9)] })).toBe(false);
+    expect(isRestrictedWine({ vintages: [vintage(1_000_000, 14.9), vintage(2_000_000, 12), vintage(3_000_000, 14.99)] })).toBe(false);
+  });
+
+  it.each([
+    ["first", [vintage(2_000_000, 15), vintage(1_000_000, 13), vintage(3_000_000, 13)]],
+    ["last", [vintage(2_000_000, 13), vintage(1_000_000, 13), vintage(3_000_000, 15)]],
+    ["cheapest, in the middle", [vintage(2_000_000, 13), vintage(1_000_000, 15), vintage(3_000_000, 13)]],
+    ["most expensive, in the middle", [vintage(1_000_000, 13), vintage(3_000_000, 15), vintage(2_000_000, 13)]],
+    ["first and cheapest below the rest", [vintage(1_000_000, 14.9), vintage(2_000_000, 20)]],
+  ])("drops a mixed wine whose restricted vintage is the %s", (_, vintages) => {
+    expect(isRestrictedWine({ vintages })).toBe(true);
+  });
+});
+
+describe("giftCollections", () => {
+  const WINES_BY_ABV = [
+    gifted("safe-149", [vintage(900_000, 14.9)], ["gift", "tet"]),
+    gifted("edge-15", [vintage(900_000, 15)], ["gift", "tet"]),
+    gifted("strong-20", [vintage(900_000, 20)], ["gift", "celebration"]),
+    gifted("mixed-cheap-restricted", [vintage(900_000, 15), vintage(2_500_000, 13)], ["gift"]),
+    gifted("mixed-dear-restricted", [vintage(900_000, 13), vintage(2_500_000, 15.1)], ["gift"]),
+  ];
+
+  it("lists a wine only when none of its vintages is restricted", () => {
+    expect(listed(WINES_BY_ABV)).toEqual({ gift: ["safe-149"], tet: ["safe-149"], celebration: [] });
+  });
+
+  it("keeps a wine out of every budget even when the band holds only its unrestricted vintage", () => {
+    expect(listed(WINES_BY_ABV, "2m-4m").gift).toEqual([]);
+    expect(listed(WINES_BY_ABV, "lt1m").gift).toEqual(["safe-149"]);
+  });
+
+  it("makes one collection per gift occasion, in a fixed order, and none for a browse occasion", () => {
+    const all = [gifted("a", [vintage(500_000, 12)], ["dinner", "everyday"])];
+    expect(giftCollections(all, undefined, "en").map((c) => c.occasion)).toEqual(["gift", "tet", "celebration"]);
+    expect(listed(all)).toEqual({ gift: [], tet: [], celebration: [] });
+  });
+
+  it("puts a wine in every gift collection it is tagged with", () => {
+    const all = [gifted("a", [vintage(500_000, 12)], ["celebration", "gift", "dinner"]), gifted("b", [vintage(500_000, 12)], ["tet"])];
+    expect(listed(all)).toEqual({ gift: ["a"], tet: ["b"], celebration: ["a"] });
+  });
+
+  it("narrows every collection by budget with the collection page's card semantics", () => {
+    const all = [gifted("a", [vintage(500_000, 12), vintage(1_500_000, 12)], ["gift", "tet"]), gifted("b", [vintage(1_000_000, 12)], ["gift"])];
+    expect(listed(all, "lt1m")).toEqual({ gift: ["a"], tet: ["a"], celebration: [] });
+    expect(listed(all, "1m-2m")).toEqual({ gift: ["a", "b"], tet: ["a"], celebration: [] });
+    const a = giftCollections(all, "1m-2m", "en")[0].listings.find((l) => l.wine.slug === "a")!;
+    expect(a.fromPriceVnd).toBe(1_500_000);
+    expect(listed(all, "gte4m")).toEqual({ gift: [], tet: [], celebration: [] });
+  });
+
+  it("is derived from the vintages handed in, with nothing stored", () => {
+    const w = gifted("a", [vintage(500_000, 14.9)]);
+    expect(listed([w]).gift).toEqual(["a"]);
+    expect(listed([{ ...w, vintages: [{ ...w.vintages[0], abvPct: 15 }] }]).gift).toEqual([]);
   });
 });

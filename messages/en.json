@@ -8,6 +8,7 @@
     "cart": "Cart",
     "wines": "Wine",
     "giftService": "Gift service",
+    "giftCollections": "Gift collections",
     "switchLocale": "Tiếng Việt"
   },
   "Notice": {
@@ -399,6 +400,31 @@
     "noMessage": "(no message)",
     "yes": "Yes",
     "no": "No"
+  },
+  "GiftCollections": {
+    "title": "Gift collections",
+    "lead": "Wines by gift occasion and by budget. Prices include VAT.",
+    "warning": "Người dưới 18 tuổi không được uống rượu, bia",
+    "warningTranslation": "People under 18 must not drink alcohol or beer",
+    "budget": "Budget",
+    "budgetAll": "Any price",
+    "collections": {
+      "gift": {
+        "title": "Gifts",
+        "lead": "Wines noted for giving as a gift."
+      },
+      "tet": {
+        "title": "Tết",
+        "lead": "Wines noted for Tết."
+      },
+      "celebration": {
+        "title": "Celebrations",
+        "lead": "Wines noted for celebrations."
+      }
+    },
+    "empty": "No wine in this collection at the selected budget.",
+    "giftServiceNote": "Gift wrap is a paid service, charged separately for each order.",
+    "giftServiceLink": "See the gift service"
   },
   "GiftService": {
     "title": "Gift service",

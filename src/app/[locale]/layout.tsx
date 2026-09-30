@@ -98,6 +98,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               </div>
               <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-5 gap-y-3">
                 <Link href="/ruou-vang" className="text-sm text-wine underline underline-offset-4">{brand("wines")}</Link>
+                <Link href="/qua-tang" className="text-sm text-wine underline underline-offset-4">{brand("giftCollections")}</Link>
                 <Link href="/dich-vu-goi-qua" className="text-sm text-wine underline underline-offset-4">{brand("giftService")}</Link>
                 <Link href="/gio-hang" className="text-sm text-wine underline underline-offset-4">{brand("cart")}</Link>
                 <span className="sr-only">{footer("language")}</span>
