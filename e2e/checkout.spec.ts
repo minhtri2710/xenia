@@ -1183,9 +1183,9 @@ test("changing delivery mode clears step 3 gift choices while resubmitting the s
   await page.getByRole("link", { name: "Sửa giao hàng" }).click();
   await page.locator('input[name=mode][value="self"]').check();
   await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
   const handle = (await page.context().cookies()).find((cookie) => cookie.name === "xenia_checkout")!.value;
   expect(sql(`SELECT concat_ws('|', gift_saved::text, coalesce(gift_packaging, 'null'), coalesce(gift_card, 'null'), coalesce(gift_message, ''), coalesce(gift_sender, 'null'), coalesce(gift_hide_prices::text, 'null')) FROM checkout_drafts WHERE handle = '${handle}' AND delivery_mode = 'self'`)).toBe("false|null|null||null|null");
-  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/goi-qua");
   await expect(page.locator('input[name=packaging][value="none"]')).toBeChecked();
   for (const name of ["card", "message", "sender", "anonymous", "hidePrices"]) await expect(page.locator(`[name=${name}]`)).toHaveCount(0);
   await submitGift(page, "");
