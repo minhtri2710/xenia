@@ -8,9 +8,13 @@ import { buildConfig } from "payload";
 
 import { Producers, Vintages, Wines } from "./collections/catalogue";
 import { CheckoutDrafts } from "./collections/checkout-drafts";
+import { Customers } from "./collections/customers";
 import { CardDesigns, Packaging } from "./collections/gift";
 import { Orders } from "./collections/orders";
+import { MockOutbox } from "./collections/outbox";
 import { SiteSettings } from "./globals/site-settings";
+import { adminOnlyAuthAccess } from "./lib/access";
+import { mockEmailAdapter } from "./lib/outbox";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,8 +37,12 @@ export default buildConfig({
       slug: "users",
       auth: true,
       admin: { useAsTitle: "email" },
+      access: adminOnlyAuthAccess,
+      lockDocuments: false,
       fields: [],
     },
+    Customers,
+    MockOutbox,
     Producers,
     Wines,
     Vintages,
@@ -43,6 +51,9 @@ export default buildConfig({
     Orders,
     CheckoutDrafts,
   ],
+  // All Payload mail (account verification and reset, the admin's forgot-password) is written to
+  // the mock outbox; nothing is sent and it refuses in production (src/lib/outbox.ts).
+  email: mockEmailAdapter,
   globals: [SiteSettings],
   localization: {
     locales: [

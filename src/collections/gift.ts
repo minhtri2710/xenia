@@ -1,11 +1,11 @@
 import type { CollectionConfig, Validate } from "payload";
 
+import { adminOnlyAccess } from "@/lib/access";
 import { BOTTLE_SIZES } from "@/lib/catalogue";
 import { isCode } from "@/lib/gift";
 
-// Access: neither collection sets `access`, so Payload's default applies and every operation over
-// `/api` needs an authenticated admin, like the catalogue. The storefront reads them through the
-// Local API on the server.
+// Access: every operation is `adminOnly`, like the catalogue (a signed-in customer gets nothing).
+// The storefront reads them through the Local API on the server. `lockDocuments: false`: see catalogue.ts.
 
 const code: Validate<string | null | undefined> = (value) => isCode(value) || "Lower-case letters, digits and hyphens only.";
 
@@ -15,6 +15,8 @@ const atLeastOne: Validate<number | null | undefined> = (value) =>
 export const Packaging: CollectionConfig = {
   slug: "packaging",
   admin: { useAsTitle: "code", defaultColumns: ["code", "name", "capacity", "fits", "priceVnd", "active"] },
+  access: adminOnlyAccess,
+  lockDocuments: false,
   fields: [
     { name: "code", type: "text", required: true, unique: true, validate: code },
     { name: "name", type: "text", required: true, localized: true },
@@ -30,6 +32,8 @@ export const Packaging: CollectionConfig = {
 export const CardDesigns: CollectionConfig = {
   slug: "card-designs",
   admin: { useAsTitle: "code", defaultColumns: ["code", "name", "active"] },
+  access: adminOnlyAccess,
+  lockDocuments: false,
   fields: [
     { name: "code", type: "text", required: true, unique: true, validate: code },
     { name: "name", type: "text", required: true, localized: true },

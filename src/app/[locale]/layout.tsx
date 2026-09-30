@@ -12,6 +12,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { currentCustomer } from "@/lib/account-data";
+import { ACCOUNT_PATH, ACCOUNT_ROUTES } from "@/lib/accounts";
 import { POLICY_SLUGS, policyPath } from "@/lib/policies";
 import { loadSiteSettings } from "@/lib/shop-data";
 
@@ -84,6 +86,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const brand = await getTranslations("Brand");
   const notice = await getTranslations("Notice");
   const footer = await getTranslations("Footer");
+  const account = await currentCustomer();
 
   return (
     <html lang={locale}>
@@ -101,6 +104,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <Link href="/qua-tang" className="text-sm text-wine underline underline-offset-4">{brand("giftCollections")}</Link>
                 <Link href="/dich-vu-goi-qua" className="text-sm text-wine underline underline-offset-4">{brand("giftService")}</Link>
                 <Link href="/gio-hang" className="text-sm text-wine underline underline-offset-4">{brand("cart")}</Link>
+                <Link href={account ? ACCOUNT_PATH : ACCOUNT_ROUTES.signIn} className="text-sm text-wine underline underline-offset-4" data-testid="header-account">{account ? brand("account") : brand("signIn")}</Link>
                 <span className="sr-only">{footer("language")}</span>
                 <LanguageLink />
               </nav>

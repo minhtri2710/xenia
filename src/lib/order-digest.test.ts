@@ -18,6 +18,7 @@ const base: DigestInput = {
   wrap: { code: "box-2", nameVi: "Hộp cứng đôi", nameEn: "Two-bottle box", units: 2, unitPriceVnd: 200_000 },
   gift: { card: { code: "tet", nameVi: "Tết", nameEn: "Tết" }, message: "Chúc mừng năm mới", sender: "An", hidePrices: true },
   totals: { goodsVnd: 1_680_000, wrapVnd: 400_000, shippingVnd: 30_000, vatIncludedVnd: 191_818, totalVnd: 2_110_000 },
+  customerId: null,
 };
 
 const withLine = (i: number, change: Partial<DigestInput["lines"][number]>): DigestInput => ({
@@ -39,9 +40,27 @@ describe("orderDigest", () => {
       '["gift",["Trần Thị Bình","0912345678","5 Hàng Bài, Hoàn Kiếm"],"2026-10-02","morning"],' +
       '["box-2","Hộp cứng đôi","Two-bottle box",2,200000],' +
       '[["tet","Tết","Tết"],"Chúc mừng năm mới","An",true],' +
-      "[1680000,400000,30000,191818,2110000]]";
+      "[1680000,400000,30000,191818,2110000],null]";
     expect(orderDigest(base)).toBe(createHash("sha256").update(canonical).digest("hex"));
     expect(orderDigest(base)).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("binds the account id last, as written out by hand", () => {
+    const canonical =
+      '[[[3,2,480000],[7,1,720000]],["Nguyễn Văn An","0901234567","an@example.test","12 Lê Lợi, Quận 1"],"hcmc",30000,' +
+      '["gift",["Trần Thị Bình","0912345678","5 Hàng Bài, Hoàn Kiếm"],"2026-10-02","morning"],' +
+      '["box-2","Hộp cứng đôi","Two-bottle box",2,200000],' +
+      '[["tet","Tết","Tết"],"Chúc mừng năm mới","An",true],' +
+      "[1680000,400000,30000,191818,2110000],42]";
+    expect(orderDigest({ ...base, customerId: 42 })).toBe(createHash("sha256").update(canonical).digest("hex"));
+  });
+
+  it("tells a guest order from an account order, and one account from another", () => {
+    const guest = orderDigest(base);
+    const a = orderDigest({ ...base, customerId: 1 });
+    const b = orderDigest({ ...base, customerId: 2 });
+    expect(new Set([guest, a, b]).size).toBe(3);
+    expect(orderDigest({ ...base, customerId: 1 })).toBe(a);
   });
 
   it("does not depend on line order", () => {

@@ -12,6 +12,8 @@ export type DigestInput = {
   wrap: { code: string; nameVi: string; nameEn: string; units: number; unitPriceVnd: number } | null;
   gift: { card: { code: string; nameVi: string; nameEn: string }; message: string; sender: string | null; hidePrices: boolean } | null;
   totals: Totals;
+  /** The signed-in account the order will be saved to, or `null` for a guest order. */
+  customerId: number | null;
 };
 
 /**
@@ -19,12 +21,13 @@ export type DigestInput = {
  * price], the buyer as [name, phone, email, address], the zone, its fee, the delivery as [mode,
  * recipient [name, phone, address] or null, date, window], the packaging as [code, name vi, name
  * en, units, unit price] or null, the gift as [card [code, name vi, name en], message, sender or
- * null for anonymous, hide prices] or null, and goods, wrap, shipping, VAT included and total.
- * The review posts the digest of what it showed; placement recomputes it from what it would store
+ * null for anonymous, hide prices] or null, goods, wrap, shipping, VAT included and total as one
+ * list, and last the account id or null for a guest order (step 4 shows which; signing in or out
+ * after the review changes the digest). The review posts the digest of what it showed; placement recomputes it from what it would store
  * and refuses on a mismatch (Law 122 Art. 12). Every value is hashed exactly as stored, with no
  * normalization. Not a secret: a forged digest can only fail to match.
  */
-export function orderDigest({ lines, buyer, zone, feeVnd, delivery, wrap, gift, totals }: DigestInput): string {
+export function orderDigest({ lines, buyer, zone, feeVnd, delivery, wrap, gift, totals, customerId }: DigestInput): string {
   const r = delivery.recipient;
   const canonical = JSON.stringify([
     [...lines].sort((a, b) => a.vintageId - b.vintageId).map((l) => [l.vintageId, l.qty, l.unitPriceVnd]),
@@ -35,6 +38,7 @@ export function orderDigest({ lines, buyer, zone, feeVnd, delivery, wrap, gift, 
     wrap ? [wrap.code, wrap.nameVi, wrap.nameEn, wrap.units, wrap.unitPriceVnd] : null,
     gift ? [[gift.card.code, gift.card.nameVi, gift.card.nameEn], gift.message, gift.sender, gift.hidePrices] : null,
     [totals.goodsVnd, totals.wrapVnd, totals.shippingVnd, totals.vatIncludedVnd, totals.totalVnd],
+    customerId,
   ]);
   return createHash("sha256").update(canonical).digest("hex");
 }

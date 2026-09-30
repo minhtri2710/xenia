@@ -1,5 +1,6 @@
 import type { CollectionConfig, Field, FieldAccess, Option, Validate } from "payload";
 
+import { adminOnlyAccess } from "@/lib/access";
 import { MAX_NAME_LENGTH } from "@/lib/age";
 import { MAX_ADDRESS_LENGTH, MAX_EMAIL_LENGTH } from "@/lib/buyer";
 import { BOTTLE_SIZES } from "@/lib/catalogue";
@@ -7,10 +8,12 @@ import { DELIVERY_MODES, DELIVERY_WINDOWS } from "@/lib/delivery";
 import { MAX_MESSAGE_CODE_POINTS } from "@/lib/gift";
 import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, ZONES } from "@/lib/order";
 
-// Access: like the catalogue, Payload's default applies (every operation needs an authenticated
-// admin) with two narrowings. Nobody creates an order over `/api` or in the admin: placement is a
-// storefront server action through the Local API. Nobody deletes an order, admin included, and
-// the Local API neither (Law 122 Art. 16.2b retention): `beforeDelete` refuses every delete.
+// Access: like the catalogue, every operation is `adminOnly` (a signed-in customer gets nothing,
+// not even their own orders: the storefront reads them through the Local API) with two
+// narrowings. Nobody creates an order over `/api` or in the admin: placement is a storefront
+// server action through the Local API. Nobody deletes an order, admin included, and the Local API
+// neither (Law 122 Art. 16.2b retention): `beforeDelete` refuses every delete. Deleting a customer
+// sets `customer` empty in the database; the order and its snapshots stay.
 
 const neverUpdate: FieldAccess = () => false;
 
@@ -30,9 +33,11 @@ export const Orders: CollectionConfig = {
     description: "Orders are never deleted. Only the status can be changed here.",
   },
   access: {
+    ...adminOnlyAccess,
     create: () => false,
     delete: () => false,
   },
+  lockDocuments: false,
   hooks: {
     beforeChange: [({ originalDoc }) => {
       if (originalDoc?.status === "expired") {
@@ -72,6 +77,9 @@ export const Orders: CollectionConfig = {
         { name: "address", type: "textarea", required: true, maxLength: MAX_ADDRESS_LENGTH },
       ],
     }),
+    // The account the order was placed under: set only when the buyer was signed in at placement,
+    // never by matching emails (G82). Empty for a guest order and after the account is deleted.
+    snapshot({ name: "customer", type: "relationship", relationTo: "customers", index: true, admin: { readOnly: true } }),
     // Decree 24/2020 Art. 6.1: the age check passed at this instant. The date of birth itself is never stored.
     snapshot({ name: "ageAttestedAt", type: "date", required: true, admin: { readOnly: true, date: { pickerAppearance: "dayAndTime" } } }),
     snapshot({

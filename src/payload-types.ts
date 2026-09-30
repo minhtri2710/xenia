@@ -64,10 +64,13 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    customers: CustomerAuthOperations;
   };
   blocks: {};
   collections: {
     users: User;
+    customers: Customer;
+    'mock-outbox': MockOutbox;
     producers: Producer;
     wines: Wine;
     vintages: Vintage;
@@ -76,13 +79,14 @@ export interface Config {
     orders: Order;
     'checkout-drafts': CheckoutDraft;
     'payload-kv': PayloadKv;
-    'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
+    'mock-outbox': MockOutboxSelect<false> | MockOutboxSelect<true>;
     producers: ProducersSelect<false> | ProducersSelect<true>;
     wines: WinesSelect<false> | WinesSelect<true>;
     vintages: VintagesSelect<false> | VintagesSelect<true>;
@@ -91,7 +95,6 @@ export interface Config {
     orders: OrdersSelect<false> | OrdersSelect<true>;
     'checkout-drafts': CheckoutDraftsSelect<false> | CheckoutDraftsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
-    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
@@ -109,13 +112,31 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: User | Customer;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface CustomerAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -157,6 +178,58 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * Buyer accounts. Read-only here; accounts are made and changed on the storefront.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers".
+ */
+export interface Customer {
+  id: number;
+  name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  consents: {
+    terms: boolean;
+    privacy: boolean;
+    at: string;
+  };
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'customers';
+}
+/**
+ * Pre-launch mock: account mail is written here and sent nowhere. Read-only.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mock-outbox".
+ */
+export interface MockOutbox {
+  id: number;
+  to: string;
+  subject: string;
+  body: string;
+  sentAt: string;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -327,6 +400,7 @@ export interface Order {
     email: string;
     address: string;
   };
+  customer?: (number | null) | Customer;
   ageAttestedAt: string;
   /**
    * Self: to the buyer at the buyer's address. Gift: to the recipient, who must be 18 or over and show ID.
@@ -468,61 +542,19 @@ export interface PayloadKv {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-locked-documents".
- */
-export interface PayloadLockedDocument {
-  id: number;
-  document?:
-    | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
-        relationTo: 'producers';
-        value: number | Producer;
-      } | null)
-    | ({
-        relationTo: 'wines';
-        value: number | Wine;
-      } | null)
-    | ({
-        relationTo: 'vintages';
-        value: number | Vintage;
-      } | null)
-    | ({
-        relationTo: 'packaging';
-        value: number | Packaging;
-      } | null)
-    | ({
-        relationTo: 'card-designs';
-        value: number | CardDesign;
-      } | null)
-    | ({
-        relationTo: 'orders';
-        value: number | Order;
-      } | null)
-    | ({
-        relationTo: 'checkout-drafts';
-        value: number | CheckoutDraft;
-      } | null);
-  globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'customers';
+        value: number | Customer;
+      };
   key?: string | null;
   value?:
     | {
@@ -568,6 +600,52 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  name?: T;
+  phone?: T;
+  address?: T;
+  consents?:
+    | T
+    | {
+        terms?: T;
+        privacy?: T;
+        at?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  _verified?: T;
+  _verificationToken?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mock-outbox_select".
+ */
+export interface MockOutboxSelect<T extends boolean = true> {
+  to?: T;
+  subject?: T;
+  body?: T;
+  sentAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -685,6 +763,7 @@ export interface OrdersSelect<T extends boolean = true> {
         email?: T;
         address?: T;
       };
+  customer?: T;
   ageAttestedAt?: T;
   delivery?:
     | T
@@ -808,17 +887,6 @@ export interface CheckoutDraftsSelect<T extends boolean = true> {
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-locked-documents_select".
- */
-export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T;
-  globalSlug?: T;
-  user?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

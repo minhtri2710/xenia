@@ -9,7 +9,9 @@
     "wines": "Wine",
     "giftService": "Gift service",
     "giftCollections": "Gift collections",
-    "switchLocale": "Tiếng Việt"
+    "switchLocale": "Tiếng Việt",
+    "account": "Account",
+    "signIn": "Sign in"
   },
   "Notice": {
     "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi",
@@ -272,6 +274,12 @@
       }
     },
     "review": {
+      "account": {
+        "title": "Account",
+        "signedIn": "This order will be saved to your account {email}.",
+        "guest": "This order will be placed as a guest, without an account.",
+        "signIn": "Sign in to save it to your account"
+      },
       "title": "Review & confirm",
       "intro": "Please check your order. You can edit each part before placing it.",
       "goods": "Goods",
@@ -474,8 +482,8 @@
     "pending": "Pending legal review",
     "pages": {
       "thong-tin-doanh-nghiep": { "title": "Business information", "intro": "The information below is sample data for pre-launch development, not the details of a real business.", "sections": { "owner": "Owner and registration", "licence": "Alcohol retail licence", "notification": "Website notification" } },
-      "bao-mat": { "title": "Privacy and personal data", "intro": "This draft describes data processed and stored by the current version of the shop.", "sections": { "purpose": "Purpose and scope", "flows": "Data and cookies", "retention": "Retention", "access": "Access and security", "rights": "Rights and complaints", "pending": "Points for review" } },
-      "dieu-khoan": { "title": "Terms of sale", "intro": "This is a draft for the current simulated order flow.", "sections": { "parties": "Parties and conditions", "order": "Placing and reviewing an order", "delivery": "Delivery", "payment": "Price and payment", "retention": "Transaction retention", "pending": "Points for review" } },
+      "bao-mat": { "title": "Privacy and personal data", "intro": "This draft describes data processed and stored by the current version of the shop.", "sections": { "account": "Optional account", "purpose": "Purpose and scope", "flows": "Data and cookies", "retention": "Retention", "access": "Access and security", "rights": "Rights and complaints", "pending": "Points for review" } },
+      "dieu-khoan": { "title": "Terms of sale", "intro": "This is a draft for the current simulated order flow.", "sections": { "account": "Optional account", "parties": "Parties and conditions", "order": "Placing and reviewing an order", "delivery": "Delivery", "payment": "Price and payment", "retention": "Transaction retention", "pending": "Points for review" } },
       "khieu-nai": { "title": "Complaints", "intro": "The online contact channel and proposed response times below need confirmation before launch.", "sections": { "channel": "Contact channel", "timeline": "Proposed timing", "scope": "Information to include" } },
       "gia": { "title": "Prices and fees", "intro": "Prices are shown in Vietnamese đồng; product and packaging prices in this environment are sample data.", "sections": { "display": "How prices are shown", "delivery": "Delivery fees", "wrap": "Gift wrapping", "other": "Other fees" } },
       "dieu-kien-ban-hang": { "title": "Conditions of sale", "intro": "These conditions describe current configured limits; they do not establish the actual scope of a business licence.", "sections": { "age": "Age", "areas": "Delivery areas", "availability": "Availability" } },
@@ -532,7 +540,165 @@
       "horizonFact": "A delivery date can be booked up to {days} days after the earliest date.",
       "windowFact": "Available delivery windows: {windows}.",
       "messageFact": "A card message is limited to {max} Unicode code points.",
-      "noticeFact": "Configured notification link: {url}."
+      "noticeFact": "Configured notification link: {url}.",
+      "accountData": "An optional account stores your email, a password hash, your name, phone and address if you enter them, whether you verified your email, and the time you accepted the terms and privacy policy. It never stores a date of birth. Orders placed while signed in are linked to the account; orders placed as a guest are never linked, even by matching email.",
+      "accountCookie": "The {name} cookie holds the signed-in session and is set only after sign-in; it ends with the session or when you sign out.",
+      "accountPassword": "A password has {min} to {max} characters. After {attempts} failed sign-ins the account is locked for {minutes, plural, one {# minute} other {# minutes}}.",
+      "accountReset": "A password reset link expires after {minutes, plural, one {# minute} other {# minutes}} and works once. A reset or password change ends the account's other sessions. A session lasts {hours, plural, one {# hour} other {# hours}}.",
+      "accountMail": "Account email is a pre-launch mock: nothing is sent to a real address; messages are kept in an internal outbox for {hours, plural, one {# hour} other {# hours}} and then purged.",
+      "accountDelete": "You can delete the account with your password. The account row is removed; placed orders stay and lose the link to it."
+    }
+  },
+  "Account": {
+    "notices": {
+      "registered": "Check your email for the verification link. If that address can be used, a message has been sent.",
+      "resent": "If those details match an account that is not yet verified, a new verification email has been sent.",
+      "verified": "Your email is verified. You can sign in.",
+      "reset": "Your password was changed. Sign in with the new password.",
+      "signedOut": "You are signed out.",
+      "deleted": "Your account was deleted. Orders already placed remain, without a link to an account."
+    },
+    "register": {
+      "title": "Create an account",
+      "intro": "An account is optional. You can always order as a guest.",
+      "fields": {
+        "name": "Full name",
+        "dob": "Date of birth",
+        "email": "Email",
+        "password": "Password"
+      },
+      "dobNote": "Used only to check that you are 18 or over. It is not saved.",
+      "passwordHint": "{min} to {max} characters.",
+      "consent": {
+        "terms": "I agree to the <link>terms of sale</link>.",
+        "privacy": "I have read the <link>privacy policy</link> and agree to my details being stored in my account."
+      },
+      "submit": "Create account",
+      "errors": {
+        "nameRequired": "Please enter your full name.",
+        "nameTooLong": "That name is too long.",
+        "dobRequired": "Please enter your date of birth.",
+        "dobInvalid": "That date of birth is not valid.",
+        "dobFuture": "Date of birth cannot be in the future.",
+        "emailRequired": "Please enter your email.",
+        "emailInvalid": "That email is not valid.",
+        "passwordTooShort": "The password must have at least {min} characters.",
+        "passwordTooLong": "The password can have at most {max} characters.",
+        "consentRequired": "This consent is required to create an account."
+      }
+    },
+    "signIn": {
+      "title": "Sign in",
+      "fields": {
+        "email": "Email",
+        "password": "Password"
+      },
+      "submit": "Sign in",
+      "failed": "Sign-in failed. Check your email and password, and that you have verified your email. If you tried several times, wait a while.",
+      "forgot": "Forgot your password?",
+      "noAccount": "No account yet?",
+      "register": "Create an account",
+      "resend": {
+        "title": "Verification email again",
+        "intro": "Enter your email and password to receive a new verification email.",
+        "email": "Email",
+        "password": "Password",
+        "submit": "Send again"
+      }
+    },
+    "verify": {
+      "title": "Verify your email",
+      "intro": "Confirm your email address to finish creating your account.",
+      "submit": "Verify email",
+      "failed": "This verification link is not valid or was already used.",
+      "noToken": "Open the link from the verification email."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "Enter your email. If it belongs to an account, we will send a reset link.",
+      "email": "Email",
+      "submit": "Send reset link",
+      "sent": "If that email belongs to an account, a reset link has been sent.",
+      "errors": {
+        "emailRequired": "Please enter your email.",
+        "emailInvalid": "That email is not valid."
+      }
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "password": "New password",
+      "passwordHint": "{min} to {max} characters.",
+      "submit": "Change password",
+      "tokenInvalid": "This reset link is not valid, has expired or was already used.",
+      "noToken": "Open the link from the reset email.",
+      "again": "Ask for a new link",
+      "errors": {
+        "passwordTooShort": "The password must have at least {min} characters.",
+        "passwordTooLong": "The password can have at most {max} characters."
+      }
+    },
+    "page": {
+      "title": "Your account",
+      "signedInAs": "Signed in as {email}",
+      "signOut": "Sign out",
+      "profile": {
+        "title": "Profile",
+        "name": "Full name",
+        "phone": "Phone",
+        "address": "Address",
+        "submit": "Save profile",
+        "saved": "Profile saved.",
+        "errors": {
+          "nameTooLong": "That name is too long.",
+          "phoneInvalid": "That phone number is not valid.",
+          "addressTooLong": "That address is too long."
+        }
+      },
+      "orders": {
+        "title": "Your orders",
+        "none": "No orders are saved to this account yet."
+      },
+      "password": {
+        "title": "Change password",
+        "current": "Current password",
+        "next": "New password",
+        "hint": "{min} to {max} characters.",
+        "submit": "Change password",
+        "changed": "Password changed. Your other sessions were ended.",
+        "errors": {
+          "wrongPassword": "The current password is not correct.",
+          "passwordTooShort": "The password must have at least {min} characters.",
+          "passwordTooLong": "The password can have at most {max} characters."
+        }
+      },
+      "delete": {
+        "title": "Delete account",
+        "intro": "This deletes your account and profile. Orders already placed stay, without a link to the account.",
+        "password": "Password",
+        "submit": "Delete my account",
+        "errors": {
+          "wrongPassword": "The password is not correct."
+        }
+      }
+    },
+    "mail": {
+      "verify": {
+        "subject": "Verify your email",
+        "intro": "Open the link below to verify your email address.",
+        "ignore": "If you did not create an account, ignore this message."
+      },
+      "exists": {
+        "subject": "You already have an account",
+        "intro": "Someone used this email to register, but it already has an account.",
+        "signIn": "Sign in",
+        "reset": "Reset your password",
+        "ignore": "If this was not you, ignore this message."
+      },
+      "reset": {
+        "subject": "Reset your password",
+        "intro": "Open the link below to choose a new password.",
+        "ignore": "If you did not ask for this, ignore this message."
+      }
     }
   }
 }

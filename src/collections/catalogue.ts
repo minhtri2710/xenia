@@ -1,11 +1,12 @@
 import type { CollectionConfig, SelectField, Validate } from "payload";
 
+import { adminOnlyAccess } from "@/lib/access";
 import { BOTTLE_SIZES, COUNTRIES, isAdRestricted, OCCASIONS, PAIRINGS, STATUSES, WINE_TYPES } from "@/lib/catalogue";
 
-// Access: none of these collections sets `access`, so Payload's default applies and every
-// operation needs an authenticated admin. `/api` is exempt from the age gate, so a public
-// `read` would hand product information to an undeclared visitor (Decree 24/2020 Art. 6.1).
-// The storefront reads through the Local API on the server instead.
+// Access: every operation is `adminOnly` (a signed-in customer gets nothing either). `/api` is
+// exempt from the age gate, so a public `read` would hand product information to an undeclared
+// visitor (Decree 24/2020 Art. 6.1). The storefront reads through the Local API on the server.
+// `lockDocuments: false`: Payload's lock collection admits any signed-in user, customers included.
 
 const integerIn =
   (min: number, max: number): Validate<number | null | undefined> =>
@@ -28,6 +29,8 @@ const countryField: SelectField = { name: "country", type: "select", required: t
 export const Producers: CollectionConfig = {
   slug: "producers",
   admin: { useAsTitle: "name", defaultColumns: ["name", "country", "region"] },
+  access: adminOnlyAccess,
+  lockDocuments: false,
   fields: [
     { name: "name", type: "text", required: true },
     countryField,
@@ -39,6 +42,8 @@ export const Producers: CollectionConfig = {
 export const Wines: CollectionConfig = {
   slug: "wines",
   admin: { useAsTitle: "name", defaultColumns: ["name", "producer", "type", "status"] },
+  access: adminOnlyAccess,
+  lockDocuments: false,
   fields: [
     {
       name: "slug",
@@ -95,6 +100,8 @@ export const Wines: CollectionConfig = {
 export const Vintages: CollectionConfig = {
   slug: "vintages",
   admin: { defaultColumns: ["wine", "year", "bottleMl", "abvPct", "adRestricted", "priceVnd", "stock", "status"] },
+  access: adminOnlyAccess,
+  lockDocuments: false,
   fields: [
     { name: "wine", type: "relationship", relationTo: "wines", required: true, index: true },
     {

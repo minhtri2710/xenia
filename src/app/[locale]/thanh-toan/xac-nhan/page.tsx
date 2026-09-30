@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { getPathname, Link } from "@/i18n/navigation";
+import { currentCustomer } from "@/lib/account-data";
+import { ACCOUNT_ROUTES } from "@/lib/accounts";
 import { reviewOrder } from "@/lib/order-review";
 import { VND_FORMAT } from "@/lib/order-totals";
 import { loadCards, loadDeliverySettings, loadPackaging } from "@/lib/shop-data";
@@ -42,6 +44,8 @@ export default async function ReviewStep({ params, searchParams }: Props) {
   const { buyer, delivery, gift, clientKey } = checkout! as Required<NonNullable<typeof checkout>>;
   const settings = await loadDeliverySettings();
   const isGift = delivery.mode === "gift";
+  // The account the order will be saved to, or none for a guest order: shown below and bound by the digest.
+  const account = await currentCustomer();
   // Exactly what placement will compute and store; its digest binds the consent to this page.
   const review = reviewOrder({
     lines: items.map((i) => ({ vintageId: i.vintageId, qty: i.qty, unitPriceVnd: i.priceVnd, bottleMl: i.bottleMl })),
@@ -52,6 +56,7 @@ export default async function ReviewStep({ params, searchParams }: Props) {
     blackoutDates: settings.blackoutDates,
     packaging: gift.packaging === null ? undefined : (await loadPackaging({ code: gift.packaging }))[0],
     card: isGift && gift.card !== null ? (await loadCards({ code: gift.card }))[0] : undefined,
+    customerId: account?.id ?? null,
     now: new Date(),
   });
   if (!review.ok) {
@@ -102,6 +107,23 @@ export default async function ReviewStep({ params, searchParams }: Props) {
           {buyer.name} · {buyer.phone} · {buyer.email}
         </p>
       </Section>
+
+      <section className="mt-10 border-t border-ink/15 pt-6" aria-labelledby="review-account-title">
+        <h2 id="review-account-title" className="font-display text-2xl font-medium">{t("review.account.title")}</h2>
+        <p className="mt-3" data-testid="review-account">
+          {account ? t("review.account.signedIn", { email: account.email }) : t("review.account.guest")}
+        </p>
+        {!account && (
+          <p className="mt-2 text-sm">
+            <Link
+              href={`${ACCOUNT_ROUTES.signIn}?next=${encodeURIComponent(getPathname({ href: "/thanh-toan/xac-nhan", locale }))}`}
+              className="text-wine underline underline-offset-4"
+            >
+              {t("review.account.signIn")}
+            </Link>
+          </p>
+        )}
+      </section>
 
       <Section title={t("review.delivery")} edit="/thanh-toan/giao-hang" editLabel={t("review.editDelivery")}>
         <p data-testid="review-delivery">

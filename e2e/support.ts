@@ -1,7 +1,7 @@
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 
 import AxeBuilder from "@axe-core/playwright";
-import { type APIRequestContext, expect, type Page } from "@playwright/test";
+import { type APIRequestContext, type BrowserContext, expect, type Page } from "@playwright/test";
 
 import { databaseName } from "./database";
 
@@ -121,3 +121,73 @@ export const POLICY_ROUTES = [
   { slug: "giao-hang", path: "/chinh-sach/giao-hang" },
   { slug: "doi-tra-hoan-tien", path: "/chinh-sach/doi-tra-hoan-tien" },
 ] as const;
+
+/** Opens `path` through the gate: redirect, adult declaration, return to `next`. */
+export async function declareAdult(page: Page, path: string) {
+  await page.goto(path);
+  await expect(page).toHaveURL((url) => url.pathname.endsWith("/xac-minh-tuoi"));
+  await page.locator("#gate-name").fill("Nguyễn Văn An");
+  await page.locator("#gate-dob").fill(vietnamDateYearsAgo(30));
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === new URL(path, "http://x").pathname);
+}
+
+/** The account passwords the specs use: 15 to 128 characters. */
+export const ACCOUNT_PASSWORD = "correct horse battery staple";
+export const NEW_ACCOUNT_PASSWORD = "another long passphrase here";
+
+/** The newest mock-outbox message to `email`: its subject, body and the first link in it. */
+export function lastMail(email: string): { subject: string; body: string; href: string; token: string } | null {
+  const row = sql(`SELECT subject || E'\\x1f' || body FROM mock_outbox WHERE "to" = '${email}' ORDER BY id DESC LIMIT 1`);
+  if (!row) return null;
+  const [subject, body] = row.split("\x1f");
+  const href = /href="([^"]+)"/.exec(body)?.[1] ?? "";
+  return { subject, body, href, token: new URL(href, "http://x").searchParams.get("token") ?? "" };
+}
+
+export const mailCount = (email: string) => Number(sql(`SELECT count(*) FROM mock_outbox WHERE "to" = '${email}'`));
+export const customerCount = (email: string) => Number(sql(`SELECT count(*) FROM customers WHERE email = '${email}'`));
+
+/** Fills and submits the registration form (the visitor is already through the gate). */
+export async function register(page: Page, prefix: string, email: string, { dob = vietnamDateYearsAgo(30), password = ACCOUNT_PASSWORD, name = "Nguyễn Văn An" } = {}) {
+  await page.goto(`${prefix}/tai-khoan/dang-ky`);
+  await page.locator("#register-name").fill(name);
+  await page.locator("#register-dob").fill(dob);
+  await page.locator("#register-email").fill(email);
+  await page.locator("#register-password").fill(password);
+  await page.locator("#register-terms").check();
+  await page.locator("#register-privacy").check();
+  await page.locator("form button[type=submit]").click();
+}
+
+/** Opens the verification link from the outbox and confirms it. */
+export async function verifyFromMail(page: Page, prefix: string, email: string) {
+  const mail = lastMail(email);
+  expect(mail, `a verification mail to ${email}`).not.toBeNull();
+  await page.goto(mail!.href);
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/tai-khoan/dang-nhap`);
+}
+
+export async function signInAs(page: Page, prefix: string, email: string, password = ACCOUNT_PASSWORD, next = "") {
+  await page.goto(`${prefix}/tai-khoan/dang-nhap${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+  await page.locator("#sign-in-email").fill(email);
+  await page.locator("#sign-in-password").fill(password);
+  await page.locator("form button[type=submit]").first().click();
+}
+
+/** A verified, signed-in customer in a gated visitor's browser. */
+export async function newCustomerSession(page: Page, prefix: string, email: string) {
+  await declareAdult(page, `${prefix}/tai-khoan/dang-ky`);
+  await register(page, prefix, email);
+  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/tai-khoan/dang-nhap`);
+  await verifyFromMail(page, prefix, email);
+  await signInAs(page, prefix, email);
+  await expect(page).toHaveURL((url) => url.pathname === `${prefix}/tai-khoan`);
+}
+
+export const ACCOUNT_COOKIE_NAME = "xenia_account";
+
+export async function accountCookie(context: BrowserContext) {
+  return (await context.cookies()).find((cookie) => cookie.name === ACCOUNT_COOKIE_NAME);
+}

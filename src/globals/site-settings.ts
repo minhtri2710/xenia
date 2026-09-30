@@ -1,13 +1,16 @@
 import type { GlobalConfig } from "payload";
 
 import { wholeVnd } from "@/collections/orders";
+import { adminOnlyGlobalAccess } from "@/lib/access";
 import { isIsoDate } from "@/lib/delivery";
 import { ZONES } from "@/lib/order";
 import { validateContactEmail, validateContactPhone, validateOptionalHttpsUrl, validateRequiredText, validateSettingsDate } from "@/lib/site-settings";
 
 export const SiteSettings: GlobalConfig = {
   slug: "site-settings",
-  // Admin-only like the catalogue: the storefront reads it through the Local API.
+  // `adminOnly` like the catalogue: the storefront reads it through the Local API.
+  access: adminOnlyGlobalAccess,
+  lockDocuments: false,
   fields: [
     {
       name: "owner",

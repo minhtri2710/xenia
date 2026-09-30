@@ -28,6 +28,7 @@ const base: ReviewInput = {
   blackoutDates: [],
   packaging: box2,
   card: tet,
+  customerId: null,
   now: new Date("2026-09-25T03:00:00Z"),
 };
 
@@ -55,8 +56,16 @@ describe("reviewOrder", () => {
         wrap: { code: "box-2", nameVi: "Hộp cứng đôi", nameEn: "Two-bottle box", units: 2, unitPriceVnd: 200_000 },
         gift: { card: { code: "tet", nameVi: "Tết", nameEn: "Tết" }, message: "Chúc mừng", sender: "An", hidePrices: true },
         totals: review.totals,
+        customerId: null,
       }),
     );
+  });
+
+  it("digests the account the order will be saved to", () => {
+    const guest = reviewOrder(base);
+    const account = reviewOrder({ ...base, customerId: 5 });
+    if (!guest.ok || !account.ok) throw new Error("expected ok");
+    expect(account.digest).not.toBe(guest.digest);
   });
 
   it("has no wrap and no gift part in self mode without packaging", () => {

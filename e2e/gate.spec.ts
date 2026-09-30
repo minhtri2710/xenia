@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
+import { ACCOUNT_PATH, ACCOUNT_ROUTES } from "../src/lib/accounts";
 import { expectNoSeriousA11yViolations, POLICY_ROUTES, seedCatalogue, vietnamDateYearsAgo } from "./support";
 
 test.beforeAll(async ({ request }) => {
@@ -44,6 +45,8 @@ test.describe("unverified visitor", () => {
       "/thanh-toan/giao-hang",
       "/thanh-toan/goi-qua",
       "/thanh-toan/xac-nhan",
+      ...Object.values(ACCOUNT_ROUTES),
+      ACCOUNT_PATH,
       `/don-hang/${"A".repeat(43)}`,
       ...POLICY_ROUTES.map((route) => route.path),
       "/robots.txt",
@@ -57,6 +60,17 @@ test.describe("unverified visitor", () => {
         expect(location.searchParams.get("next")).toBe(prefix + path);
       });
     }
+  }
+});
+
+test("a token link survives the gate round trip: its query comes back intact after the declaration", async ({ page }) => {
+  for (const prefix of ["", "/en"]) {
+    const link = `${prefix}${ACCOUNT_ROUTES.reset}?token=abc123-_XYZ`;
+    await page.context().clearCookies();
+    await page.goto(link);
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}/xac-minh-tuoi`);
+    await declare(page, "Nguyễn Văn An", vietnamDateYearsAgo(30));
+    await expect(page).toHaveURL((url) => url.pathname === `${prefix}${ACCOUNT_ROUTES.reset}` && url.searchParams.get("token") === "abc123-_XYZ");
   }
 });
 

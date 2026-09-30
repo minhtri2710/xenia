@@ -56,6 +56,8 @@ async function stockOf(payload: BasePayload, id: number): Promise<number> {
  *   to its step.
  * - The order must be the one step 4 showed (Law 122 Art. 12): `reviewedDigest` is compared with
  *   the digest of everything about to be stored; a mismatch refuses with "changed".
+ * - The order is saved to `customerId` (the signed-in account, or `null` for a guest order), which
+ *   the digest also binds: signing in or out after the review refuses with "changed".
  * - Stock is decremented here, at placement, with an atomic `stock = stock - qty` in vintage-id
  *   order; the `vintages_stock_non_negative` CHECK refuses a concurrent oversell. The draft is
  *   deleted in the same transaction.
@@ -66,6 +68,7 @@ export async function placeOrder(
   lines: CartLine[],
   handle: string | undefined,
   now: Date,
+  customerId: number | null,
 ): Promise<PlaceResult> {
   await releaseExpiredOrders(now);
   const payload = await getPayload({ config });
@@ -91,6 +94,11 @@ export async function placeOrder(
     if (!buyer || !attestedAt) return await refuse({ ok: false, reason: "buyer" });
     if (!delivery) return await refuse({ ok: false, reason: "delivery", error: "missing" });
     if (!gift) return await refuse({ ok: false, reason: "gift", error: "missing" });
+
+    // The account is the session's, checked again here: an account deleted since the review is a change.
+    if (customerId !== null && !(await payload.findByID({ collection: "customers", id: customerId, depth: 0, req, disableErrors: true }))) {
+      return await refuse({ ok: false, reason: "changed" });
+    }
 
     const sorted = [...lines].sort((a, b) => a.vintageId - b.vintageId);
     const problems: LineProblem[] = [];
@@ -133,6 +141,7 @@ export async function placeOrder(
       blackoutDates: settings.blackoutDates,
       packaging: gift.packaging === null ? undefined : (await loadPackaging({ code: gift.packaging }, req))[0],
       card: isGift && gift.card !== null ? (await loadCards({ code: gift.card }, req))[0] : undefined,
+      customerId,
       now,
     });
     if (!review.ok) {
@@ -162,6 +171,8 @@ export async function placeOrder(
           paymentDueAt: paymentDueAt(now).toISOString(),
           token,
           clientKey,
+          // Only the session's account, never a match on the buyer's email (G82: no retroactive claim).
+          customer: customerId,
           buyer,
           ageAttestedAt: attestedAt,
           delivery: { zone: delivery.zone, mode: delivery.mode, recipient: delivery.recipient ?? undefined, date: delivery.date, window: delivery.window },

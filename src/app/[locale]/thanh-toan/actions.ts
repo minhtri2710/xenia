@@ -6,6 +6,7 @@ import { hasLocale } from "next-intl";
 
 import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { currentCustomer } from "@/lib/account-data";
 import { MAX_NAME_LENGTH } from "@/lib/age";
 import { type BuyerErrors, checkBuyer, checkRecipient, type RecipientErrors } from "@/lib/buyer";
 import { removeLine, setLine } from "@/lib/cart";
@@ -211,7 +212,7 @@ export async function submitOrder(_previous: ReviewState, formData: FormData): P
   if (Object.keys(errors).length > 0) return { errors };
 
   const lines = await readCartLines();
-  const result = await placeOrder(key, field(formData, "digest"), lines, await checkoutHandle(), new Date());
+  const result = await placeOrder(key, field(formData, "digest"), lines, await checkoutHandle(), new Date(), (await currentCustomer())?.id ?? null);
   if (result.ok) {
     await writeCart([]);
     // Placement deleted the draft in its transaction; only the cookie is left.

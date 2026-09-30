@@ -1,6 +1,19 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, spawnPsqlTransaction, sql, vietnamDateYearsAgo } from "./support";
+import {
+  ACCOUNT_PASSWORD,
+  blockThirdParty,
+  declareAdult,
+  expectNoSeriousA11yViolations,
+  newCustomerSession,
+  register,
+  seedCatalogue,
+  signInAs,
+  spawnPsqlTransaction,
+  sql,
+  verifyFromMail,
+  vietnamDateYearsAgo,
+} from "./support";
 
 // Every money value below is written by hand from `src/seed/data.ts` (vintage prices) and its
 // `ZONE_FEES` (HCMC 30 000, Hà Nội 45 000), never computed with `computeTotals` or the pages' code.
@@ -26,16 +39,6 @@ function vintageId(slug: string, year: number | null, ml: number): number {
 }
 
 const digits = async (page: Page, selector: string) => Number((await page.locator(selector).textContent())!.replace(/\D/g, ""));
-
-/** Opens `path` through the gate: redirect, adult declaration, return to `next`. */
-async function declareAdult(page: Page, path: string) {
-  await page.goto(path);
-  await expect(page).toHaveURL((url) => url.pathname.endsWith("/xac-minh-tuoi"));
-  await page.locator("#gate-name").fill("Nguyễn Văn An");
-  await page.locator("#gate-dob").fill(vietnamDateYearsAgo(30));
-  await page.locator("form button[type=submit]").click();
-  await expect(page).toHaveURL((url) => url.pathname === new URL(path, "http://x").pathname);
-}
 
 /** Adds the product page's default selection in `qty` and lands on the cart. */
 async function addToCart(page: Page, prefix: string, slug: string, qty = 1) {
@@ -1539,4 +1542,121 @@ test("pnpm seed changes no user, order or checkout draft and clears the vintage 
   await seedCatalogue(request);
   expect(rows()).toBe(before);
   expect(line()).toBe("t|Colle del Vento Rosso|720000|1");
+});
+
+// ── F8: the optional account at checkout (V7) ───────────────────────────────────────────────
+
+const accountRun = Date.now().toString(36);
+const accountMailbox = (name: string) => `${name}.${accountRun}@example.test`;
+const customerOf = (token: string) => sql(`SELECT coalesce(customer_id::text, 'none') FROM orders WHERE token = '${token}'`);
+const customerId = (email: string) => sql(`SELECT id FROM customers WHERE email = '${email}'`);
+
+test("a signed-in order is saved to the account, prefilled from it; a guest order with the same email is never linked; another account sees nothing; deleting the account keeps the order, unlinked", async ({ page, browser }) => {
+  test.setTimeout(300_000);
+  const email = accountMailbox("buyer");
+  await newCustomerSession(page, "", email);
+  await page.locator("#profile-phone").fill("090 123 4567");
+  await page.locator("#profile-address").fill("12 Lê Lợi, Quận 1");
+  await page.locator("#profile-phone").locator("xpath=ancestor::form").locator("button[type=submit]").click();
+  await expect(page.getByTestId("profile-saved")).toBeVisible();
+
+  await addToCart(page, "", "lune-grise-rouge");
+  await page.goto("/thanh-toan");
+  // Prefilled from the account, still editable; the date of birth is asked again.
+  await expect(page.locator("#buyer-name")).toHaveValue("Nguyễn Văn An");
+  await expect(page.locator("#buyer-email")).toHaveValue(email);
+  await expect(page.locator("#buyer-phone")).toHaveValue("0901234567");
+  await expect(page.locator("#buyer-address")).toHaveValue("12 Lê Lợi, Quận 1");
+  await expect(page.locator("#buyer-dob")).toHaveValue("");
+  await page.locator("#buyer-dob").fill(vietnamDateYearsAgo(30));
+  await page.locator("form button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/giao-hang");
+  await submitDelivery(page, "", "hcmc");
+  await submitGift(page, "");
+  await expect(page.getByTestId("review-account")).toContainText(email);
+  const owned = await consentAndPlace(page, "");
+  expect(customerOf(owned)).toBe(customerId(email));
+  const ownedNumber = sql(`SELECT number FROM orders WHERE token = '${owned}'`);
+
+  // A guest order with the very same email: never linked.
+  const guest = await newPage(browser);
+  await declareAdult(guest, "/ruou-vang/lune-grise-rouge");
+  await addToCart(guest, "", "lune-grise-rouge");
+  await toReview(guest, "", "hcmc");
+  await guest.goto("/thanh-toan");
+  await guest.locator("#buyer-email").fill(email);
+  await guest.locator("#buyer-dob").fill(vietnamDateYearsAgo(30));
+  await guest.locator("form button[type=submit]").click();
+  await submitDelivery(guest, "", "hcmc");
+  await submitGift(guest, "");
+  await expect(guest.getByTestId("review-account")).toBeVisible();
+  await expect(guest.getByTestId("review-account")).not.toContainText(email);
+  const guestToken = await consentAndPlace(guest, "");
+  expect(customerOf(guestToken)).toBe("none");
+  expect(sql(`SELECT buyer_email FROM orders WHERE token = '${guestToken}'`).toLowerCase()).toBe(email);
+  await guest.context().close();
+
+  // The account lists exactly its own order.
+  await page.goto("/tai-khoan");
+  await expect(page.getByTestId("account-orders").locator("li")).toHaveCount(1);
+  await expect(page.getByTestId("account-orders").locator("li")).toHaveAttribute("data-order", ownedNumber);
+  await page.getByTestId("account-orders").getByRole("link").click();
+  await expect(page).toHaveURL((url) => url.pathname === `/don-hang/${owned}`);
+
+  // Another account sees none of it.
+  const other = await newPage(browser);
+  await newCustomerSession(other, "", accountMailbox("stranger"));
+  await expect(other.getByTestId("account-no-orders")).toBeVisible();
+  await other.context().close();
+
+  // Deleting the account removes the row; the order stays and loses the link.
+  await page.goto("/tai-khoan");
+  await page.locator("#delete-password").fill(ACCOUNT_PASSWORD);
+  await page.locator("#delete-password").locator("xpath=ancestor::form").locator("button[type=submit]").click();
+  await expect(page).toHaveURL(/notice=deleted/);
+  expect(sql(`SELECT count(*) FROM customers WHERE email = '${email}'`)).toBe("0");
+  expect(sql(`SELECT count(*) || '|' || coalesce(max(customer_id::text), 'none') FROM orders WHERE token = '${owned}'`)).toBe("1|none");
+});
+
+test("signing in after the review re-shows step 4 at ?changed=1 and the order is then saved to the account; signing out after the review does the same the other way", async ({ page }) => {
+  test.setTimeout(300_000);
+  const email = accountMailbox("digest");
+  // An account and a guest browser share the flow: register in one context first.
+  await declareAdult(page, "/tai-khoan/dang-ky");
+  await register(page, "", email);
+  await expect(page).toHaveURL(/notice=registered/);
+  await verifyFromMail(page, "", email);
+
+  await addToCart(page, "", "lune-grise-rouge");
+  await toReview(page, "", "hcmc");
+  await expect(page.getByTestId("review-account")).not.toContainText(email);
+
+  // Sign in in a second tab of the same browser, then place from the first.
+  const tab = await page.context().newPage();
+  await signInAs(tab, "", email);
+  await expect(tab).toHaveURL((url) => url.pathname === "/tai-khoan");
+  await tab.close();
+  const before = orderCount();
+  await page.locator("input[name=terms]").check();
+  await page.locator("input[name=privacy]").check();
+  await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan" && url.searchParams.get("changed") === "1");
+  expect(orderCount()).toBe(before);
+  await expect(page.getByTestId("review-changed")).toBeVisible();
+  await expect(page.getByTestId("review-account")).toContainText(email);
+
+  // Sign out in another tab: the order shown is stale again.
+  const out = await page.context().newPage();
+  await out.goto("/tai-khoan");
+  await out.getByRole("button", { name: /Đăng xuất/ }).click();
+  await expect(out).toHaveURL((url) => url.pathname === "/tai-khoan/dang-nhap");
+  await out.close();
+  await page.locator("input[name=terms]").check();
+  await page.locator("input[name=privacy]").check();
+  await page.locator("form:has(input[name=clientKey]) button[type=submit]").click();
+  await expect(page).toHaveURL((url) => url.pathname === "/thanh-toan/xac-nhan" && url.searchParams.get("changed") === "1");
+  expect(orderCount()).toBe(before);
+  await expect(page.getByTestId("review-account")).not.toContainText(email);
+  const token = await consentAndPlace(page, "");
+  expect(customerOf(token)).toBe("none");
 });

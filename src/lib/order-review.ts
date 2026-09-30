@@ -23,6 +23,8 @@ export type ReviewInput = {
   /** The packaging and card designs named by `gift`, as stored now (undefined when missing). */
   packaging: PackagingDoc | undefined;
   card: CardDoc | undefined;
+  /** The signed-in account the order will be saved to, or `null` for a guest order; bound by the digest. */
+  customerId: number | null;
   now: Date;
 };
 
@@ -31,7 +33,7 @@ export type Review =
   | { ok: false; step: "delivery"; error: "zone" | DateError }
   | { ok: false; step: "gift"; error: "packaging" | "card" };
 
-export function reviewOrder({ lines, buyer, delivery, gift, zone, blackoutDates, packaging, card, now }: ReviewInput): Review {
+export function reviewOrder({ lines, buyer, delivery, gift, zone, blackoutDates, packaging, card, customerId, now }: ReviewInput): Review {
   if (!zone) return { ok: false, step: "delivery", error: "zone" };
   const dateError = checkDeliveryDate(delivery.date, now, zone.leadDays, blackoutDates);
   if (dateError) return { ok: false, step: "delivery", error: dateError };
@@ -51,6 +53,7 @@ export function reviewOrder({ lines, buyer, delivery, gift, zone, blackoutDates,
     wrap,
     gift: isGift ? { card: { code: card!.code, nameVi: card!.name.vi, nameEn: card!.name.en }, message: gift.message, sender: gift.sender, hidePrices: gift.hidePrices } : null,
     totals,
+    customerId,
   });
   return { ok: true, wrap, card: isGift ? card! : null, totals, digest };
 }

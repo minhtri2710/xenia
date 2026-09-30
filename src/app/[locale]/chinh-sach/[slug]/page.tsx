@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 
+import {
+  ACCOUNT_COOKIE, LOCK_MINUTES, MAX_LOGIN_ATTEMPTS, OUTBOX_TTL_HOURS, PASSWORD_MAX_CODE_POINTS, PASSWORD_MIN_CODE_POINTS, RESET_EXPIRY_MINUTES, SESSION_SECONDS,
+} from "@/lib/accounts";
 import { LEGAL_AGE } from "@/lib/age";
 import { AGE_COOKIE } from "@/lib/gate";
 import { DELIVERY_WINDOWS, HORIZON_DAYS } from "@/lib/delivery";
@@ -47,6 +50,15 @@ export default async function PolicyPage({ params }: Props) {
   const copy = (key: string, values?: Record<string, string | number>) => t(`copy.${key}`, values);
   const field = (value: string | null | undefined) => value || "—";
   const policyFields = owner ?? ({} as NonNullable<typeof owner>);
+  // The account's enforced values come from their constants, never from message text.
+  const accountFacts = [
+    copy("accountData"),
+    copy("accountCookie", { name: ACCOUNT_COOKIE }),
+    copy("accountPassword", { min: PASSWORD_MIN_CODE_POINTS, max: PASSWORD_MAX_CODE_POINTS, attempts: MAX_LOGIN_ATTEMPTS, minutes: LOCK_MINUTES }),
+    copy("accountReset", { minutes: RESET_EXPIRY_MINUTES, hours: SESSION_SECONDS / 3600 }),
+    copy("accountMail", { hours: OUTBOX_TTL_HOURS }),
+    copy("accountDelete"),
+  ];
   const factList = (label: string, values: string[]) => (
     <section key={`${label}-${values.join("|")}`} className="mt-8 border-t border-ink/15 pt-5" aria-label={label}>
       <h2 className="font-display text-2xl font-medium">{label}</h2>
@@ -77,6 +89,7 @@ export default async function PolicyPage({ params }: Props) {
         {factList(sections.purpose, [copy("privacyPurpose")])}
         {factList(sections.flows, [copy("privacyFlows"), copy("cookieAge", { name: AGE_COOKIE }), copy("cookieCart", { name: CART_COOKIE }), copy("cookieCheckout", { name: CHECKOUT_COOKIE }), copy("messageFact", { max: MAX_MESSAGE_CODE_POINTS })])}
         {factList(sections.retention, [copy("privacyRetention"), copy("retentionFact", { years: ORDER_RETENTION_YEARS }), copy("draftFact", { hours: DRAFT_TTL_HOURS }), copy("privacyPending")])}
+        {factList(sections.account, accountFacts)}
         {factList(sections.access, [copy("privacyAccess")])}
         {factList(sections.rights, [copy("privacyRights")])}
       </>;
@@ -84,6 +97,7 @@ export default async function PolicyPage({ params }: Props) {
     case "dieu-khoan":
       content = <>
         {factList(sections.parties, [copy("termsParties"), copy("ageFact", { age: LEGAL_AGE }), copy("cookieAge", { name: AGE_COOKIE })])}
+        {factList(sections.account, accountFacts)}
         {factList(sections.order, [copy("termsOrder")])}
         {factList(sections.delivery, [copy("termsDelivery")])}
         {factList(sections.payment, [copy("termsPayment", { minutes: PAYMENT_HOLD_MINUTES }), copy("paymentList", { methods }), copy("retentionFact", { years: ORDER_RETENTION_YEARS })])}

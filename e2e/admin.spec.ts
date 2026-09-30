@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { blockThirdParty, seedCatalogue, sql, vintageWineNames } from "./support";
+import { blockThirdParty, customerCount, declareAdult, register, seedCatalogue, sql, vintageWineNames } from "./support";
 
 const EMAIL = "admin@xenia.test";
 const PASSWORD = "e2e-dev-only-password";
@@ -34,7 +34,7 @@ test.beforeAll(async ({ request }) => {
   sql("TRUNCATE users CASCADE");
 });
 
-test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage, the gift collections, site settings and login", async ({ page }) => {
+test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage, the gift collections, site settings, customers, the outbox and login", async ({ page }) => {
   const external = await blockThirdParty(page);
 
   await page.goto("/admin");
@@ -129,6 +129,43 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await page.goto("/admin/globals/site-settings");
   await waitForFormReady(page);
   await expect(page.locator("#field-zones")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+
+  // Customers (read-only, no hash, salt or token) and the mock outbox (read-only). A customer is made
+  // on the storefront, in another browser context, as a buyer would.
+  const buyerEmail = `admin-view.${Date.now().toString(36)}@example.test`;
+  const buyerContext = await page.context().browser()!.newContext({ baseURL: test.info().project.use.baseURL });
+  const buyer = await buyerContext.newPage();
+  await declareAdult(buyer, "/tai-khoan/dang-ky");
+  await register(buyer, "", buyerEmail);
+  await expect(buyer).toHaveURL(/notice=registered/);
+  await buyerContext.close();
+  expect(customerCount(buyerEmail)).toBe(1);
+
+  await page.goto("/admin/collections/customers");
+  await expect(page.locator(".collection-list table")).toContainText(buyerEmail);
+  await page.waitForLoadState("networkidle");
+  await page.goto(`/admin/collections/customers/${sql(`SELECT id FROM customers WHERE email = '${buyerEmail}'`)}`);
+  await waitForFormReady(page);
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("#field-email")).toHaveValue(buyerEmail);
+  const customerHtml = (await page.content()).toLowerCase();
+  const hash = sql(`SELECT hash FROM customers WHERE email = '${buyerEmail}'`);
+  const salt = sql(`SELECT salt FROM customers WHERE email = '${buyerEmail}'`);
+  const verificationToken = sql(`SELECT _verificationtoken FROM customers WHERE email = '${buyerEmail}'`);
+  for (const secret of [hash, salt, verificationToken]) {
+    expect(secret.length).toBeGreaterThan(10);
+    expect(customerHtml).not.toContain(secret.toLowerCase());
+  }
+  for (const field of ["#field-name", "#field-phone", "#field-address"]) await expect(page.locator(field)).toBeDisabled();
+
+  await page.goto("/admin/collections/mock-outbox");
+  await expect(page.locator(".collection-list table")).toContainText(buyerEmail);
+  await page.waitForLoadState("networkidle");
+  await page.locator(".collection-list tbody tr").first().locator("a").first().click();
+  await expect(page).toHaveURL(/\/admin\/collections\/mock-outbox\/\d+/);
+  await waitForFormReady(page);
+  for (const field of ["#field-to", "#field-subject", "#field-body"]) await expect(page.locator(field)).toBeDisabled();
   await page.waitForLoadState("networkidle");
 
   await page.goto("/admin/logout");

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { currentCustomer } from "@/lib/account-data";
+
 import { BuyerForm } from "./buyer-form";
 import { requireCheckout, Steps } from "./steps";
 
@@ -17,6 +19,11 @@ export default async function BuyerStep({ params }: Props) {
   setRequestLocale(locale);
   const { checkout } = await requireCheckout(locale, "buyer");
   const t = await getTranslations("Checkout");
+  // A signed-in buyer starts from the profile and the account email; every field stays editable
+  // and the date of birth is asked again on every order.
+  const account = await currentCustomer();
+  const buyer =
+    checkout?.buyer ?? (account ? { name: account.name ?? "", phone: account.phone ?? "", email: account.email, address: account.address ?? "" } : undefined);
 
   return (
     <section className="max-w-3xl pt-4">
@@ -24,7 +31,7 @@ export default async function BuyerStep({ params }: Props) {
       <Steps current="buyer" />
       <h2 className="mt-10 font-display text-3xl font-medium">{t("buyer.title")}</h2>
       <p className="mt-2 text-muted">{t("buyer.intro")}</p>
-      <BuyerForm locale={locale} buyer={checkout?.buyer} />
+      <BuyerForm locale={locale} buyer={buyer} />
     </section>
   );
 }

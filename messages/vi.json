@@ -9,7 +9,9 @@
     "wines": "Rượu vang",
     "giftService": "Dịch vụ gói quà",
     "giftCollections": "Bộ sưu tập quà",
-    "switchLocale": "English"
+    "switchLocale": "English",
+    "account": "Tài khoản",
+    "signIn": "Đăng nhập"
   },
   "Notice": {
     "legal": "Không bán rượu, bia cho người chưa đủ 18 tuổi",
@@ -271,6 +273,12 @@
       }
     },
     "review": {
+      "account": {
+        "title": "Tài khoản",
+        "signedIn": "Đơn hàng này sẽ được lưu vào tài khoản {email}.",
+        "guest": "Đơn hàng này được đặt với tư cách khách, không có tài khoản.",
+        "signIn": "Đăng nhập để lưu đơn vào tài khoản"
+      },
       "title": "Xem lại & xác nhận",
       "intro": "Vui lòng kiểm tra đơn hàng. Bạn có thể sửa từng phần trước khi đặt hàng.",
       "goods": "Hàng hóa",
@@ -472,8 +480,8 @@
     "pending": "Đang chờ luật sư rà soát",
     "pages": {
       "thong-tin-doanh-nghiep": { "title": "Thông tin doanh nghiệp", "intro": "Thông tin dưới đây là dữ liệu mẫu để phát triển trước khai trương, không phải thông tin của một doanh nghiệp có thật.", "sections": { "owner": "Chủ sở hữu và đăng ký", "licence": "Giấy phép bán lẻ rượu", "notification": "Thông báo website" } },
-      "bao-mat": { "title": "Bảo mật và dữ liệu cá nhân", "intro": "Bản dự thảo mô tả dữ liệu mà phiên bản hiện tại của cửa hàng xử lý và nơi lưu trữ.", "sections": { "purpose": "Mục đích và phạm vi", "flows": "Dữ liệu và cookie", "retention": "Thời hạn lưu giữ", "access": "Truy cập và bảo mật", "rights": "Quyền và khiếu nại", "pending": "Các điểm cần rà soát" } },
-      "dieu-khoan": { "title": "Điều khoản mua bán", "intro": "Đây là dự thảo điều khoản cho quy trình đặt hàng mô phỏng hiện có.", "sections": { "parties": "Các bên và điều kiện", "order": "Đặt hàng và xem lại", "delivery": "Giao hàng", "payment": "Giá và thanh toán", "retention": "Lưu giữ giao dịch", "pending": "Các điểm cần rà soát" } },
+      "bao-mat": { "title": "Bảo mật và dữ liệu cá nhân", "intro": "Bản dự thảo mô tả dữ liệu mà phiên bản hiện tại của cửa hàng xử lý và nơi lưu trữ.", "sections": { "account": "Tài khoản tùy chọn", "purpose": "Mục đích và phạm vi", "flows": "Dữ liệu và cookie", "retention": "Thời hạn lưu giữ", "access": "Truy cập và bảo mật", "rights": "Quyền và khiếu nại", "pending": "Các điểm cần rà soát" } },
+      "dieu-khoan": { "title": "Điều khoản mua bán", "intro": "Đây là dự thảo điều khoản cho quy trình đặt hàng mô phỏng hiện có.", "sections": { "account": "Tài khoản tùy chọn", "parties": "Các bên và điều kiện", "order": "Đặt hàng và xem lại", "delivery": "Giao hàng", "payment": "Giá và thanh toán", "retention": "Lưu giữ giao dịch", "pending": "Các điểm cần rà soát" } },
       "khieu-nai": { "title": "Tiếp nhận khiếu nại", "intro": "Kênh liên hệ trực tuyến và thời gian phản hồi dự kiến dưới đây cần được xác nhận trước khai trương.", "sections": { "channel": "Kênh tiếp nhận", "timeline": "Thời gian dự kiến", "scope": "Thông tin nên cung cấp" } },
       "gia": { "title": "Giá và phí", "intro": "Giá niêm yết bằng đồng Việt Nam; các mức giá sản phẩm và bao bì trong môi trường này là dữ liệu mẫu.", "sections": { "display": "Cách hiển thị giá", "delivery": "Phí giao hàng", "wrap": "Dịch vụ gói quà", "other": "Khoản phí khác" } },
       "dieu-kien-ban-hang": { "title": "Điều kiện bán hàng", "intro": "Các điều kiện dưới đây mô tả giới hạn hiện được cấu hình; chúng chưa xác lập phạm vi kinh doanh thực tế.", "sections": { "age": "Độ tuổi", "areas": "Khu vực giao hàng", "availability": "Tình trạng bán" } },
@@ -530,7 +538,165 @@
       "horizonFact": "Ngày giao có thể đặt đến {days} ngày sau ngày sớm nhất.",
       "windowFact": "Khung giờ giao hiện có: {windows}.",
       "messageFact": "Lời nhắn thiệp tối đa {max} điểm mã Unicode.",
-      "noticeFact": "Liên kết thông báo đã cấu hình: {url}."
+      "noticeFact": "Liên kết thông báo đã cấu hình: {url}.",
+      "accountData": "Tài khoản tùy chọn lưu email, mã băm mật khẩu, họ tên, điện thoại và địa chỉ nếu bạn nhập, việc bạn đã xác minh email, và thời điểm bạn chấp nhận điều khoản và chính sách bảo mật. Tài khoản không bao giờ lưu ngày sinh. Đơn đặt khi đã đăng nhập được liên kết với tài khoản; đơn đặt với tư cách khách không bao giờ được liên kết, kể cả khi trùng email.",
+      "accountCookie": "Cookie {name} giữ phiên đăng nhập và chỉ được đặt sau khi đăng nhập; cookie hết hạn cùng phiên hoặc khi bạn đăng xuất.",
+      "accountPassword": "Mật khẩu có từ {min} đến {max} ký tự. Sau {attempts} lần đăng nhập sai, tài khoản bị khóa {minutes} phút.",
+      "accountReset": "Liên kết đặt lại mật khẩu hết hạn sau {minutes} phút và chỉ dùng được một lần. Đặt lại hoặc đổi mật khẩu sẽ kết thúc các phiên khác của tài khoản. Một phiên kéo dài {hours} giờ.",
+      "accountMail": "Email của tài khoản hiện là bản giả lập trước khi khai trương: không có thư nào được gửi đến địa chỉ thật; thư được giữ trong hộp thư nội bộ {hours} giờ rồi bị xóa.",
+      "accountDelete": "Bạn có thể xóa tài khoản bằng mật khẩu. Dòng tài khoản bị xóa; các đơn đã đặt vẫn còn và mất liên kết với tài khoản."
+    }
+  },
+  "Account": {
+    "notices": {
+      "registered": "Hãy kiểm tra email để mở liên kết xác minh. Nếu địa chỉ này dùng được, một thư đã được gửi.",
+      "resent": "Nếu thông tin khớp với một tài khoản chưa xác minh, một email xác minh mới đã được gửi.",
+      "verified": "Email đã được xác minh. Bạn có thể đăng nhập.",
+      "reset": "Mật khẩu đã được đổi. Hãy đăng nhập bằng mật khẩu mới.",
+      "signedOut": "Bạn đã đăng xuất.",
+      "deleted": "Tài khoản đã bị xóa. Các đơn đã đặt vẫn còn, không còn liên kết với tài khoản."
+    },
+    "register": {
+      "title": "Tạo tài khoản",
+      "intro": "Tài khoản là tùy chọn. Bạn luôn có thể đặt hàng với tư cách khách.",
+      "fields": {
+        "name": "Họ và tên",
+        "dob": "Ngày sinh",
+        "email": "Email",
+        "password": "Mật khẩu"
+      },
+      "dobNote": "Chỉ dùng để kiểm tra bạn đủ 18 tuổi. Không được lưu.",
+      "passwordHint": "Từ {min} đến {max} ký tự.",
+      "consent": {
+        "terms": "Tôi đồng ý với <link>điều khoản bán hàng</link>.",
+        "privacy": "Tôi đã đọc <link>chính sách bảo mật</link> và đồng ý lưu thông tin của tôi trong tài khoản."
+      },
+      "submit": "Tạo tài khoản",
+      "errors": {
+        "nameRequired": "Vui lòng nhập họ và tên.",
+        "nameTooLong": "Tên quá dài.",
+        "dobRequired": "Vui lòng nhập ngày sinh.",
+        "dobInvalid": "Ngày sinh không hợp lệ.",
+        "dobFuture": "Ngày sinh không được ở tương lai.",
+        "emailRequired": "Vui lòng nhập email.",
+        "emailInvalid": "Email không hợp lệ.",
+        "passwordTooShort": "Mật khẩu phải có ít nhất {min} ký tự.",
+        "passwordTooLong": "Mật khẩu có tối đa {max} ký tự.",
+        "consentRequired": "Cần đồng ý mục này để tạo tài khoản."
+      }
+    },
+    "signIn": {
+      "title": "Đăng nhập",
+      "fields": {
+        "email": "Email",
+        "password": "Mật khẩu"
+      },
+      "submit": "Đăng nhập",
+      "failed": "Đăng nhập không thành công. Hãy kiểm tra email, mật khẩu và việc đã xác minh email. Nếu đã thử nhiều lần, hãy chờ một lúc.",
+      "forgot": "Quên mật khẩu?",
+      "noAccount": "Chưa có tài khoản?",
+      "register": "Tạo tài khoản",
+      "resend": {
+        "title": "Gửi lại email xác minh",
+        "intro": "Nhập email và mật khẩu để nhận email xác minh mới.",
+        "email": "Email",
+        "password": "Mật khẩu",
+        "submit": "Gửi lại"
+      }
+    },
+    "verify": {
+      "title": "Xác minh email",
+      "intro": "Xác nhận địa chỉ email để hoàn tất việc tạo tài khoản.",
+      "submit": "Xác minh email",
+      "failed": "Liên kết xác minh không hợp lệ hoặc đã được dùng.",
+      "noToken": "Hãy mở liên kết trong email xác minh."
+    },
+    "forgot": {
+      "title": "Đặt lại mật khẩu",
+      "intro": "Nhập email. Nếu email thuộc một tài khoản, chúng tôi sẽ gửi liên kết đặt lại.",
+      "email": "Email",
+      "submit": "Gửi liên kết đặt lại",
+      "sent": "Nếu email thuộc một tài khoản, liên kết đặt lại đã được gửi.",
+      "errors": {
+        "emailRequired": "Vui lòng nhập email.",
+        "emailInvalid": "Email không hợp lệ."
+      }
+    },
+    "reset": {
+      "title": "Chọn mật khẩu mới",
+      "password": "Mật khẩu mới",
+      "passwordHint": "Từ {min} đến {max} ký tự.",
+      "submit": "Đổi mật khẩu",
+      "tokenInvalid": "Liên kết đặt lại không hợp lệ, đã hết hạn hoặc đã được dùng.",
+      "noToken": "Hãy mở liên kết trong email đặt lại.",
+      "again": "Yêu cầu liên kết mới",
+      "errors": {
+        "passwordTooShort": "Mật khẩu phải có ít nhất {min} ký tự.",
+        "passwordTooLong": "Mật khẩu có tối đa {max} ký tự."
+      }
+    },
+    "page": {
+      "title": "Tài khoản của bạn",
+      "signedInAs": "Đăng nhập với {email}",
+      "signOut": "Đăng xuất",
+      "profile": {
+        "title": "Hồ sơ",
+        "name": "Họ và tên",
+        "phone": "Điện thoại",
+        "address": "Địa chỉ",
+        "submit": "Lưu hồ sơ",
+        "saved": "Đã lưu hồ sơ.",
+        "errors": {
+          "nameTooLong": "Tên quá dài.",
+          "phoneInvalid": "Số điện thoại không hợp lệ.",
+          "addressTooLong": "Địa chỉ quá dài."
+        }
+      },
+      "orders": {
+        "title": "Đơn hàng của bạn",
+        "none": "Chưa có đơn hàng nào được lưu vào tài khoản này."
+      },
+      "password": {
+        "title": "Đổi mật khẩu",
+        "current": "Mật khẩu hiện tại",
+        "next": "Mật khẩu mới",
+        "hint": "Từ {min} đến {max} ký tự.",
+        "submit": "Đổi mật khẩu",
+        "changed": "Đã đổi mật khẩu. Các phiên khác đã bị đăng xuất.",
+        "errors": {
+          "wrongPassword": "Mật khẩu hiện tại không đúng.",
+          "passwordTooShort": "Mật khẩu phải có ít nhất {min} ký tự.",
+          "passwordTooLong": "Mật khẩu có tối đa {max} ký tự."
+        }
+      },
+      "delete": {
+        "title": "Xóa tài khoản",
+        "intro": "Việc này xóa tài khoản và hồ sơ của bạn. Các đơn đã đặt vẫn còn, không còn liên kết với tài khoản.",
+        "password": "Mật khẩu",
+        "submit": "Xóa tài khoản của tôi",
+        "errors": {
+          "wrongPassword": "Mật khẩu không đúng."
+        }
+      }
+    },
+    "mail": {
+      "verify": {
+        "subject": "Xác minh email của bạn",
+        "intro": "Mở liên kết bên dưới để xác minh địa chỉ email.",
+        "ignore": "Nếu bạn không tạo tài khoản, hãy bỏ qua thư này."
+      },
+      "exists": {
+        "subject": "Bạn đã có tài khoản",
+        "intro": "Có người dùng email này để đăng ký, nhưng email đã có tài khoản.",
+        "signIn": "Đăng nhập",
+        "reset": "Đặt lại mật khẩu",
+        "ignore": "Nếu không phải bạn, hãy bỏ qua thư này."
+      },
+      "reset": {
+        "subject": "Đặt lại mật khẩu",
+        "intro": "Mở liên kết bên dưới để chọn mật khẩu mới.",
+        "ignore": "Nếu bạn không yêu cầu, hãy bỏ qua thư này."
+      }
     }
   }
 }
