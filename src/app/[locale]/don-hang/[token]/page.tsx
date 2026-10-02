@@ -90,7 +90,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
               </div>
             </fieldset>
             <div className="flex flex-wrap gap-3">
-              <button type="submit" name="outcome" value="success" className="bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink">
+              <button type="submit" name="outcome" value="success" className="bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep">
                 {t("payment.succeed")}
               </button>
               <button type="submit" name="outcome" value="failure" className="border border-ink/40 px-6 py-3 hover:border-wine hover:text-wine">

@@ -73,7 +73,7 @@ export default async function CartPage({ params, searchParams }: Props) {
                           step={1}
                           required
                           defaultValue={item.qty}
-                          className="w-24 border border-ink/40 bg-white px-3 py-2"
+                          className="w-24 border border-ink/40 bg-raised px-3 py-2"
                         />
                       </label>
                       <button type="submit" className="border border-ink/40 px-4 py-2 text-sm hover:border-wine hover:text-wine">
@@ -102,7 +102,7 @@ export default async function CartPage({ params, searchParams }: Props) {
             </span>
           </p>
           <p className="text-sm text-muted">{t("vatNote")}</p>
-          <Link href="/thanh-toan" className="mt-8 inline-block bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink">
+          <Link href="/thanh-toan" className="mt-8 inline-block bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep">
             {t("checkout")}
           </Link>
         </>

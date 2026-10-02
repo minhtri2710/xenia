@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-export const INPUT = "border border-ink/40 bg-white px-3 py-2 focus:outline-2 focus:outline-wine";
-export const BUTTON = "justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink disabled:opacity-60";
+export const INPUT = "border border-ink/40 bg-raised px-3 py-2 focus:outline-2 focus:outline-wine";
+export const BUTTON = "justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep disabled:opacity-60";
 
 type TextFieldProps = {
   id: string;

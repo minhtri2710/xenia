@@ -30,7 +30,7 @@ export function GateForm({ locale, next }: { locale: string; next: string }) {
           defaultValue={state.name}
           aria-invalid={errors.name ? true : undefined}
           aria-describedby={errors.name ? "gate-name-error" : undefined}
-          className="border border-ink/40 bg-white px-3 py-2 focus:outline-2 focus:outline-wine"
+          className="border border-ink/40 bg-raised px-3 py-2 focus:outline-2 focus:outline-wine"
         />
         {errors.name && (
           <p id="gate-name-error" className="text-sm text-wine">
@@ -52,7 +52,7 @@ export function GateForm({ locale, next }: { locale: string; next: string }) {
           defaultValue={state.dob}
           aria-invalid={errors.dob ? true : undefined}
           aria-describedby={errors.dob ? "gate-dob-error" : undefined}
-          className="border border-ink/40 bg-white px-3 py-2 focus:outline-2 focus:outline-wine"
+          className="border border-ink/40 bg-raised px-3 py-2 focus:outline-2 focus:outline-wine"
         />
         {errors.dob && (
           <p id="gate-dob-error" className="text-sm text-wine">
@@ -64,7 +64,7 @@ export function GateForm({ locale, next }: { locale: string; next: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink disabled:opacity-60"
+        className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep disabled:opacity-60"
       >
         {t("submit")}
       </button>

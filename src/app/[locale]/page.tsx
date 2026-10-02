@@ -6,21 +6,22 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Home");
+  const brand = await getTranslations("Brand");
 
   return (
-    <section className="grid gap-12 pt-8 md:grid-cols-[3fr_2fr] md:items-end md:pt-16">
-      <div className="max-w-2xl">
-        <h1 className="font-display text-5xl leading-tight font-medium sm:text-6xl">{t("title")}</h1>
-        <p className="mt-6 text-lg text-muted">{t("lead")}</p>
-        <Link href="/ruou-vang" className="mt-8 inline-block text-wine underline underline-offset-4">
-          {t("browse")}
-        </Link>
-      </div>
-      <div
-        role="img"
-        aria-label={t("placeholder")}
-        className="aspect-[3/4] w-full max-w-sm bg-paper outline outline-1 -outline-offset-8 outline-wine/40"
-      />
-    </section>
+    <>
+      <section className="dark framed mt-8 bg-wine md:mt-12">
+        <div className="frame flex flex-col items-center px-6 py-16 text-center sm:py-24">
+          <p className="eyebrow">{brand("tagline")}</p>
+          <h1 className="mt-6 max-w-3xl font-display text-4xl leading-tight font-semibold text-champagne sm:text-6xl">{t("title")}</h1>
+          <p className="mt-6 max-w-2xl text-lg text-ivory">{t("lead")}</p>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link href="/ruou-vang" className="btn btn-champagne">{t("browse")}</Link>
+            <Link href="/qua-tang" className="btn btn-line">{brand("giftCollections")}</Link>
+          </div>
+        </div>
+      </section>
+      <div role="img" aria-label={t("placeholder")} className="aspect-[16/7] w-full bg-sand" />
+    </>
   );
 }

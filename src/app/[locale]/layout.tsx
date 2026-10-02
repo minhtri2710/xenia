@@ -1,7 +1,10 @@
 import "@fontsource/be-vietnam-pro/400.css";
 import "@fontsource/be-vietnam-pro/500.css";
-import "@fontsource/cormorant-garamond/500.css";
-import "@fontsource/cormorant-garamond/600.css";
+import "@fontsource/be-vietnam-pro/600.css";
+import "@fontsource/cormorant-garamond/500-italic.css";
+import "@fontsource/playfair-display/400.css";
+import "@fontsource/playfair-display/500.css";
+import "@fontsource/playfair-display/600.css";
 import "../globals.css";
 
 import type { Metadata } from "next";
@@ -37,42 +40,47 @@ async function SiteFooter() {
   const t = await getTranslations("Footer");
   const notice = await getTranslations("Notice");
   const p = await getTranslations("Policy.links");
+  const brand = await getTranslations("Brand");
   const showSample = (owner?.legalName ?? "").startsWith("Xenia Sample Trading Company");
 
   return (
-    <footer className="mt-12 border-t border-ink/15 px-6 py-8 text-sm sm:px-12">
-      <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-3">
+    <footer className="dark mt-12 bg-wine-deep px-6 pt-16 pb-8 text-sm text-on-dark sm:px-12">
+      <div className="mx-auto max-w-7xl">
+        <p className="font-display text-2xl font-semibold tracking-[0.12em] text-champagne uppercase">{brand("name")}</p>
+        <p className="mt-1 font-accent text-xl text-champagne italic">{brand("tagline")}</p>
+      </div>
+      <div className="mx-auto mt-10 grid max-w-7xl gap-8 md:grid-cols-3">
         <section aria-labelledby="footer-owner" data-testid="footer-owner">
-          <h2 id="footer-owner" className="font-display text-xl font-semibold">{t("business")}</h2>
-          {showSample && <p className="mt-2 text-wine">{t("sample")}</p>}
+          <h2 id="footer-owner" className="eyebrow">{t("business")}</h2>
+          {showSample && <p className="mt-2 text-champagne">{t("sample")}</p>}
           <dl className="mt-3 grid gap-2">
-            <div><dt className="inline font-medium">{t("business")}: </dt><dd className="inline">{owner?.legalName}</dd></div>
-            <div><dt className="inline font-medium">{t("registration")}: </dt><dd className="inline">{owner?.businessRegistration?.number}</dd></div>
-            <div><dt className="inline font-medium">{t("registrationDate")}: </dt><dd className="inline">{owner?.businessRegistration?.date}</dd></div>
-            <div><dt className="inline font-medium">{t("registrationPlace")}: </dt><dd className="inline">{owner?.businessRegistration?.place}</dd></div>
-            <div><dt className="inline font-medium">{t("representative")}: </dt><dd className="inline">{owner?.legalRepresentative}</dd></div>
-            <div><dt className="inline font-medium">{t("licence")}: </dt><dd className="inline">{owner?.alcoholLicence?.number}</dd></div>
-            <div><dt className="inline font-medium">{t("licenceIssuer")}: </dt><dd className="inline">{owner?.alcoholLicence?.issuer}</dd></div>
-            <div><dt className="inline font-medium">{t("licenceDate")}: </dt><dd className="inline">{owner?.alcoholLicence?.date}</dd></div>
-            <div><dt className="inline font-medium">{t("headOffice")}: </dt><dd className="inline">{owner?.headOffice}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("business")}: </dt><dd className="inline">{owner?.legalName}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("registration")}: </dt><dd className="inline">{owner?.businessRegistration?.number}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("registrationDate")}: </dt><dd className="inline">{owner?.businessRegistration?.date}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("registrationPlace")}: </dt><dd className="inline">{owner?.businessRegistration?.place}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("representative")}: </dt><dd className="inline">{owner?.legalRepresentative}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("licence")}: </dt><dd className="inline">{owner?.alcoholLicence?.number}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("licenceIssuer")}: </dt><dd className="inline">{owner?.alcoholLicence?.issuer}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("licenceDate")}: </dt><dd className="inline">{owner?.alcoholLicence?.date}</dd></div>
+            <div><dt className="inline font-medium text-on-dark-muted">{t("headOffice")}: </dt><dd className="inline">{owner?.headOffice}</dd></div>
           </dl>
         </section>
         <section aria-labelledby="footer-contact">
-          <h2 id="footer-contact" className="font-display text-xl font-semibold">{t("contact")}</h2>
-          <p className="mt-3"><a className="break-all text-wine underline underline-offset-4" href={`mailto:${owner?.contactEmail}`}>{owner?.contactEmail}</a></p>
-          <p className="mt-2"><a className="text-wine underline underline-offset-4" href={`tel:${owner?.contactPhone}`}>{owner?.contactPhone}</a></p>
-          {owner?.notificationLink && <p className="mt-3"><a className="break-all text-wine underline underline-offset-4" href={owner.notificationLink} rel="noreferrer">{t("notification")}</a></p>}
+          <h2 id="footer-contact" className="eyebrow">{t("contact")}</h2>
+          <p className="mt-3"><a className="break-all text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={`mailto:${owner?.contactEmail}`}>{owner?.contactEmail}</a></p>
+          <p className="mt-2"><a className="text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={`tel:${owner?.contactPhone}`}>{owner?.contactPhone}</a></p>
+          {owner?.notificationLink && <p className="mt-3"><a className="break-all text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={owner.notificationLink} rel="noreferrer">{t("notification")}</a></p>}
         </section>
         <nav aria-labelledby="footer-policies">
-          <h2 id="footer-policies" className="font-display text-xl font-semibold">{t("policies")}</h2>
+          <h2 id="footer-policies" className="eyebrow">{t("policies")}</h2>
           <ul className="mt-3 grid gap-2">
-            {POLICY_SLUGS.map((slug) => <li key={slug}><Link className="text-wine underline underline-offset-4" href={policyPath(slug)}>{p(slug)}</Link></li>)}
+            {POLICY_SLUGS.map((slug) => <li key={slug}><Link className="text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={policyPath(slug)}>{p(slug)}</Link></li>)}
           </ul>
         </nav>
       </div>
-      <p className="mt-8" data-testid="age-notice">
-        <strong lang="vi" className="font-medium text-wine">{notice("legal")}</strong>
-        {notice.has("translation") && <span className="text-muted"> — {notice("translation")}</span>}
+      <p className="mx-auto mt-12 max-w-7xl border-t border-on-dark/20 pt-6" data-testid="age-notice">
+        <strong lang="vi" className="font-medium text-champagne">{notice("legal")}</strong>
+        {notice.has("translation") && <span className="text-on-dark-muted"> — {notice("translation")}</span>}
       </p>
     </footer>
   );
@@ -93,18 +101,18 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <NextIntlClientProvider>
           <a href="#main-content" className="skip-link">{notice("skip")}</a>
-          <header className="border-b border-ink/10 px-6 py-5 sm:px-12">
-            <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+          <header className="border-b border-line bg-ivory px-6 py-4 sm:px-12">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-8 gap-y-4">
               <div>
-                <Link href="/" className="font-display text-3xl font-semibold tracking-wide text-ink">{brand("name")}</Link>
-                <p className="mt-1 text-sm text-muted">{brand("tagline")}</p>
+                <Link href="/" className="font-display text-2xl font-semibold tracking-[0.12em] text-wine uppercase no-underline">{brand("name")}</Link>
+                <p className="eyebrow mt-1">{brand("tagline")}</p>
               </div>
-              <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-5 gap-y-3">
-                <Link href="/ruou-vang" className="text-sm text-wine underline underline-offset-4">{brand("wines")}</Link>
-                <Link href="/qua-tang" className="text-sm text-wine underline underline-offset-4">{brand("giftCollections")}</Link>
-                <Link href="/dich-vu-goi-qua" className="text-sm text-wine underline underline-offset-4">{brand("giftService")}</Link>
-                <Link href="/gio-hang" className="text-sm text-wine underline underline-offset-4">{brand("cart")}</Link>
-                <Link href={account ? ACCOUNT_PATH : ACCOUNT_ROUTES.signIn} className="text-sm text-wine underline underline-offset-4" data-testid="header-account">{account ? brand("account") : brand("signIn")}</Link>
+              <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-8 gap-y-2">
+                <Link href="/ruou-vang" className="nav-link">{brand("wines")}</Link>
+                <Link href="/qua-tang" className="nav-link">{brand("giftCollections")}</Link>
+                <Link href="/dich-vu-goi-qua" className="nav-link">{brand("giftService")}</Link>
+                <Link href="/gio-hang" className="nav-link">{brand("cart")}</Link>
+                <Link href={account ? ACCOUNT_PATH : ACCOUNT_ROUTES.signIn} className="nav-link" data-testid="header-account">{account ? brand("account") : brand("signIn")}</Link>
                 <span className="sr-only">{footer("language")}</span>
                 <LanguageLink />
               </nav>

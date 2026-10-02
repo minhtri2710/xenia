@@ -7,7 +7,7 @@ import type { Buyer } from "@/lib/buyer";
 
 import { type BuyerState, saveBuyer } from "./actions";
 
-const INPUT = "border border-ink/40 bg-white px-3 py-2 focus:outline-2 focus:outline-wine";
+const INPUT = "border border-ink/40 bg-raised px-3 py-2 focus:outline-2 focus:outline-wine";
 
 type Name = keyof BuyerState["values"];
 
@@ -54,7 +54,7 @@ export function BuyerForm({ locale, buyer }: { locale: string; buyer?: Buyer }) 
         );
       })}
       <p className="text-sm text-muted">{t("privacy")}</p>
-      <button type="submit" disabled={pending} className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink disabled:opacity-60">
+      <button type="submit" disabled={pending} className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep disabled:opacity-60">
         {t("submit")}
       </button>
     </form>

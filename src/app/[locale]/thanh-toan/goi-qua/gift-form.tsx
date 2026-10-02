@@ -7,7 +7,7 @@ import { MAX_MESSAGE_CODE_POINTS } from "@/lib/gift";
 
 import { type GiftState, saveGift } from "../actions";
 
-const INPUT = "border border-ink/40 bg-white px-3 py-2 focus:outline-2 focus:outline-wine";
+const INPUT = "border border-ink/40 bg-raised px-3 py-2 focus:outline-2 focus:outline-wine";
 
 type PackagingOption = { code: string; label: string; description: string; line: string };
 
@@ -167,7 +167,7 @@ export function GiftForm({
         </>
       )}
 
-      <button type="submit" disabled={pending} className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink disabled:opacity-60">
+      <button type="submit" disabled={pending} className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep disabled:opacity-60">
         {t("submit")}
       </button>
     </form>

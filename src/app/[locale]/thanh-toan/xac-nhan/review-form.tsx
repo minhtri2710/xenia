@@ -77,7 +77,7 @@ export function ReviewForm({
           )}
         </div>
       ))}
-      <button type="submit" disabled={pending} className="mt-4 justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink disabled:opacity-60">
+      <button type="submit" disabled={pending} className="mt-4 justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep disabled:opacity-60">
         {t("submit")}
       </button>
     </form>

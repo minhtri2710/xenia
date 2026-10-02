@@ -14,6 +14,9 @@ importers:
       '@fontsource/cormorant-garamond':
         specifier: 5.2.8
         version: 5.2.8
+      '@fontsource/playfair-display':
+        specifier: 5.2.8
+        version: 5.2.8
       '@payloadcms/db-postgres':
         specifier: 3.88.0
         version: 3.88.0(payload@3.88.0(graphql@16.12.0)(supports-color@7.2.0)(typescript@6.0.3))(supports-color@7.2.0)
@@ -798,6 +801,9 @@ packages:
 
   '@fontsource/cormorant-garamond@5.2.8':
     resolution: {integrity: sha512-ylx8F6QQ0cyhS/fyeAqv3SlZNr+y3Cvt/AOd1e2hVA62Eg86vPqjugN7l5rsh6pnjbwHRaPNZWh98hyT7sasAQ==}
+
+  '@fontsource/playfair-display@5.2.8':
+    resolution: {integrity: sha512-fUEhib70SszNhQVsGbUMSsWJhr7Je0rdeuZdtGpDNu0GKF1xJM8QhpI/y0pckU25GcChXm9TLOmeZupkvvZo2g==}
 
   '@formatjs/fast-memoize@3.1.7':
     resolution: {integrity: sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA==}
@@ -4578,6 +4584,8 @@ snapshots:
   '@fontsource/be-vietnam-pro@5.2.8': {}
 
   '@fontsource/cormorant-garamond@5.2.8': {}
+
+  '@fontsource/playfair-display@5.2.8': {}
 
   '@formatjs/fast-memoize@3.1.7': {}
 

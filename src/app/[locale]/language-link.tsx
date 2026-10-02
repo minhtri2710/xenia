@@ -12,7 +12,7 @@ export function LanguageLink() {
   const t = useTranslations("Brand");
 
   return (
-    <Link href={{ pathname, query }} locale={target} lang={target} hrefLang={target} className="text-sm text-wine underline underline-offset-4">
+    <Link href={{ pathname, query }} locale={target} lang={target} hrefLang={target} className="nav-link">
       {t("switchLocale")}
     </Link>
   );
