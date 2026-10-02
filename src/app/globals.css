@@ -1,13 +1,32 @@
 @import "tailwindcss";
 
+/* Wine & champagne: cream paper, wine red, olive and gold foil (design canvas "Website Xenia"). */
 @theme {
-  --color-ivory: #f8f4ec;
-  --color-paper: #efe8da;
-  --color-ink: #1b1816;
-  --color-muted: #574f47;
-  --color-wine: #7b1e2c;
-  --font-display: "Cormorant Garamond", Georgia, serif;
+  --color-ivory: #f6f0e8;
+  --color-raised: #fbf8f3;
+  --color-paper: #ebe1d6;
+  --color-sand: #e2d6c9;
+  --color-line: #d9c8b4;
+  --color-ink: #3b1519;
+  --color-muted: #6e5a52;
+  --color-wine: #5a2229;
+  --color-wine-deep: #2a0d10;
+  --color-olive: #55552f;
+  --color-champagne: #d7bd9c;
+  --color-champagne-deep: #7a5f3d;
+  --color-on-dark: #f3e8dc;
+  --color-on-dark-muted: #c9b3a0;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-accent: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    color: var(--color-wine);
+  }
 }
 
 body {
@@ -16,8 +35,96 @@ body {
 }
 
 :where(a, button, input, select, textarea):focus-visible {
-  outline: 3px solid var(--color-wine);
-  outline-offset: 3px;
+  outline: 2px solid var(--color-wine);
+  outline-offset: 2px;
+}
+
+.dark :where(a, button, input, select, textarea):focus-visible {
+  outline-color: var(--color-champagne);
+}
+
+/* Small uppercase label above a heading. */
+.eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-champagne-deep);
+}
+.dark .eyebrow {
+  color: var(--color-champagne);
+}
+
+/* Header navigation: plain text, a wine rule under the hovered link. */
+.nav-link {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid transparent;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.nav-link:hover {
+  border-bottom-color: var(--color-wine);
+  color: var(--color-wine);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1.5rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--color-wine);
+  color: var(--color-ivory);
+}
+.btn-primary:hover {
+  background: var(--color-wine-deep);
+}
+.btn-champagne {
+  background: var(--color-champagne);
+  color: var(--color-wine-deep);
+}
+.btn-champagne:hover {
+  background: #e6d2b8;
+}
+.btn-line {
+  border-color: var(--color-champagne);
+  color: var(--color-champagne);
+}
+.btn-line:hover {
+  background: rgb(215 189 156 / 0.12);
+}
+
+/* Product tile: raised paper, hairline border, soft lift on hover. */
+.card {
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  background: var(--color-raised);
+  transition: box-shadow 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 1px 2px rgb(59 21 25 / 0.06), 0 12px 32px rgb(59 21 25 / 0.08);
+}
+
+/* Double frame: a gold hairline inset inside a coloured band. */
+.framed {
+  padding: 0.75rem;
+}
+.framed > .frame {
+  border: 1px solid var(--color-champagne);
 }
 
 .skip-link {
@@ -64,7 +171,7 @@ body {
   display: block;
   min-height: 4rem;
   border: 1px solid color-mix(in srgb, var(--color-ink) 25%, transparent);
-  background: #fff;
+  background: var(--color-raised);
 }
 .card-chuc-mung {
   border-top: 0.5rem solid var(--color-wine);
@@ -73,7 +180,7 @@ body {
   border-left: 0.5rem double var(--color-wine);
 }
 .card-tet {
-  background: linear-gradient(135deg, var(--color-wine) 0 1.5rem, #fff 1.5rem);
+  background: linear-gradient(135deg, var(--color-wine) 0 1.5rem, var(--color-raised) 1.5rem);
 }
 .card-plain {
   border-style: solid;

@@ -8,7 +8,7 @@ import type { Zone } from "@/lib/order";
 
 import { type DeliveryState, saveDelivery } from "../actions";
 
-const INPUT = "border border-ink/40 bg-white px-3 py-2 focus:outline-2 focus:outline-wine";
+const INPUT = "border border-ink/40 bg-raised px-3 py-2 focus:outline-2 focus:outline-wine";
 
 type ZoneOption = { zone: Zone; label: string; fee: string; earliest: string };
 
@@ -139,7 +139,7 @@ export function DeliveryForm({
         <FieldError id="window-error" message={errors.window && t(`errors.${errors.window}`)} />
       </fieldset>
 
-      <button type="submit" disabled={pending} className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink disabled:opacity-60">
+      <button type="submit" disabled={pending} className="justify-self-start bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep disabled:opacity-60">
         {t("submit")}
       </button>
     </form>

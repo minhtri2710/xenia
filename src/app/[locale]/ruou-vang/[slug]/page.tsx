@@ -124,10 +124,10 @@ export default async function WinePage({ params, searchParams }: Props) {
                   step={1}
                   required
                   defaultValue={1}
-                  className="w-24 border border-ink/40 bg-white px-3 py-2"
+                  className="w-24 border border-ink/40 bg-raised px-3 py-2"
                 />
               </label>
-              <button type="submit" className="bg-wine px-6 py-3 font-medium text-ivory hover:bg-ink">
+              <button type="submit" className="bg-wine px-6 py-3 font-medium text-ivory hover:bg-wine-deep">
                 {t("addToCart")}
               </button>
             </form>
