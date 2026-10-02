@@ -5,6 +5,8 @@ import { Link } from "@/i18n/navigation";
 import { type Filters, facetOptions, listWines, PRICE_BANDS, parseQuery, SORTS, toQuery } from "@/lib/catalogue";
 import { loadCatalogue } from "@/lib/catalogue-data";
 
+import { Container, PageHero } from "../page-parts";
+
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -38,7 +40,7 @@ function FacetGroup({
         <Link
           href={hrefFor(value)}
           aria-current={current ? "true" : undefined}
-          className={current ? "font-medium text-wine underline underline-offset-4" : "text-ink hover:text-wine"}
+          className={`inline-block py-1 ${current ? "font-medium text-wine underline underline-offset-4" : "text-ink hover:text-wine"}`}
         >
           {text}
         </Link>
@@ -47,8 +49,8 @@ function FacetGroup({
   };
   return (
     <div>
-      <h3 className="font-display text-lg font-semibold">{label}</h3>
-      <ul className="mt-2 space-y-1 text-sm">
+      <h3 className="eyebrow">{label}</h3>
+      <ul className="mt-2 text-sm">
         {item(undefined, allLabel)}
         {options.map((o) => item(o.value, o.label))}
       </ul>
@@ -72,12 +74,10 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const hasFilters = toQuery({ ...filters, sort: "name" }) !== "";
 
   return (
-    <section className="pt-8">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      <p className="mt-4 max-w-2xl text-muted">{t("lead")}</p>
-
-      <div className="mt-10 grid gap-10 md:grid-cols-[14rem_1fr]">
-        <nav aria-label={t("filters")} className="space-y-6">
+    <>
+      <PageHero eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
+      <Container className="grid gap-10 pt-10 md:grid-cols-[15rem_1fr]">
+        <nav aria-label={t("filters")} className="card space-y-6 self-start p-6">
           <h2 className="sr-only">{t("filters")}</h2>
           <FacetGroup
             label={t("facets.type")}
@@ -133,7 +133,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
         </nav>
 
         <div>
-          <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-ink/15 pb-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-4">
             <p role="status" data-testid="result-count" className="text-sm text-muted">
               {t("count", { count: listings.length })}
             </p>
@@ -145,7 +145,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
                     <Link
                       href={href({ sort: s })}
                       aria-current={filters.sort === s ? "true" : undefined}
-                      className={filters.sort === s ? "font-medium text-wine underline underline-offset-4" : "hover:text-wine"}
+                      className={`inline-block py-1 ${filters.sort === s ? "font-medium text-wine underline underline-offset-4" : "hover:text-wine"}`}
                     >
                       {t(`sorts.${s}`)}
                     </Link>
@@ -157,9 +157,9 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
           {listings.length === 0 ? (
             <div className="py-16" data-testid="empty-result">
-              <h2 className="font-display text-3xl font-medium">{t("empty.title")}</h2>
+              <h2 className="font-display text-3xl font-semibold">{t("empty.title")}</h2>
               <p className="mt-2 text-muted">{t("empty.body")}</p>
-              <Link href={PATH} className="mt-6 inline-block text-wine underline underline-offset-4">
+              <Link href={PATH} className="btn btn-primary mt-6">
                 {t("clear")}
               </Link>
             </div>
@@ -170,7 +170,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
                   {t("clear")}
                 </Link>
               )}
-              <ul className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-3" data-testid="wine-list">
+              <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-testid="wine-list">
                 {listings.map(({ wine, fromPriceVnd, inStock }) => (
                   <li key={wine.slug} data-testid="wine-card" data-slug={wine.slug} className="card flex flex-col overflow-hidden">
                     <div aria-hidden="true" className="flex aspect-[3/4] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
@@ -197,7 +197,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
             </>
           )}
         </div>
-      </div>
-    </section>
+      </Container>
+    </>
   );
 }

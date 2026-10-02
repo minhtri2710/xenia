@@ -40,7 +40,7 @@ export function SignInForm({ locale, next }: { locale: string; next: string }) {
 export function ResendForm({ locale }: { locale: string }) {
   const t = useTranslations("Account.signIn.resend");
   return (
-    <form action={resendAction} className="mt-12 grid max-w-md gap-6 border-t border-ink/15 pt-6">
+    <form action={resendAction} className="card mt-10 grid gap-6 p-6 sm:p-8">
       <h2 className="font-display text-2xl font-medium">{t("title")}</h2>
       <p className="text-muted">{t("intro")}</p>
       <input type="hidden" name="locale" value={locale} />

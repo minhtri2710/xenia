@@ -57,13 +57,13 @@ export function DeliveryForm({
         <FieldError id="mode-error" message={errors.mode && t(`errors.${errors.mode}`)} />
       </fieldset>
 
-      <p className="border-l-2 border-wine pl-4" data-testid="id-check">
+      <p className="notice" data-testid="id-check">
         {t("idCheck")}
       </p>
 
-      <fieldset className="grid gap-4 border border-ink/15 p-5">
+      <fieldset className="grid gap-4 border border-line bg-ivory p-5">
         <legend className="px-1 text-sm font-medium">{t("recipient.legend")}</legend>
-        <p className="border-l-2 border-wine pl-4" data-testid="recipient-id-check">
+        <p className="notice" data-testid="recipient-id-check">
           {t("recipient.idCheck")}
         </p>
         {(

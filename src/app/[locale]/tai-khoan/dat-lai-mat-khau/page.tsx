@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { ACCOUNT_ROUTES } from "@/lib/accounts";
 
+import { Container, PageHero } from "../../page-parts";
 import { ResetForm } from "./reset-form";
 
 type Props = {
@@ -23,19 +24,24 @@ export default async function ResetPage({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const { token } = await searchParams;
   const t = await getTranslations("Account.reset");
+  const a = await getTranslations("Account");
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      {typeof token === "string" && token !== "" ? (
-        <ResetForm locale={locale} token={token} />
-      ) : (
-        <p className="mt-6 text-muted">
-          {t("noToken")}{" "}
-          <Link href={ACCOUNT_ROUTES.forgot} className="text-wine underline underline-offset-4">
-            {t("again")}
-          </Link>
-        </p>
-      )}
-    </section>
+    <>
+      <PageHero eyebrow={a("eyebrow")} title={t("title")} width="text" />
+      <Container width="text" className="pt-10">
+        <div className="card p-6 sm:p-8 [&>*:first-child]:mt-0">
+          {typeof token === "string" && token !== "" ? (
+            <ResetForm locale={locale} token={token} />
+          ) : (
+            <p className="mt-6 text-muted">
+              {t("noToken")}{" "}
+              <Link href={ACCOUNT_ROUTES.forgot} className="text-wine underline underline-offset-4">
+                {t("again")}
+              </Link>
+            </p>
+          )}
+        </div>
+      </Container>
+    </>
   );
 }

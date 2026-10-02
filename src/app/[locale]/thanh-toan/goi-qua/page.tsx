@@ -6,8 +6,9 @@ import { wrapLine } from "@/lib/gift";
 import { VND_FORMAT } from "@/lib/order-totals";
 import { loadCards, loadPackaging } from "@/lib/shop-data";
 
+import { Container } from "../../page-parts";
 import type { GiftErrors } from "../actions";
-import { requireCheckout, Steps } from "../steps";
+import { CheckoutHero, requireCheckout } from "../steps";
 import { GiftForm } from "./gift-form";
 
 type Props = {
@@ -54,34 +55,37 @@ export default async function GiftStep({ params, searchParams }: Props) {
 
   const g = checkout!.gift;
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      <Steps current="gift" />
-      <h2 className="mt-10 font-display text-3xl font-medium">{t("gift.title")}</h2>
-      <p className="mt-2 text-muted">
-        {t("gift.intro")}{" "}
-        <Link href="/dich-vu-goi-qua" className="text-wine underline underline-offset-4">
-          {t("gift.serviceLink")}
-        </Link>
-      </p>
-      <GiftForm
-        locale={locale}
-        isGift={isGift}
-        packaging={packaging}
-        someHidden={packaging.length < active.length}
-        cards={cards}
-        initial={{
-          errors,
-          values: {
-            packaging: g?.packaging ?? "none",
-            card: g?.card ?? "",
-            message: g?.message ?? "",
-            sender: g?.sender ?? checkout!.buyer!.name,
-            anonymous: isGift && g !== undefined && g.sender === null,
-            hidePrices: g ? g.hidePrices : isGift,
-          },
-        }}
-      />
-    </section>
+    <>
+      <CheckoutHero current="gift" />
+      <Container width="narrow" className="pt-10">
+        <div className="card p-6 sm:p-8">
+          <h2 className="font-display text-3xl font-semibold">{t("gift.title")}</h2>
+          <p className="mt-2 text-muted">
+            {t("gift.intro")}{" "}
+            <Link href="/dich-vu-goi-qua" className="text-wine underline underline-offset-4">
+              {t("gift.serviceLink")}
+            </Link>
+          </p>
+          <GiftForm
+            locale={locale}
+            isGift={isGift}
+            packaging={packaging}
+            someHidden={packaging.length < active.length}
+            cards={cards}
+            initial={{
+              errors,
+              values: {
+                packaging: g?.packaging ?? "none",
+                card: g?.card ?? "",
+                message: g?.message ?? "",
+                sender: g?.sender ?? checkout!.buyer!.name,
+                anonymous: isGift && g !== undefined && g.sender === null,
+                hidePrices: g ? g.hidePrices : isGift,
+              },
+            }}
+          />
+        </div>
+      </Container>
+    </>
   );
 }

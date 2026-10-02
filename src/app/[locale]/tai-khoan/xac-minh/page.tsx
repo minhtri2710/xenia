@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { Container, PageHero } from "../../page-parts";
 import { verifyAction } from "../actions";
 import { BUTTON } from "../form-parts";
 
@@ -22,26 +23,31 @@ export default async function VerifyPage({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const { token, failed } = await searchParams;
   const t = await getTranslations("Account.verify");
+  const a = await getTranslations("Account");
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      {failed === "1" && (
-        <p role="alert" className="mt-6 border border-wine/40 p-4 text-wine" data-testid="verify-failed">
-          {t("failed")}
-        </p>
-      )}
-      {typeof token === "string" && token !== "" ? (
-        <form action={verifyAction} className="mt-8 grid max-w-md gap-6">
-          <input type="hidden" name="locale" value={locale} />
-          <input type="hidden" name="token" value={token} />
-          <p className="text-muted">{t("intro")}</p>
-          <button type="submit" className={BUTTON}>
-            {t("submit")}
-          </button>
-        </form>
-      ) : (
-        <p className="mt-6 text-muted">{t("noToken")}</p>
-      )}
-    </section>
+    <>
+      <PageHero eyebrow={a("eyebrow")} title={t("title")} width="text" />
+      <Container width="text" className="pt-10">
+        <div className="card p-6 sm:p-8 [&>*:first-child]:mt-0">
+          {failed === "1" && (
+            <p role="alert" className="notice mb-6 text-wine" data-testid="verify-failed">
+              {t("failed")}
+            </p>
+          )}
+          {typeof token === "string" && token !== "" ? (
+            <form action={verifyAction} className="mt-8 grid max-w-md gap-6">
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="token" value={token} />
+              <p className="text-muted">{t("intro")}</p>
+              <button type="submit" className={BUTTON}>
+                {t("submit")}
+              </button>
+            </form>
+          ) : (
+            <p className="mt-6 text-muted">{t("noToken")}</p>
+          )}
+        </div>
+      </Container>
+    </>
   );
 }

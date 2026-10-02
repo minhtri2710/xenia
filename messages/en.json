@@ -19,6 +19,7 @@
     "skip": "Skip navigation"
   },
   "Gate": {
+    "eyebrow": "Age verification",
     "title": "Age verification",
     "intro": "By law, please declare your full name and date of birth before viewing product information.",
     "name": "Full name",
@@ -34,21 +35,41 @@
     }
   },
   "Exit": {
+    "eyebrow": "Goodbye",
     "title": "See you later",
     "body": "Sorry, xenia only serves customers aged 18 and over.",
     "back": "Back to age verification"
   },
   "Home": {
+    "occasionsEyebrow": "For every occasion",
+    "occasionsTitle": "Gifts by occasion",
+    "occasionsLead": "Each collection gathers the wines noted for one occasion.",
+    "occasionsLink": "See the collection",
+    "serviceEyebrow": "Paid service",
+    "serviceLink": "About the gift service",
+    "stepsEyebrow": "Ordering",
+    "stepsTitle": "Four steps to an order",
+    "steps": {
+      "buyer": "Buyer details and confirming you are 18 or over.",
+      "delivery": "To you or to a recipient, with a date and time window.",
+      "gift": "Choose a box, a card and a message, or no wrap.",
+      "review": "Review the whole order and pay without cash."
+    },
+    "ctaTitle": "Start from the collection",
+    "ctaLead": "Filter by type, region, grape, price and bottle size.",
+    "ctaButton": "Open the collection",
     "title": "Wine for memorable occasions",
     "lead": "A collection of wine and light grape wine, with refined gift wrapping — in preparation.",
     "placeholder": "Placeholder image",
     "browse": "Browse the wine collection"
   },
   "NotFound": {
+    "eyebrow": "Not found",
     "title": "Page not found",
     "back": "Back to home"
   },
   "Catalogue": {
+    "eyebrow": "Collection",
     "title": "Wine",
     "lead": "Red, white, rosé, sparkling and sweet wines from renowned regions. Prices include VAT.",
     "filters": "Filters",
@@ -129,6 +150,8 @@
     "clear": "Clear filters"
   },
   "Product": {
+    "specsEyebrow": "Details",
+    "tastingEyebrow": "Taste",
     "back": "All wines",
     "selector": "Choose vintage and size",
     "vintage": "Vintage",
@@ -177,6 +200,8 @@
     "addToCart": "Add to cart"
   },
   "Cart": {
+    "eyebrow": "Your order",
+    "summary": "Summary",
     "title": "Cart",
     "empty": "Your cart is empty.",
     "browse": "Browse the wine collection",
@@ -195,6 +220,7 @@
   "Checkout": {
     "title": "Checkout",
     "steps": {
+      "counter": "Step {current} of {total}",
       "label": "Checkout steps",
       "buyer": "Buyer",
       "delivery": "Delivery",
@@ -359,6 +385,7 @@
     "hanoi": "Hà Nội"
   },
   "Order": {
+    "eyebrow": "Order",
     "title": "Order",
     "heading": "Order {number}",
     "statusLabel": "Status:",
@@ -410,6 +437,7 @@
     "no": "No"
   },
   "GiftCollections": {
+    "eyebrow": "Gifts",
     "title": "Gift collections",
     "lead": "Wines by gift occasion and by budget. Prices include VAT.",
     "warning": "Người dưới 18 tuổi không được uống rượu, bia",
@@ -435,6 +463,7 @@
     "giftServiceLink": "See the gift service"
   },
   "GiftService": {
+    "eyebrow": "Service",
     "title": "Gift service",
     "intro": "We wrap your bottles, add a card with your message and deliver to your recipient.",
     "paid": "Gift wrap is a paid service with no free tier, and it comes with no promotion or discount. Prices include VAT.",
@@ -467,6 +496,7 @@
     "language": "Language"
   },
   "Policy": {
+    "eyebrow": "Policies",
     "draft": "Pre-launch draft — awaiting legal review. This is not a legal opinion.",
     "links": {
       "thong-tin-doanh-nghiep": "Business information",
@@ -550,6 +580,7 @@
     }
   },
   "Account": {
+    "eyebrow": "Account",
     "notices": {
       "registered": "Check your email for the verification link. If that address can be used, a message has been sent.",
       "resent": "If those details match an account that is not yet verified, a new verification email has been sent.",

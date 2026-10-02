@@ -29,7 +29,7 @@ export function ReviewForm({
   const { errors } = state;
 
   return (
-    <form action={formAction} noValidate className="mt-10 grid gap-4 border-t border-ink/15 pt-6">
+    <form action={formAction} noValidate className="card grid gap-4 border-wine/40 p-6 sm:p-8">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="clientKey" value={clientKey} />
       <input type="hidden" name="digest" value={digest} />

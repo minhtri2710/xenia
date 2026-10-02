@@ -3,8 +3,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { currentCustomer } from "@/lib/account-data";
 
+import { Container } from "../page-parts";
 import { BuyerForm } from "./buyer-form";
-import { requireCheckout, Steps } from "./steps";
+import { CheckoutHero, requireCheckout } from "./steps";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -26,12 +27,15 @@ export default async function BuyerStep({ params }: Props) {
     checkout?.buyer ?? (account ? { name: account.name ?? "", phone: account.phone ?? "", email: account.email, address: account.address ?? "" } : undefined);
 
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      <Steps current="buyer" />
-      <h2 className="mt-10 font-display text-3xl font-medium">{t("buyer.title")}</h2>
-      <p className="mt-2 text-muted">{t("buyer.intro")}</p>
-      <BuyerForm locale={locale} buyer={buyer} />
-    </section>
+    <>
+      <CheckoutHero current="buyer" />
+      <Container width="narrow" className="pt-10">
+        <div className="card p-6 sm:p-8">
+          <h2 className="font-display text-3xl font-semibold">{t("buyer.title")}</h2>
+          <p className="mt-2 text-muted">{t("buyer.intro")}</p>
+          <BuyerForm locale={locale} buyer={buyer} />
+        </div>
+      </Container>
+    </>
   );
 }

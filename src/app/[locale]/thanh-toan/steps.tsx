@@ -5,6 +5,8 @@ import { getPathname, Link } from "@/i18n/navigation";
 import type { Checkout } from "@/lib/checkout";
 import { readCart, readCheckout } from "@/lib/shop-data";
 
+import { PageHero } from "../page-parts";
+
 const STEPS = [
   { key: "buyer", href: "/thanh-toan" },
   { key: "delivery", href: "/thanh-toan/giao-hang" },
@@ -34,10 +36,13 @@ export async function Steps({ current }: { current: Step }) {
   const t = await getTranslations("Checkout.steps");
   const index = STEPS.findIndex((s) => s.key === current);
   return (
-    <nav aria-label={t("label")} className="mt-6">
-      <ol className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <nav aria-label={t("label")} className="mt-8 w-full">
+      <ol className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-4">
         {STEPS.map((s, i) => (
-          <li key={s.key} className={i === index ? "font-medium text-wine" : "text-muted"}>
+          <li key={s.key} className={`flex flex-col gap-1 border-t pt-3 ${i <= index ? "border-wine" : "border-line"} ${i === index ? "font-medium text-wine" : "text-muted"}`}>
+            <span className="step-number" aria-hidden="true">
+              {String(i + 1).padStart(2, "0")}
+            </span>
             {i < index ? (
               <Link href={s.href} className="underline underline-offset-4 hover:text-wine">
                 {t(s.key)}
@@ -49,5 +54,16 @@ export async function Steps({ current }: { current: Step }) {
         ))}
       </ol>
     </nav>
+  );
+}
+
+/** The top of every checkout step: the step counter, the checkout title and the four steps. */
+export async function CheckoutHero({ current }: { current: Step }) {
+  const t = await getTranslations("Checkout");
+  const index = STEPS.findIndex((s) => s.key === current);
+  return (
+    <PageHero eyebrow={t("steps.counter", { current: index + 1, total: STEPS.length })} title={t("title")} width="narrow">
+      <Steps current={current} />
+    </PageHero>
   );
 }

@@ -5,8 +5,9 @@ import { DATE_ERRORS, deliveryRange } from "@/lib/delivery";
 import { VND_FORMAT } from "@/lib/order-totals";
 import { loadDeliverySettings } from "@/lib/shop-data";
 
+import { Container } from "../../page-parts";
 import { type DeliveryErrors } from "../actions";
-import { requireCheckout, Steps } from "../steps";
+import { CheckoutHero, requireCheckout } from "../steps";
 import { DeliveryForm } from "./delivery-form";
 
 type Props = {
@@ -43,28 +44,31 @@ export default async function DeliveryStep({ params, searchParams }: Props) {
   const d = checkout!.delivery;
   const buyer = checkout!.buyer!;
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      <Steps current="delivery" />
-      <h2 className="mt-10 font-display text-3xl font-medium">{t("delivery.title")}</h2>
-      <DeliveryForm
-        locale={locale}
-        buyer={t("delivery.toBuyer", { name: buyer.name, address: buyer.address })}
-        zones={zones}
-        range={{ min: earliest, max: latest }}
-        initial={{
-          errors,
-          values: {
-            zone: d?.zone ?? "",
-            mode: d?.mode ?? "self",
-            recipientName: d?.recipient?.name ?? "",
-            recipientPhone: d?.recipient?.phone ?? "",
-            recipientAddress: d?.recipient?.address ?? "",
-            date: d?.date ?? earliest,
-            window: d?.window ?? "",
-          },
-        }}
-      />
-    </section>
+    <>
+      <CheckoutHero current="delivery" />
+      <Container width="narrow" className="pt-10">
+        <div className="card p-6 sm:p-8">
+          <h2 className="font-display text-3xl font-semibold">{t("delivery.title")}</h2>
+          <DeliveryForm
+            locale={locale}
+            buyer={t("delivery.toBuyer", { name: buyer.name, address: buyer.address })}
+            zones={zones}
+            range={{ min: earliest, max: latest }}
+            initial={{
+              errors,
+              values: {
+                zone: d?.zone ?? "",
+                mode: d?.mode ?? "self",
+                recipientName: d?.recipient?.name ?? "",
+                recipientPhone: d?.recipient?.phone ?? "",
+                recipientAddress: d?.recipient?.address ?? "",
+                date: d?.date ?? earliest,
+                window: d?.window ?? "",
+              },
+            }}
+          />
+        </div>
+      </Container>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { Container, PageHero } from "../../page-parts";
 import { RegisterForm } from "./register-form";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -15,11 +16,16 @@ export default async function RegisterPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Account.register");
+  const a = await getTranslations("Account");
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      <p className="mt-2 text-muted">{t("intro")}</p>
-      <RegisterForm locale={locale} />
-    </section>
+    <>
+      <PageHero eyebrow={a("eyebrow")} title={t("title")} width="text" />
+      <Container width="text" className="pt-10">
+        <div className="card p-6 sm:p-8 [&>*:first-child]:mt-0">
+          <p className="mt-2 text-muted">{t("intro")}</p>
+          <RegisterForm locale={locale} />
+        </div>
+      </Container>
+    </>
   );
 }

@@ -44,7 +44,7 @@ async function SiteFooter() {
   const showSample = (owner?.legalName ?? "").startsWith("Xenia Sample Trading Company");
 
   return (
-    <footer className="dark mt-12 bg-wine-deep px-6 pt-16 pb-8 text-sm text-on-dark sm:px-12">
+    <footer className="dark bg-wine-deep px-6 pt-16 pb-8 text-sm text-on-dark sm:px-12">
       <div className="mx-auto max-w-7xl">
         <p className="font-display text-2xl font-semibold tracking-[0.12em] text-champagne uppercase">{brand("name")}</p>
         <p className="mt-1 font-accent text-xl text-champagne italic">{brand("tagline")}</p>
@@ -118,7 +118,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               </nav>
             </div>
           </header>
-          <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-6 pb-16 sm:px-12">{children}</main>
+          <main id="main-content" tabIndex={-1} className="w-full flex-1 pb-16">{children}</main>
           <SiteFooter />
         </NextIntlClientProvider>
       </body>

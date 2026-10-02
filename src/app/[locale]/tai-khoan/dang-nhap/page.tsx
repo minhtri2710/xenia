@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { ACCOUNT_ROUTES } from "@/lib/accounts";
 
+import { Container, PageHero } from "../../page-parts";
 import { ResendForm, SignInForm } from "./sign-in-form";
 
 type Props = {
@@ -24,25 +25,30 @@ export default async function SignInPage({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const { notice, next } = await searchParams;
   const t = await getTranslations("Account.signIn");
+  const a = await getTranslations("Account");
   const n = await getTranslations("Account.notices");
   const known = NOTICES.find((key) => key === notice);
 
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      {known && (
-        <p role="status" className="mt-6 border border-ink/30 p-4" data-testid="account-notice" data-notice={known}>
-          {n(known)}
-        </p>
-      )}
-      <SignInForm locale={locale} next={typeof next === "string" ? next : ""} />
-      <p className="mt-6 text-sm">
-        {t("noAccount")}{" "}
-        <Link href={ACCOUNT_ROUTES.register} className="text-wine underline underline-offset-4">
-          {t("register")}
-        </Link>
-      </p>
-      <ResendForm locale={locale} />
-    </section>
+    <>
+      <PageHero eyebrow={a("eyebrow")} title={t("title")} width="text" />
+      <Container width="text" className="pt-10">
+        <div className="card p-6 sm:p-8 [&>*:first-child]:mt-0">
+          {known && (
+            <p role="status" className="notice mb-6" data-testid="account-notice" data-notice={known}>
+              {n(known)}
+            </p>
+          )}
+          <SignInForm locale={locale} next={typeof next === "string" ? next : ""} />
+          <p className="mt-6 text-sm">
+            {t("noAccount")}{" "}
+            <Link href={ACCOUNT_ROUTES.register} className="text-wine underline underline-offset-4">
+              {t("register")}
+            </Link>
+          </p>
+        </div>
+        <ResendForm locale={locale} />
+      </Container>
+    </>
   );
 }

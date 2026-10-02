@@ -20,6 +20,8 @@ import { loadSiteSettings } from "@/lib/shop-data";
 
 import { Link as LocalizedLink } from "@/i18n/navigation";
 
+import { Container, PageHero } from "../../page-parts";
+
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -60,9 +62,9 @@ export default async function PolicyPage({ params }: Props) {
     copy("accountDelete"),
   ];
   const factList = (label: string, values: string[]) => (
-    <section key={`${label}-${values.join("|")}`} className="mt-8 border-t border-ink/15 pt-5" aria-label={label}>
-      <h2 className="font-display text-2xl font-medium">{label}</h2>
-      <ul className="mt-3 grid gap-2">{values.map((value) => <li key={value}>{value}</li>)}</ul>
+    <section key={`${label}-${values.join("|")}`} className="mt-10 border-t border-line pt-6" aria-label={label}>
+      <h2 className="font-display text-2xl font-semibold">{label}</h2>
+      <ul className="mt-3 grid list-disc gap-2 pl-5 marker:text-champagne-deep">{values.map((value) => <li key={value}>{value}</li>)}</ul>
     </section>
   );
 
@@ -153,13 +155,15 @@ export default async function PolicyPage({ params }: Props) {
   }
 
   return (
-    <article className="max-w-3xl pt-4" data-testid="policy-page" data-policy={slug}>
-      <p className="border-l-4 border-wine bg-paper px-4 py-3 text-sm" data-testid="policy-draft">{t("draft")}</p>
-      <h1 className="mt-6 font-display text-5xl font-medium">{p("title")}</h1>
-      <p className="mt-4 text-lg text-muted">{p("intro")}</p>
-      {content}
-      <p className="mt-8 text-sm text-wine">{t("pending")}</p>
-      <p className="mt-4"><LocalizedLink href={policyPath("thong-tin-doanh-nghiep")} className="text-wine underline underline-offset-4">{t("links.thong-tin-doanh-nghiep")}</LocalizedLink></p>
+    <article data-testid="policy-page" data-policy={slug}>
+      <PageHero eyebrow={t("eyebrow")} title={p("title")} lead={p("intro")} width="text">
+        <p className="notice mt-6 text-sm" data-testid="policy-draft">{t("draft")}</p>
+      </PageHero>
+      <Container width="text" className="pt-4">
+        {content}
+        <p className="notice mt-10 text-sm text-wine">{t("pending")}</p>
+        <p className="mt-6"><LocalizedLink href={policyPath("thong-tin-doanh-nghiep")} className="text-wine underline underline-offset-4">{t("links.thong-tin-doanh-nghiep")}</LocalizedLink></p>
+      </Container>
     </article>
   );
 }

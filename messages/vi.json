@@ -18,6 +18,7 @@
     "skip": "Bỏ qua điều hướng"
   },
   "Gate": {
+    "eyebrow": "Xác minh độ tuổi",
     "title": "Xác minh tuổi",
     "intro": "Theo quy định pháp luật, vui lòng khai báo họ tên và ngày sinh trước khi xem thông tin sản phẩm.",
     "name": "Họ và tên",
@@ -33,21 +34,41 @@
     }
   },
   "Exit": {
+    "eyebrow": "Tạm biệt",
     "title": "Hẹn gặp lại",
     "body": "Rất tiếc, xenia chỉ phục vụ khách hàng từ đủ 18 tuổi trở lên.",
     "back": "Quay lại trang xác minh tuổi"
   },
   "Home": {
+    "occasionsEyebrow": "Cho từng dịp trao gửi",
+    "occasionsTitle": "Quà tặng theo dịp",
+    "occasionsLead": "Mỗi bộ sưu tập gom các loại vang được ghi nhận cho một dịp.",
+    "occasionsLink": "Xem bộ sưu tập",
+    "serviceEyebrow": "Dịch vụ có phí",
+    "serviceLink": "Tìm hiểu dịch vụ gói quà",
+    "stepsEyebrow": "Đặt hàng",
+    "stepsTitle": "Bốn bước đến một đơn hàng",
+    "steps": {
+      "buyer": "Thông tin người mua và xác nhận đủ 18 tuổi.",
+      "delivery": "Giao cho bạn hoặc cho người nhận, chọn ngày và khung giờ.",
+      "gift": "Chọn hộp, thiệp và lời nhắn, hoặc không gói.",
+      "review": "Xem lại toàn bộ đơn và thanh toán không dùng tiền mặt."
+    },
+    "ctaTitle": "Bắt đầu từ bộ sưu tập",
+    "ctaLead": "Lọc theo loại vang, vùng, giống nho, giá và dung tích.",
+    "ctaButton": "Mở bộ sưu tập",
     "title": "Rượu vang cho những dịp đáng nhớ",
     "lead": "Bộ sưu tập rượu vang và vang nhẹ, gói quà tinh tế — đang được chuẩn bị.",
     "placeholder": "Ảnh minh hoạ",
     "browse": "Xem bộ sưu tập rượu vang"
   },
   "NotFound": {
+    "eyebrow": "Không tìm thấy",
     "title": "Không tìm thấy trang",
     "back": "Về trang chủ"
   },
   "Catalogue": {
+    "eyebrow": "Bộ sưu tập",
     "title": "Rượu vang",
     "lead": "Bộ sưu tập vang đỏ, trắng, hồng, sủi và ngọt từ những vùng vang nổi tiếng. Giá đã gồm VAT.",
     "filters": "Bộ lọc",
@@ -128,6 +149,8 @@
     "clear": "Xoá bộ lọc"
   },
   "Product": {
+    "specsEyebrow": "Thông số",
+    "tastingEyebrow": "Hương vị",
     "back": "Tất cả rượu vang",
     "selector": "Chọn niên vụ và dung tích",
     "vintage": "Niên vụ",
@@ -176,6 +199,8 @@
     "addToCart": "Thêm vào giỏ hàng"
   },
   "Cart": {
+    "eyebrow": "Đơn hàng của bạn",
+    "summary": "Tóm tắt",
     "title": "Giỏ hàng",
     "empty": "Giỏ hàng của bạn đang trống.",
     "browse": "Xem bộ sưu tập rượu vang",
@@ -194,6 +219,7 @@
   "Checkout": {
     "title": "Thanh toán",
     "steps": {
+      "counter": "Bước {current} / {total}",
       "label": "Các bước thanh toán",
       "buyer": "Người mua",
       "delivery": "Giao hàng",
@@ -358,6 +384,7 @@
     "hanoi": "Hà Nội"
   },
   "Order": {
+    "eyebrow": "Đơn hàng",
     "title": "Đơn hàng",
     "heading": "Đơn hàng {number}",
     "statusLabel": "Trạng thái:",
@@ -409,6 +436,7 @@
     "no": "Không"
   },
   "GiftCollections": {
+    "eyebrow": "Quà tặng",
     "title": "Bộ sưu tập quà",
     "lead": "Các loại vang theo dịp tặng và theo ngân sách. Giá đã gồm VAT.",
     "warning": "Người dưới 18 tuổi không được uống rượu, bia",
@@ -433,6 +461,7 @@
     "giftServiceLink": "Xem dịch vụ gói quà"
   },
   "GiftService": {
+    "eyebrow": "Dịch vụ",
     "title": "Dịch vụ gói quà",
     "intro": "Chúng tôi gói chai rượu của bạn, kèm thiệp và lời nhắn viết tay, rồi giao tận tay người nhận.",
     "paid": "Gói quà là dịch vụ có tính phí, không có hình thức miễn phí, và không đi kèm khuyến mại hay giảm giá. Giá đã bao gồm VAT.",
@@ -465,6 +494,7 @@
     "language": "Ngôn ngữ"
   },
   "Policy": {
+    "eyebrow": "Chính sách",
     "draft": "Bản dự thảo trước khi khai trương — đang chờ luật sư rà soát. Nội dung này chưa phải ý kiến pháp lý.",
     "links": {
       "thong-tin-doanh-nghiep": "Thông tin doanh nghiệp",
@@ -548,6 +578,7 @@
     }
   },
   "Account": {
+    "eyebrow": "Tài khoản",
     "notices": {
       "registered": "Hãy kiểm tra email để mở liên kết xác minh. Nếu địa chỉ này dùng được, một thư đã được gửi.",
       "resent": "Nếu thông tin khớp với một tài khoản chưa xác minh, một email xác minh mới đã được gửi.",

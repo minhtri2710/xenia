@@ -6,6 +6,7 @@
   --color-raised: #fbf8f3;
   --color-paper: #ebe1d6;
   --color-sand: #e2d6c9;
+  --color-taupe: #c9b7a1;
   --color-line: #d9c8b4;
   --color-ink: #3b1519;
   --color-muted: #6e5a52;
@@ -43,88 +44,90 @@ body {
   outline-color: var(--color-champagne);
 }
 
-/* Small uppercase label above a heading. */
-.eyebrow {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-champagne-deep);
-}
-.dark .eyebrow {
-  color: var(--color-champagne);
-}
+@layer components {
+  /* Small uppercase label above a heading. */
+  .eyebrow {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-champagne-deep);
+  }
+  .dark .eyebrow {
+    color: var(--color-champagne);
+  }
 
-/* Header navigation: plain text, a wine rule under the hovered link. */
-.nav-link {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid transparent;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--color-ink);
-  text-decoration: none;
-}
-.nav-link:hover {
-  border-bottom-color: var(--color-wine);
-  color: var(--color-wine);
-}
+  /* Header navigation: plain text, a wine rule under the hovered link. */
+  .nav-link {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid transparent;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .nav-link:hover {
+    border-bottom-color: var(--color-wine);
+    color: var(--color-wine);
+  }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 3rem;
-  padding: 0 1.5rem;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-}
-.btn-primary {
-  background: var(--color-wine);
-  color: var(--color-ivory);
-}
-.btn-primary:hover {
-  background: var(--color-wine-deep);
-}
-.btn-champagne {
-  background: var(--color-champagne);
-  color: var(--color-wine-deep);
-}
-.btn-champagne:hover {
-  background: #e6d2b8;
-}
-.btn-line {
-  border-color: var(--color-champagne);
-  color: var(--color-champagne);
-}
-.btn-line:hover {
-  background: rgb(215 189 156 / 0.12);
-}
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0 1.5rem;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--color-wine);
+    color: var(--color-ivory);
+  }
+  .btn-primary:hover {
+    background: var(--color-wine-deep);
+  }
+  .btn-champagne {
+    background: var(--color-champagne);
+    color: var(--color-wine-deep);
+  }
+  .btn-champagne:hover {
+    background: #e6d2b8;
+  }
+  .btn-line {
+    border-color: var(--color-champagne);
+    color: var(--color-champagne);
+  }
+  .btn-line:hover {
+    background: rgb(215 189 156 / 0.12);
+  }
 
-/* Product tile: raised paper, hairline border, soft lift on hover. */
-.card {
-  border: 1px solid var(--color-line);
-  border-radius: 4px;
-  background: var(--color-raised);
-  transition: box-shadow 0.2s ease;
-}
-.card:hover {
-  box-shadow: 0 1px 2px rgb(59 21 25 / 0.06), 0 12px 32px rgb(59 21 25 / 0.08);
-}
+  /* Product tile: raised paper, hairline border, soft lift on hover. */
+  .card {
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+    background: var(--color-raised);
+    transition: box-shadow 0.2s ease;
+  }
+  .card:hover {
+    box-shadow: 0 1px 2px rgb(59 21 25 / 0.06), 0 12px 32px rgb(59 21 25 / 0.08);
+  }
 
-/* Double frame: a gold hairline inset inside a coloured band. */
-.framed {
-  padding: 0.75rem;
-}
-.framed > .frame {
-  border: 1px solid var(--color-champagne);
+  /* Double frame: a gold hairline inset inside a coloured band. */
+  .framed {
+    padding: 0.75rem;
+  }
+  .framed > .frame {
+    border: 1px solid var(--color-champagne);
+  }
 }
 
 .skip-link {
@@ -184,4 +187,58 @@ body {
 }
 .card-plain {
   border-style: solid;
+}
+
+@layer components {
+  /* Champagne reads at 4.3:1 on olive: eyebrows there use ivory. */
+  .band-olive .eyebrow {
+    color: var(--color-ivory);
+  }
+
+  /* A rule or warning the reader must not miss: a hairline box on raised paper. */
+  .notice {
+    border: 1px solid color-mix(in srgb, var(--color-wine) 35%, transparent);
+    border-radius: 2px;
+    background: var(--color-raised);
+    padding: 0.75rem 1rem;
+  }
+  .dark .notice {
+    border-color: var(--color-champagne);
+    background: transparent;
+  }
+
+  /* Filter and selector options drawn as pills; the current one is filled. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid #94796a;
+    border-radius: 2px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .pill:hover {
+    border-color: var(--color-wine);
+    color: var(--color-wine);
+  }
+  .pill[aria-current] {
+    border-color: var(--color-wine);
+    background: var(--color-wine);
+    color: var(--color-ivory);
+  }
+
+  /* A numbered step: a gold rule above, the number in the display face. */
+  .step-number {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    line-height: 2rem;
+    color: var(--color-champagne-deep);
+  }
+  .dark .step-number {
+    color: var(--color-champagne);
+  }
 }
