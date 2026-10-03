@@ -93,6 +93,12 @@ export const Wines: CollectionConfig = {
     { name: "pairings", type: "select", hasMany: true, options: [...PAIRINGS] },
     { name: "servingTempC", type: "number", required: true, validate: integerIn(4, 20) },
     { name: "occasions", type: "select", hasMany: true, options: [...OCCASIONS] },
+    {
+      name: "featured",
+      type: "checkbox",
+      defaultValue: false,
+      admin: { description: "Shown on the home page, unless one of its published vintages is at 15% ABV or above (never promoted)." },
+    },
     status,
   ],
 };

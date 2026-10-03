@@ -12,6 +12,7 @@ import { Customers } from "./collections/customers";
 import { CardDesigns, Packaging } from "./collections/gift";
 import { Orders } from "./collections/orders";
 import { MockOutbox } from "./collections/outbox";
+import { QuoteRequests } from "./collections/quotes";
 import { SiteSettings } from "./globals/site-settings";
 import { adminOnlyAuthAccess } from "./lib/access";
 import { mockEmailAdapter } from "./lib/outbox";
@@ -50,6 +51,7 @@ export default buildConfig({
     CardDesigns,
     Orders,
     CheckoutDrafts,
+    QuoteRequests,
   ],
   // All Payload mail (account verification and reset, the admin's forgot-password) is written to
   // the mock outbox; nothing is sent and it refuses in production (src/lib/outbox.ts).

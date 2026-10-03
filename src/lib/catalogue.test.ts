@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   type CatalogueWine,
+  FEATURED_LIMIT,
   facetOptions,
+  featuredWines,
   type Filters,
   giftCollections,
   isAdRestricted,
@@ -23,6 +25,7 @@ const wine = (slug: string, over: Partial<CatalogueWine> = {}): CatalogueWine =>
   region: "Bordeaux",
   grapes: ["Merlot"],
   occasions: ["dinner"],
+  featured: false,
   vintages: [{ priceVnd: 500_000, bottleMl: 750, stock: 1, abvPct: 13 }],
   ...over,
 });
@@ -253,5 +256,38 @@ describe("giftCollections", () => {
     const w = gifted("a", [vintage(500_000, 14.9)]);
     expect(listed([w]).gift).toEqual(["a"]);
     expect(listed([{ ...w, vintages: [{ ...w.vintages[0], abvPct: 15 }] }]).gift).toEqual([]);
+  });
+});
+
+describe("featuredWines (the home page's featured wines)", () => {
+  const featured = (slug: string, vintages: CatalogueWine["vintages"]) => wine(slug, { featured: true, vintages });
+  const slugs = (wines: CatalogueWine[]) => featuredWines(wines, "en").map((l) => l.wine.slug);
+
+  it("lists only admin-featured wines, in name order", () => {
+    expect(slugs([featured("c", [vintage(900_000, 13)]), wine("a"), featured("b", [vintage(900_000, 12)])])).toEqual(["b", "c"]);
+  });
+
+  it.each([
+    ["at exactly 15", [vintage(900_000, 15)]],
+    ["above 15", [vintage(900_000, 20)]],
+    ["with one restricted vintage among unrestricted ones", [vintage(900_000, 13), vintage(2_000_000, 15)]],
+  ])("never lists a featured wine %s", (_, vintages) => {
+    expect(slugs([featured("restricted", vintages), featured("safe", [vintage(900_000, 14.9)])])).toEqual(["safe"]);
+  });
+
+  it(`stops at ${FEATURED_LIMIT}, skipping restricted wines before counting`, () => {
+    const wines = [
+      featured("a-strong", [vintage(900_000, 20)]),
+      featured("b", [vintage(900_000, 13)]),
+      featured("c", [vintage(900_000, 13)]),
+      featured("d", [vintage(900_000, 13)]),
+      featured("e", [vintage(900_000, 13)]),
+    ];
+    expect(slugs(wines)).toEqual(["b", "c", "d"]);
+  });
+
+  it("gives each card the lowest price and the stock state, like the collection page", () => {
+    const [listing] = featuredWines([featured("x", [{ priceVnd: 2_000_000, bottleMl: 750, stock: 0, abvPct: 13 }, { priceVnd: 900_000, bottleMl: 375, stock: 0, abvPct: 13 }])], "en");
+    expect(listing).toMatchObject({ fromPriceVnd: 900_000, inStock: false });
   });
 });

@@ -17,10 +17,14 @@ import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { currentCustomer } from "@/lib/account-data";
 import { ACCOUNT_PATH, ACCOUNT_ROUTES } from "@/lib/accounts";
+import { BRIO_PATH } from "@/lib/brio";
+import { brioIsPromotable } from "@/lib/catalogue-data";
 import { POLICY_SLUGS, policyPath } from "@/lib/policies";
+import { QUOTE_PATH } from "@/lib/quote";
 import { loadSiteSettings } from "@/lib/shop-data";
 
 import { LanguageLink } from "./language-link";
+import { NavLink } from "./nav-link";
 
 type Props = { children: React.ReactNode; params: Promise<{ locale: string }> };
 
@@ -41,13 +45,24 @@ async function SiteFooter() {
   const notice = await getTranslations("Notice");
   const p = await getTranslations("Policy.links");
   const brand = await getTranslations("Brand");
+  const brio = await getTranslations("Brio");
+  const personalise = await getTranslations("Personalise");
+  const quote = await getTranslations("Quote");
+  const showBrio = await brioIsPromotable();
   const showSample = (owner?.legalName ?? "").startsWith("Xenia Sample Trading Company");
 
   return (
-    <footer className="dark mt-12 bg-wine-deep px-6 pt-16 pb-8 text-sm text-on-dark sm:px-12">
+    <footer className="dark bg-wine-deep px-6 pt-16 pb-8 text-sm text-on-dark sm:px-12">
       <div className="mx-auto max-w-7xl">
         <p className="font-display text-2xl font-semibold tracking-[0.12em] text-champagne uppercase">{brand("name")}</p>
         <p className="mt-1 font-accent text-xl text-champagne italic">{brand("tagline")}</p>
+        <nav aria-label={t("explore")} className="mt-6">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2" data-testid="footer-explore">
+            {showBrio && <li><Link className="inline-block py-1 text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={BRIO_PATH}>{brio("title")}</Link></li>}
+            <li><Link className="inline-block py-1 text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href="/ca-nhan-hoa">{personalise("nav")}</Link></li>
+            <li><Link className="inline-block py-1 text-on-dark underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={QUOTE_PATH}>{quote("nav")}</Link></li>
+          </ul>
+        </nav>
       </div>
       <div className="mx-auto mt-10 grid max-w-7xl gap-8 md:grid-cols-3">
         <section aria-labelledby="footer-owner" data-testid="footer-owner">
@@ -108,17 +123,17 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <p className="eyebrow mt-1">{brand("tagline")}</p>
               </div>
               <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-8 gap-y-2">
-                <Link href="/ruou-vang" className="nav-link">{brand("wines")}</Link>
-                <Link href="/qua-tang" className="nav-link">{brand("giftCollections")}</Link>
-                <Link href="/dich-vu-goi-qua" className="nav-link">{brand("giftService")}</Link>
-                <Link href="/gio-hang" className="nav-link">{brand("cart")}</Link>
-                <Link href={account ? ACCOUNT_PATH : ACCOUNT_ROUTES.signIn} className="nav-link" data-testid="header-account">{account ? brand("account") : brand("signIn")}</Link>
+                <NavLink href="/ruou-vang">{brand("wines")}</NavLink>
+                <NavLink href="/qua-tang">{brand("giftCollections")}</NavLink>
+                <NavLink href="/dich-vu-goi-qua">{brand("giftService")}</NavLink>
+                <NavLink href="/gio-hang">{brand("cart")}</NavLink>
+                <NavLink href={account ? ACCOUNT_PATH : ACCOUNT_ROUTES.signIn} testId="header-account">{account ? brand("account") : brand("signIn")}</NavLink>
                 <span className="sr-only">{footer("language")}</span>
                 <LanguageLink />
               </nav>
             </div>
           </header>
-          <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-6 pb-16 sm:px-12">{children}</main>
+          <main id="main-content" tabIndex={-1} className="w-full flex-1 pb-16">{children}</main>
           <SiteFooter />
         </NextIntlClientProvider>
       </body>

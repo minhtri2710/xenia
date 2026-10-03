@@ -78,6 +78,7 @@ export interface Config {
     'card-designs': CardDesign;
     orders: Order;
     'checkout-drafts': CheckoutDraft;
+    'quote-requests': QuoteRequest;
     'payload-kv': PayloadKv;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -94,6 +95,7 @@ export interface Config {
     'card-designs': CardDesignsSelect<false> | CardDesignsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     'checkout-drafts': CheckoutDraftsSelect<false> | CheckoutDraftsSelect<true>;
+    'quote-requests': QuoteRequestsSelect<false> | QuoteRequestsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -238,7 +240,7 @@ export interface MockOutbox {
 export interface Producer {
   id: number;
   name: string;
-  country: 'FR' | 'IT' | 'ES' | 'PT' | 'DE' | 'AT' | 'US' | 'CL' | 'AR' | 'AU' | 'NZ' | 'ZA';
+  country: 'FR' | 'IT' | 'ES' | 'PT' | 'DE' | 'AT' | 'US' | 'CL' | 'AR' | 'AU' | 'NZ' | 'ZA' | 'VN';
   region: string;
   story: string;
   updatedAt: string;
@@ -257,7 +259,7 @@ export interface Wine {
   producer: number | Producer;
   name: string;
   type: 'red' | 'white' | 'rose' | 'sparkling' | 'sweet';
-  country: 'FR' | 'IT' | 'ES' | 'PT' | 'DE' | 'AT' | 'US' | 'CL' | 'AR' | 'AU' | 'NZ' | 'ZA';
+  country: 'FR' | 'IT' | 'ES' | 'PT' | 'DE' | 'AT' | 'US' | 'CL' | 'AR' | 'AU' | 'NZ' | 'ZA' | 'VN';
   region: string;
   appellation?: string | null;
   grapes: {
@@ -299,6 +301,10 @@ export interface Wine {
     | null;
   servingTempC: number;
   occasions?: ('gift' | 'tet' | 'celebration' | 'dinner' | 'everyday')[] | null;
+  /**
+   * Shown on the home page, unless one of its published vintages is at 15% ABV or above (never promoted).
+   */
+  featured?: boolean | null;
   status: 'draft' | 'published';
   updatedAt: string;
   createdAt: string;
@@ -524,6 +530,27 @@ export interface CheckoutDraft {
   createdAt: string;
 }
 /**
+ * Quote requests from the contact page. Only the status can be changed here.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quote-requests".
+ */
+export interface QuoteRequest {
+  id: number;
+  company: string;
+  name: string;
+  email: string;
+  phone: string;
+  occasion: 'tet' | 'thanks' | 'event' | 'staff' | 'other';
+  quantity: number;
+  budget?: ('lt1m' | '1m-2m' | '2m-4m' | 'gte4m') | null;
+  message?: string | null;
+  privacyAcceptedAt: string;
+  status: 'new' | 'contacted' | 'quoted' | 'closed';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -696,6 +723,7 @@ export interface WinesSelect<T extends boolean = true> {
   pairings?: T;
   servingTempC?: T;
   occasions?: T;
+  featured?: T;
   status?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -877,6 +905,24 @@ export interface CheckoutDraftsSelect<T extends boolean = true> {
         sender?: T;
         hidePrices?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quote-requests_select".
+ */
+export interface QuoteRequestsSelect<T extends boolean = true> {
+  company?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  occasion?: T;
+  quantity?: T;
+  budget?: T;
+  message?: T;
+  privacyAcceptedAt?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }

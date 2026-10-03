@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { Container, PageHero } from "../../page-parts";
 import { ForgotForm } from "./forgot-form";
 
 type Props = {
@@ -19,19 +20,24 @@ export default async function ForgotPage({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const { sent } = await searchParams;
   const t = await getTranslations("Account.forgot");
+  const a = await getTranslations("Account");
   return (
-    <section className="max-w-3xl pt-4">
-      <h1 className="font-display text-5xl font-medium">{t("title")}</h1>
-      {sent === "1" ? (
-        <p role="status" className="mt-6 border border-ink/30 p-4" data-testid="forgot-sent">
-          {t("sent")}
-        </p>
-      ) : (
-        <>
-          <p className="mt-2 text-muted">{t("intro")}</p>
-          <ForgotForm locale={locale} />
-        </>
-      )}
-    </section>
+    <>
+      <PageHero eyebrow={a("eyebrow")} title={t("title")} width="text" />
+      <Container width="text" className="pt-10">
+        <div className="card p-6 sm:p-8 [&>*:first-child]:mt-0">
+          {sent === "1" ? (
+            <p role="status" className="notice mb-6" data-testid="forgot-sent">
+              {t("sent")}
+            </p>
+          ) : (
+            <>
+              <p className="mt-2 text-muted">{t("intro")}</p>
+              <ForgotForm locale={locale} />
+            </>
+          )}
+        </div>
+      </Container>
+    </>
   );
 }

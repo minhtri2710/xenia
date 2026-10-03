@@ -35,6 +35,8 @@ export type SeedWine = {
   pairings: (typeof PAIRINGS)[number][];
   servingTempC: number;
   occasions: Occasion[];
+  /** Featured on the home page; a restricted wine stays off it whatever this says. */
+  featured?: boolean;
   status: Status;
   vintages: SeedVintage[];
 };
@@ -250,6 +252,7 @@ export const wines: SeedWine[] = [
     pairings: ["beef", "bo-luc-lac", "cheese"],
     servingTempC: 17,
     occasions: ["dinner", "gift"],
+    featured: true,
     status: "published",
     vintages: [
       v(2019, 750, 13.5, 890_000, 24, { drinkFrom: 2022, drinkTo: 2030 }),
@@ -321,6 +324,7 @@ export const wines: SeedWine[] = [
     pairings: ["seafood", "cha-gio", "cheese"],
     servingTempC: 8,
     occasions: ["celebration", "tet", "gift"],
+    featured: true,
     status: "published",
     vintages: [
       v(null, 750, 12, 2_450_000, 30),
@@ -452,6 +456,7 @@ export const wines: SeedWine[] = [
     pairings: ["dessert", "cheese"],
     servingTempC: 14,
     occasions: ["gift", "tet"],
+    featured: true,
     status: "published",
     vintages: [
       v(null, 750, 20, 1_890_000, 10),
@@ -579,6 +584,7 @@ export const wines: SeedWine[] = [
     pairings: ["seafood", "cha-gio"],
     servingTempC: 9,
     occasions: ["celebration", "everyday"],
+    featured: true,
     status: "published",
     vintages: [v(2023, 750, 12.5, 820_000, 15)],
   },
@@ -640,6 +646,7 @@ export function seedCatalogue(locale: keyof Localized): CatalogueWine[] {
         region: w.region,
         grapes: w.grapes.map((g) => g.grape),
         occasions: w.occasions,
+        featured: w.featured ?? false,
         vintages: vintages.map(({ priceVnd, bottleMl, stock, abvPct }) => ({ priceVnd, bottleMl, stock, abvPct })),
       },
     ];

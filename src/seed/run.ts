@@ -55,6 +55,7 @@ for (const w of wines) {
     pairings: w.pairings,
     servingTempC: w.servingTempC,
     occasions: w.occasions,
+    featured: w.featured ?? false,
     status: w.status,
   };
   const found = existingWines.find((x) => x.slug === w.slug);
