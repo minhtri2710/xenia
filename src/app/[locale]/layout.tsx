@@ -131,6 +131,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <span className="sr-only">{footer("language")}</span>
                 <LanguageLink />
               </nav>
+              <Link href={QUOTE_PATH} className="btn btn-primary hidden sm:inline-flex">{brand("quote")}</Link>
             </div>
           </header>
           <main id="main-content" tabIndex={-1} className="w-full flex-1 pb-16">{children}</main>

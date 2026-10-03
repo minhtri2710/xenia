@@ -29,7 +29,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <Band tone="wine" framed className="mx-auto max-w-7xl sm:mt-6">
+      <Band tone="wine" framed>
         <Container className="flex flex-col items-center py-16 text-center sm:py-24">
           <p className="eyebrow">{brand("tagline")}</p>
           <h1 className="mt-6 max-w-3xl font-display text-4xl leading-tight font-semibold text-champagne sm:text-6xl">{t("title")}</h1>
@@ -40,11 +40,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
         </Container>
       </Band>
-      <div className="mx-auto w-full max-w-7xl">
-        <Photo name="site/home-hero" className="aspect-[16/7]" testId="home-hero-photo">
-          <div role="img" aria-label={t("placeholder")} className="aspect-[16/7] w-full bg-sand" />
-        </Photo>
-      </div>
+      <Photo name="site/home-hero" className="h-64 sm:h-[480px]" testId="home-hero-photo">
+        <div role="img" aria-label={t("placeholder")} className="h-64 w-full bg-sand sm:h-[480px]" />
+      </Photo>
 
       <Container className="py-16">
         <SectionHeading id="home-occasions" eyebrow={t("occasionsEyebrow")} title={t("occasionsTitle")} />
@@ -67,8 +65,25 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </ul>
       </Container>
 
+      <Band tone="paper" labelledBy="home-service">
+        <Container className="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16">
+          <Photo name="site/gift-service" className="aspect-square">
+            <div aria-hidden="true" className="aspect-square bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+          </Photo>
+          <div>
+            <SectionHeading id="home-service" eyebrow={t("serviceEyebrow")} title={service("title")} />
+            <p className="mt-4 text-lg">{service("intro")}</p>
+            <p className="mt-2 text-muted">{service("paid")}</p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link href="/dich-vu-goi-qua" className="btn btn-primary">{t("serviceLink")}</Link>
+              <Link href={QUOTE_PATH} className="btn border-ink/40 hover:border-wine hover:text-wine">{t("quoteButton")}</Link>
+            </div>
+          </div>
+        </Container>
+      </Band>
+
       {featured.length > 0 && (
-        <Band tone="paper" labelledBy="home-featured">
+        <Band labelledBy="home-featured">
           <Container className="py-16">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <SectionHeading id="home-featured" eyebrow={t("featuredEyebrow")} title={t("featuredTitle")} />
@@ -109,23 +124,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </Container>
         </Band>
       )}
-
-      <Band labelledBy="home-service">
-        <Container className="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16">
-          <Photo name="site/gift-service" className="aspect-square">
-            <div aria-hidden="true" className="aspect-square bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
-          </Photo>
-          <div>
-            <SectionHeading id="home-service" eyebrow={t("serviceEyebrow")} title={service("title")} />
-            <p className="mt-4 text-lg">{service("intro")}</p>
-            <p className="mt-2 text-muted">{service("paid")}</p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/dich-vu-goi-qua" className="btn btn-primary">{t("serviceLink")}</Link>
-              <Link href={QUOTE_PATH} className="btn border-ink/40 hover:border-wine hover:text-wine">{t("quoteButton")}</Link>
-            </div>
-          </div>
-        </Container>
-      </Band>
 
       <Band tone="olive" labelledBy="home-steps">
         <Container className="py-16">

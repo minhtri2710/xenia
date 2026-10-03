@@ -68,8 +68,8 @@ export function PageHero({
   const framed = tone === "wine" || tone === "olive";
   const titleColor = framed ? (tone === "wine" ? "text-champagne" : "text-ivory") : "";
   return (
-    <Band tone={tone} framed={framed} className={framed ? "mx-auto max-w-7xl sm:mt-6" : "border-b border-line"}>
-      <Container width={width} className={`${framed ? "py-14 sm:py-20" : "py-10 sm:py-14"} ${center ? "flex flex-col items-center text-center" : ""}`}>
+    <Band tone={tone} framed={framed} className={framed ? "" : "border-b border-line"}>
+      <Container width={width} className={`${framed ? "py-16 sm:py-24" : "py-10 sm:py-14"} ${center ? "flex flex-col items-center text-center" : ""}`}>
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         <h1 className={`mt-3 font-display text-4xl leading-tight font-semibold sm:text-5xl ${titleColor}`} data-testid={testId}>
           {title}
