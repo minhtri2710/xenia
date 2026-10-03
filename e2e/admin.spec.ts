@@ -34,7 +34,7 @@ test.beforeAll(async ({ request }) => {
   sql("TRUNCATE users CASCADE");
 });
 
-test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage, the gift collections, site settings, customers, the outbox and login", async ({ page }) => {
+test("the admin makes no third-party request in create-first-user, dashboard, account, catalogue lists, a vintage, the gift collections, site settings, customers, the outbox, quote requests and login", async ({ page }) => {
   const external = await blockThirdParty(page);
 
   await page.goto("/admin");
@@ -134,14 +134,26 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await expect(page.locator("#field-zones")).toBeVisible();
   await page.waitForLoadState("networkidle");
 
-  // Customers (read-only, no hash, salt or token) and the mock outbox (read-only). A customer is made
-  // on the storefront, in another browser context, as a buyer would.
+  // Customers (read-only, no hash, salt or token), the mock outbox (read-only) and quote requests (sent
+  // fields read-only). The customer and the quote request are made on the storefront, in another
+  // browser context, as a buyer would.
   const buyerEmail = `admin-view.${Date.now().toString(36)}@example.test`;
   const buyerContext = await page.context().browser()!.newContext({ baseURL: test.info().project.use.baseURL });
   const buyer = await buyerContext.newPage();
   await declareAdult(buyer, "/tai-khoan/dang-ky");
   await register(buyer, "", buyerEmail);
   await expect(buyer).toHaveURL(/notice=registered/);
+  const company = `Admin view ${Date.now().toString(36)}`;
+  await buyer.goto("/lien-he");
+  await buyer.locator("#quote-company").fill(company);
+  await buyer.locator("#quote-name").fill("Trần Thị Bình");
+  await buyer.locator("#quote-phone").fill("0901234567");
+  await buyer.locator("#quote-email").fill(buyerEmail);
+  await buyer.locator("#quote-occasion").selectOption("event");
+  await buyer.locator("#quote-quantity").fill("40");
+  await buyer.locator("#quote-privacy").check();
+  await buyer.getByTestId("quote-form").getByRole("button").click();
+  await expect(buyer.getByTestId("quote-sent")).toBeVisible();
   await buyerContext.close();
   expect(customerCount(buyerEmail)).toBe(1);
 
@@ -170,6 +182,15 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await waitForFormReady(page);
   for (const field of ["#field-to", "#field-subject", "#field-body"]) await expect(page.locator(field)).toBeDisabled();
   await page.waitForLoadState("networkidle");
+
+  await page.goto("/admin/collections/quote-requests");
+  await expect(page.locator(".collection-list table")).toContainText(company);
+  await page.waitForLoadState("networkidle");
+  await page.goto(`/admin/collections/quote-requests/${sql(`SELECT id FROM quote_requests WHERE company = '${company}'`)}`);
+  await waitForFormReady(page);
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("#field-company")).toHaveValue(company);
+  for (const field of ["#field-company", "#field-name", "#field-email", "#field-phone", "#field-message"]) await expect(page.locator(field)).toBeDisabled();
 
   await page.goto("/admin/logout");
   await expect(page).toHaveURL(/\/admin\/login/);
