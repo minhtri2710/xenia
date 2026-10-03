@@ -1,0 +1,66 @@
+# The check set from AGENTS.md on every pull request and every push to main:
+# `checks` runs the fast steps and the build, `e2e` runs Playwright against its own Postgres.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Diff check, lint, typecheck, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Dev-only placeholders; the build and the Payload config read them.
+      - run: cp .env.example .env
+      # Whitespace errors anywhere in the tree (against the empty tree, so no history is needed).
+      - run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  e2e:
+    name: End-to-end tests (Playwright + axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.example .env
+      # The specs reach Postgres through `docker exec xenia-dev-postgres`, so it runs from
+      # docker-compose.yml exactly as in development.
+      - run: pnpm db:up
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
+      - name: Stop Postgres
+        if: always()
+        run: pnpm db:down

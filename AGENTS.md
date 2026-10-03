@@ -25,6 +25,8 @@ pnpm db:up               # start Postgres (only needed for /admin, /api and pnpm
 
 Check set, in order: `git diff --check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm build`.
 
+CI (`.github/workflows/ci.yml`) runs the check set on every pull request and every push to `main`, in two jobs on Node 24 with the lockfile frozen and `.env` copied from `.env.example`: `checks` (`git diff --check` over the whole tree against the empty tree, lint, typecheck, unit tests, build) and `e2e` (`pnpm db:up`, Playwright's Chromium, `pnpm test:e2e`, then `pnpm db:down`; the results are uploaded when it fails). A red job is a failed check, the same as a local failure; making it block the merge is a branch-protection setting on GitHub.
+
 ## Ports
 
 - 3000: `pnpm dev`.
