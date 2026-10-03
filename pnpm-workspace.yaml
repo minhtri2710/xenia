@@ -2,5 +2,8 @@ packages:
   - '.'
 
 allowBuilds:
+  # Prebuilt binaries come from their optional platform packages; their install scripts are not needed.
+  '@parcel/watcher': false
+  '@swc/core': false
   esbuild: true
   unrs-resolver: true
