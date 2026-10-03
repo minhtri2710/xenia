@@ -74,6 +74,11 @@ for (const { locale, prefix } of LOCALES) {
 
     test("the quote form refuses an incomplete request, stores a complete one and confirms it", async ({ page }) => {
       await declareAdult(page, `${prefix}/lien-he`);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(vi ? "Nhận đề xuất & báo giá" : "Get a proposal & quote");
+      // The framed contact card beside the form carries the owner's phone and email from site-settings.
+      const contact = page.getByRole("region", { name: "With Compliments" });
+      await expect(contact.locator('a[href^="tel:"]')).toHaveText(sql("SELECT owner_contact_phone FROM site_settings"));
+      await expect(contact.locator('a[href^="mailto:"]')).toHaveText(sql("SELECT owner_contact_email FROM site_settings"));
       await expectNoSeriousA11yViolations(page, "quote form");
       const before = quoteRows();
 
@@ -96,7 +101,8 @@ for (const { locale, prefix } of LOCALES) {
       await page.getByTestId("quote-form").getByRole("button").click();
 
       await expect(page).toHaveURL((url) => url.pathname === `${prefix}/lien-he` && url.search === "?sent=1");
-      await expect(page.getByTestId("quote-sent")).toBeVisible();
+      await expect(page.getByTestId("quote-sent").getByRole("heading", { level: 2 })).toHaveText(vi ? "Cảm ơn quý doanh nghiệp" : "Thank you");
+      await expect(page.getByTestId("quote-sent").getByRole("link", { name: vi ? "Gửi yêu cầu khác" : "Send another request" })).toHaveAttribute("href", `${prefix}/lien-he`);
       expect(quoteRows()).toBe(before + 1);
       const row = sql(
         `SELECT name || '|' || email || '|' || phone || '|' || occasion || '|' || quantity || '|' || budget || '|' || message || '|' || status || '|' || (privacy_accepted_at IS NOT NULL) FROM quote_requests WHERE company = '${company}'`,
@@ -125,6 +131,12 @@ test.describe("Brio page", () => {
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Brio");
       await expect(page.getByTestId("brio-specs").locator('[data-spec="abv"] dd')).toHaveText("11% vol");
       await expect(page.getByTestId("brio-warning").locator('strong[lang="vi"]')).toHaveText(WARNING);
+      await expect(page.getByRole("heading", { level: 2, name: "Brio 2026" })).toBeVisible();
+      const main = page.getByRole("main");
+      await expect(main.getByRole("link", { name: prefix ? "Gifts with Brio" : "Bộ quà có Brio" })).toHaveAttribute("href", `${prefix}/qua-tang`);
+      await expect(main.getByRole("link", { name: prefix ? "Order Brio in quantity" : "Đặt Brio số lượng lớn" })).toHaveAttribute("href", `${prefix}/lien-he`);
+      await expect(main.getByRole("link", { name: prefix ? "See Brio in the shop" : "Xem Brio trong cửa hàng" })).toHaveAttribute("href", `${prefix}/ruou-vang/brio`);
+      await expect(main.getByRole("link", { name: prefix ? "See the gift collections" : "Xem bộ sưu tập quà" })).toHaveAttribute("href", `${prefix}/qua-tang`);
       await expect(footerBrio(page)).toHaveCount(1);
       await expect(headerBrio(page)).toHaveAttribute("href", `${prefix}/brio`);
       await expect(headerBrio(page)).toHaveAttribute("aria-current", "page");

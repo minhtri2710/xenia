@@ -15,11 +15,12 @@ export function Container({ width = "wide", className = "", children }: { width?
   return <div className={`mx-auto w-full px-6 sm:px-12 ${WIDTHS[width]} ${className}`}>{children}</div>;
 }
 
-type Tone = "paper" | "wine" | "olive" | "plain";
+type Tone = "paper" | "wine" | "deep" | "olive" | "plain";
 
 const BANDS: Record<Tone, string> = {
   paper: "bg-paper",
   wine: "dark bg-wine text-ivory",
+  deep: "dark bg-wine-deep text-ivory",
   olive: "dark band-olive bg-olive text-ivory",
   plain: "",
 };
@@ -65,8 +66,8 @@ export function PageHero({
   testId?: string;
   children?: ReactNode;
 }) {
-  const framed = tone === "wine" || tone === "olive";
-  const titleColor = framed ? (tone === "wine" ? "text-champagne" : "text-ivory") : "";
+  const framed = tone === "wine" || tone === "deep" || tone === "olive";
+  const titleColor = framed ? (tone === "olive" ? "text-ivory" : "text-champagne") : "";
   return (
     <Band tone={tone} framed={framed} className={framed ? "" : "border-b border-line"}>
       <Container width={width} className={`${framed ? "py-16 sm:py-24" : "py-10 sm:py-14"} ${center ? "flex flex-col items-center text-center" : ""}`}>

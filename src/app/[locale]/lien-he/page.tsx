@@ -7,7 +7,7 @@ import { PRICE_BANDS } from "@/lib/catalogue";
 import { MAX_QUANTITY, MAX_QUOTE_MESSAGE_CODE_POINTS, QUOTE_OCCASIONS, QUOTE_PATH } from "@/lib/quote";
 import { loadSiteSettings } from "@/lib/shop-data";
 
-import { Container, PageHero, SectionHeading } from "../page-parts";
+import { Container } from "../page-parts";
 import { QuoteForm } from "./quote-form";
 
 type Props = {
@@ -21,9 +21,10 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
   return { title: t("nav") };
 }
 
-const NEXT = ["read", "propose", "confirm"] as const;
-
-/** Contact and corporate gift quote requests. The request is stored in `quote-requests` (admin-only). */
+/**
+ * Contact and corporate gift quote requests, as in the design: the heading and a framed contact card
+ * beside the form. The request is stored in `quote-requests` (admin-only).
+ */
 export default async function QuotePage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -34,54 +35,59 @@ export default async function QuotePage({ params, searchParams }: Props) {
   const owner = (await loadSiteSettings()).owner;
 
   return (
-    <>
-      <PageHero eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
-      <Container className="grid grid-cols-1 items-start gap-10 pt-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-16">
-        <div className="grid gap-10">
-          <section aria-labelledby="quote-next">
-            <SectionHeading id="quote-next" title={t("nextTitle")} size="md" />
-            <ol className="mt-6 grid gap-0 border-t border-line">
-              {NEXT.map((step, i) => (
-                <li key={step} className="flex gap-6 border-b border-line py-5">
-                  <span className="step-number min-w-8" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p>{t(`next.${step}`)}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
-          <section aria-labelledby="quote-contact" className="card p-6 sm:p-8">
-            <h2 id="quote-contact" className="eyebrow">
-              {t("contactTitle")}
+    <Container className="grid grid-cols-1 items-start gap-10 py-16 lg:grid-cols-2 lg:gap-16">
+      <div>
+        <p className="eyebrow">{t("eyebrow")}</p>
+        <h1 className="mt-3 font-display text-4xl leading-tight font-semibold">{t("title")}</h1>
+        <p className="mt-4 max-w-xl text-lg">{t("lead")}</p>
+        <section aria-labelledby="quote-contact" className="dark framed mt-8 bg-wine text-ivory">
+          <div className="frame grid gap-5 p-6 sm:p-8">
+            <h2 id="quote-contact" className="font-accent text-3xl text-champagne italic">
+              {t("accent")}
             </h2>
-            <p className="mt-4">
-              <a className="break-all text-wine underline underline-offset-4" href={`mailto:${owner?.contactEmail}`}>
-                {owner?.contactEmail}
-              </a>
-            </p>
-            <p className="mt-2">
-              <a className="text-wine underline underline-offset-4" href={`tel:${owner?.contactPhone}`}>
-                {owner?.contactPhone}
-              </a>
-            </p>
-          </section>
-        </div>
+            <dl className="grid gap-5">
+              <div className="grid gap-1">
+                <dt className="eyebrow">{t("hotline")}</dt>
+                <dd>
+                  <a className="text-ivory underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={`tel:${owner?.contactPhone}`}>
+                    {owner?.contactPhone}
+                  </a>
+                </dd>
+              </div>
+              <div className="grid gap-1">
+                <dt className="eyebrow">{t("emailLabel")}</dt>
+                <dd>
+                  <a className="break-all text-ivory underline decoration-champagne/50 underline-offset-4 hover:text-champagne" href={`mailto:${owner?.contactEmail}`}>
+                    {owner?.contactEmail}
+                  </a>
+                </dd>
+              </div>
+              <div className="grid gap-1">
+                <dt className="eyebrow">{t("office")}</dt>
+                <dd>{owner?.headOffice}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      </div>
 
-        <section aria-labelledby="quote-form-title" className="card p-6 sm:p-8">
-          <h2 id="quote-form-title" className="font-display text-3xl font-semibold">
-            {t("formTitle")}
-          </h2>
-          {sent === "1" ? (
-            <div className="mt-6">
-              <p role="status" className="notice" data-testid="quote-sent">
-                {t("sent")}
-              </p>
-              <Link href={QUOTE_PATH} className="btn btn-primary mt-6">
-                {t("sendAnother")}
-              </Link>
-            </div>
-          ) : (
+      <section aria-labelledby="quote-form-title" className="card p-6 sm:p-8">
+        {sent === "1" ? (
+          <div role="status" className="flex flex-col items-center gap-3 py-8 text-center" data-testid="quote-sent">
+            <p className="eyebrow">{t("sentEyebrow")}</p>
+            <h2 id="quote-form-title" className="font-display text-3xl font-semibold">
+              {t("sentTitle")}
+            </h2>
+            <p className="max-w-md">{t("sent")}</p>
+            <Link href={QUOTE_PATH} className="btn btn-ghost mt-4">
+              {t("sendAnother")}
+            </Link>
+          </div>
+        ) : (
+          <>
+            <h2 id="quote-form-title" className="font-display text-2xl font-semibold">
+              {t("formTitle")}
+            </h2>
             <QuoteForm
               locale={locale}
               occasions={QUOTE_OCCASIONS.map((o) => ({ value: o, label: t(`occasions.${o}`) }))}
@@ -89,9 +95,9 @@ export default async function QuotePage({ params, searchParams }: Props) {
               maxQuantity={MAX_QUANTITY}
               maxMessage={MAX_QUOTE_MESSAGE_CODE_POINTS}
             />
-          )}
-        </section>
-      </Container>
-    </>
+          </>
+        )}
+      </section>
+    </Container>
   );
 }

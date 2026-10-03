@@ -769,9 +769,15 @@
       }
     },
     "specsEyebrow": "Thông số",
-    "specsTitle": "Thông tin Brio",
+    "specsTitle": "{name} {vintage}",
     "productLink": "Xem Brio trong cửa hàng",
-    "quoteLink": "Đặt Brio số lượng lớn"
+    "quoteLink": "Đặt Brio số lượng lớn",
+    "intro": "Brio được làm ra để giữ lại nhịp chậm của nắng gió Ninh Thuận. (Nội dung mẫu.)",
+    "giftsLink": "Bộ quà có Brio",
+    "specsLead": "Thông số của chai Brio đang bán.",
+    "ctaTitle": "Brio trong hộp quà xenia",
+    "ctaLead": "Kết hợp Brio với dịch vụ gói quà có tính phí và thiệp kèm lời nhắn.",
+    "ctaButton": "Xem bộ sưu tập quà"
   },
   "Personalise": {
     "nav": "Cá nhân hoá",
@@ -802,21 +808,21 @@
     "paid": "Cá nhân hoá là dịch vụ có tính phí, báo giá theo từng yêu cầu. Giá đã bao gồm VAT.",
     "processTitle": "Quy trình đặt quà",
     "process": {
-      "listen": {
-        "title": "Lắng nghe",
-        "body": "Xenia tìm hiểu dịp tặng, người nhận, số lượng và ngân sách."
+      "send": {
+        "title": "Gửi nhu cầu",
+        "body": "Dịp tặng, số lượng, ngân sách và thời hạn giao."
       },
-      "select": {
-        "title": "Tuyển chọn",
-        "body": "Đề xuất bộ quà kèm ảnh mẫu và báo giá chi tiết."
+      "propose": {
+        "title": "Nhận đề xuất & báo giá",
+        "body": "Phương án bộ quà kèm ảnh mẫu."
       },
-      "personalise": {
-        "title": "Cá nhân hoá",
-        "body": "In nhũ logo, chọn màu hộp, làm thiệp theo tên người nhận."
+      "approve": {
+        "title": "Duyệt mẫu cá nhân hoá",
+        "body": "Xác nhận logo, thiệp và hộp trước khi sản xuất."
       },
       "deliver": {
-        "title": "Trao gửi",
-        "body": "Đóng gói chỉn chu và giao theo danh sách người nhận."
+        "title": "Đóng gói & giao quà",
+        "body": "Giao tận nơi hoặc theo danh sách người nhận."
       }
     },
     "faqTitle": "Câu hỏi thường gặp",
@@ -843,17 +849,16 @@
   },
   "Quote": {
     "nav": "Liên hệ & báo giá",
-    "eyebrow": "Quà tặng doanh nghiệp",
-    "title": "Liên hệ & báo giá",
-    "lead": "Gửi nhu cầu của doanh nghiệp, xenia sẽ liên hệ lại với đề xuất và báo giá.",
-    "nextTitle": "Sau khi bạn gửi",
-    "next": {
-      "read": "Xenia đọc yêu cầu và liên hệ lại qua email hoặc điện thoại.",
-      "propose": "Bạn nhận đề xuất bộ quà và báo giá chi tiết.",
-      "confirm": "Đơn được xác nhận khi bạn duyệt mẫu và báo giá."
-    },
-    "contactTitle": "Liên hệ trực tiếp",
-    "formTitle": "Yêu cầu báo giá",
+    "eyebrow": "Liên hệ",
+    "title": "Nhận đề xuất & báo giá",
+    "lead": "Chia sẻ dịp tặng và người nhận, xenia sẽ tuyển chọn phương án phù hợp cho quý doanh nghiệp.",
+    "formTitle": "Thông tin yêu cầu",
+    "accent": "With Compliments",
+    "hotline": "Hotline",
+    "emailLabel": "Email",
+    "office": "Trụ sở",
+    "sentEyebrow": "Đã nhận yêu cầu",
+    "sentTitle": "Cảm ơn quý doanh nghiệp",
     "company": "Tên doanh nghiệp",
     "name": "Người liên hệ",
     "email": "Email",
@@ -874,7 +879,7 @@
     "messageHint": "Tối đa {max} ký tự.",
     "privacy": "Tôi đồng ý để xenia lưu các thông tin này để liên hệ báo giá, theo <link>chính sách bảo mật</link>.",
     "submit": "Gửi yêu cầu",
-    "sent": "Đã nhận yêu cầu của bạn. Xenia sẽ liên hệ lại.",
+    "sent": "Xenia sẽ liên hệ lại với đề xuất bộ quà và báo giá.",
     "sendAnother": "Gửi yêu cầu khác",
     "errors": {
       "companyRequired": "Vui lòng nhập tên doanh nghiệp.",

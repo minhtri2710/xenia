@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const OPTIONS = ["box", "logo", "card", "mix"] as const;
-const PROCESS = ["listen", "select", "personalise", "deliver"] as const;
+const PROCESS = ["send", "propose", "approve", "deliver"] as const;
 const FAQ = ["minimum", "lead", "invoice", "delivery"] as const;
 
 /** Line icons for the options, drawn inline in the wine ink; decorative only. */
