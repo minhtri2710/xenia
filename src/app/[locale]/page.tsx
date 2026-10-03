@@ -6,6 +6,7 @@ import { loadCatalogue } from "@/lib/catalogue-data";
 import { QUOTE_PATH } from "@/lib/quote";
 
 import { Band, Container, SectionHeading } from "./page-parts";
+import { Photo } from "./photo";
 
 const STEPS = ["buyer", "delivery", "gift", "review"] as const;
 
@@ -39,7 +40,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
         </Container>
       </Band>
-      <div role="img" aria-label={t("placeholder")} className="mx-auto aspect-[16/7] w-full max-w-7xl bg-sand" />
+      <div className="mx-auto w-full max-w-7xl">
+        <Photo name="site/home-hero" className="aspect-[16/7]" testId="home-hero-photo">
+          <div role="img" aria-label={t("placeholder")} className="aspect-[16/7] w-full bg-sand" />
+        </Photo>
+      </div>
 
       <Container className="py-16">
         <SectionHeading id="home-occasions" eyebrow={t("occasionsEyebrow")} title={t("occasionsTitle")} />
@@ -47,7 +52,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-labelledby="home-occasions">
           {GIFT_OCCASIONS.map((occasion) => (
             <li key={occasion} className="card flex flex-col overflow-hidden">
-              <div aria-hidden="true" className="aspect-[4/3] bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+              <Photo name={`site/occasion-${occasion}`} className="aspect-[4/3]">
+                <div aria-hidden="true" className="aspect-[4/3] bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+              </Photo>
               <div className="flex flex-1 flex-col gap-2 p-6">
                 <h3 className="font-display text-2xl font-semibold">{gifts(`collections.${occasion}.title`)}</h3>
                 <p className="text-muted">{gifts(`collections.${occasion}.lead`)}</p>
@@ -78,9 +85,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-testid="featured-wines">
               {featured.map(({ wine, fromPriceVnd, inStock }) => (
                 <li key={wine.slug} data-testid="featured-card" data-slug={wine.slug} className="card flex flex-col overflow-hidden">
-                  <div aria-hidden="true" className="flex aspect-[4/3] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
-                    <div className="mb-6 h-3/4 w-1/6 rounded-t-full bg-wine/15" />
-                  </div>
+                  <Photo name={`wines/${wine.slug}`} className="aspect-[4/3]">
+                    <div aria-hidden="true" className="flex aspect-[4/3] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
+                      <div className="mb-6 h-3/4 w-1/6 rounded-t-full bg-wine/15" />
+                    </div>
+                  </Photo>
                   <div className="flex flex-1 flex-col p-6">
                     <h3 className="font-display text-2xl font-semibold">
                       <Link href={`/ruou-vang/${wine.slug}`} className="hover:text-wine-deep hover:underline">
@@ -103,7 +112,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <Band labelledBy="home-service">
         <Container className="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16">
-          <div aria-hidden="true" className="aspect-square bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+          <Photo name="site/gift-service" className="aspect-square">
+            <div aria-hidden="true" className="aspect-square bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+          </Photo>
           <div>
             <SectionHeading id="home-service" eyebrow={t("serviceEyebrow")} title={service("title")} />
             <p className="mt-4 text-lg">{service("intro")}</p>

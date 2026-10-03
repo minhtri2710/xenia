@@ -6,6 +6,7 @@ import { giftCollections, PRICE_BANDS, parseQuery } from "@/lib/catalogue";
 import { loadCatalogue } from "@/lib/catalogue-data";
 
 import { Container, PageHero, SectionHeading } from "../page-parts";
+import { Photo } from "../photo";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -84,24 +85,26 @@ export default async function GiftCollectionsPage({ params, searchParams }: Prop
               <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-testid="wine-list">
                 {listings.map(({ wine, fromPriceVnd, inStock }) => (
                   <li key={wine.slug} data-testid="wine-card" data-slug={wine.slug} className="card flex flex-col overflow-hidden">
-                    <div aria-hidden="true" className="flex aspect-[3/4] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
-                      <div className="mb-8 h-3/5 w-1/5 rounded-t-full bg-wine/15" />
-                    </div>
-                    <div className="flex flex-1 flex-col p-6">
-                      <h3 className="font-display text-2xl font-semibold">
-                        <Link href={`/ruou-vang/${wine.slug}`} className="hover:text-wine-deep hover:underline">
-                          {wine.name}
-                        </Link>
-                      </h3>
-                      <p className="text-sm text-muted">{wine.producer}</p>
-                      <p className="mt-1 text-sm">
-                        {c(`types.${wine.type}`)} · {wine.region}, {c(`countries.${wine.country}`)}
-                      </p>
-                      <p className="mt-auto pt-4 font-display text-xl font-semibold text-ink" data-testid="price">
-                        {c("from", { price: money(fromPriceVnd) })}
-                      </p>
-                      {!inStock && <p className="text-sm text-muted">{c("outOfStock")}</p>}
-                    </div>
+                    <Photo name={`wines/${wine.slug}`} className="aspect-[3/4]">
+                      <div aria-hidden="true" className="flex aspect-[3/4] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
+                        <div className="mb-8 h-3/5 w-1/5 rounded-t-full bg-wine/15" />
+                      </div>
+                      <div className="flex flex-1 flex-col p-6">
+                        <h3 className="font-display text-2xl font-semibold">
+                          <Link href={`/ruou-vang/${wine.slug}`} className="hover:text-wine-deep hover:underline">
+                            {wine.name}
+                          </Link>
+                        </h3>
+                        <p className="text-sm text-muted">{wine.producer}</p>
+                        <p className="mt-1 text-sm">
+                          {c(`types.${wine.type}`)} · {wine.region}, {c(`countries.${wine.country}`)}
+                        </p>
+                        <p className="mt-auto pt-4 font-display text-xl font-semibold text-ink" data-testid="price">
+                          {c("from", { price: money(fromPriceVnd) })}
+                        </p>
+                        {!inStock && <p className="text-sm text-muted">{c("outOfStock")}</p>}
+                      </div>
+                    </Photo>
                   </li>
                 ))}
               </ul>

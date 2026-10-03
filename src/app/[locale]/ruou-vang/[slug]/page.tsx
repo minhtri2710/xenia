@@ -7,6 +7,7 @@ import { selectVintage } from "@/lib/vintage-selection";
 
 import { addToCart } from "../../gio-hang/actions";
 import { Band, Container, SectionHeading } from "../../page-parts";
+import { Photo } from "../../photo";
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>;
@@ -73,9 +74,11 @@ export default async function WinePage({ params, searchParams }: Props) {
         </Link>
 
         <div className="mt-6 grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-16">
-          <div aria-hidden="true" className="card flex aspect-[3/4] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
-            <div className="mb-8 h-3/5 w-1/5 rounded-t-full bg-wine/15" />
-          </div>
+          <Photo name={`wines/${wine.slug}`} alt={wine.name} className="card aspect-[3/4]" testId="product-photo">
+            <div aria-hidden="true" className="card flex aspect-[3/4] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
+              <div className="mb-8 h-3/5 w-1/5 rounded-t-full bg-wine/15" />
+            </div>
+          </Photo>
 
           <div>
             <p className="eyebrow">{wine.producer.name}</p>

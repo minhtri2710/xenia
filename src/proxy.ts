@@ -4,13 +4,15 @@ import createMiddleware from "next-intl/middleware";
 import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { AGE_COOKIE, AGE_COOKIE_VALUE, GATE_PATH, UNGATED_PATHS } from "@/lib/gate";
+import { isImagePath } from "@/lib/images";
 
 const intlMiddleware = createMiddleware(routing);
 
 /**
  * The age gate (Decree 24/2020 Art. 6.1). Every storefront request without the
  * verification marker is redirected to the gate before any page renders; the
- * requested path travels in `next`. Everything else is next-intl's routing.
+ * requested path travels in `next`. Photos under `public/images/` are gated the same way and then
+ * served as files; everything else is next-intl's routing.
  */
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -25,6 +27,8 @@ export default function proxy(request: NextRequest) {
     gate.searchParams.set("next", pathname + search);
     return NextResponse.redirect(gate);
   }
+  // A verified visitor's photo request goes straight to the file in `public/images/`.
+  if (!prefixed && isImagePath(pathname)) return NextResponse.next();
   return intlMiddleware(request);
 }
 
