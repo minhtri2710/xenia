@@ -746,20 +746,20 @@
     "lead": "Ninh Thuận grapes, slowly fermented",
     "quote": "“In Ninh Thuận the sun is never in a hurry and the wind never stops.”",
     "storyEyebrow": "Story",
-    "story": "[BRIO STORY: the vineyards, the grapes, the people, the fermentation.]",
+    "story": "Brio begins in the vineyards of Ninh Thuận, where the sun shines almost all year and the sea wind never stops. The grapes are picked evenly ripe, pressed gently and fermented slowly at a low temperature to keep their fresh fruit. Each bottle is a slice of that land, simple and gentle. (Sample text: replace with the real Brio story.)",
     "processTitle": "From vineyard to gift box",
     "process": {
       "region": {
         "title": "Sun and wind",
-        "body": "[Describe the vineyards in Ninh Thuận.]"
+        "body": "Sandy soil, long sunshine and little rain ripen sweet, thick-skinned, fragrant grapes. (Sample text.)"
       },
       "ferment": {
         "title": "Slow fermentation",
-        "body": "[Describe the fermentation.]"
+        "body": "The juice ferments slowly in chilled steel tanks, keeping its flowers and fruit. (Sample text.)"
       },
       "bottle": {
         "title": "Bottled by hand",
-        "body": "[Describe the bottle, the cork and the label.]"
+        "body": "A glass bottle, a natural cork and a label printed with a hand-drawn bunch of grapes. (Sample text.)"
       }
     },
     "specsEyebrow": "Details",
@@ -817,15 +817,15 @@
     "faq": {
       "minimum": {
         "q": "What is the minimum quantity per order?",
-        "a": "[MINIMUM QUANTITY] — to be confirmed."
+        "a": "From 10 gifts per order. (Sample data, to be confirmed.)"
       },
       "lead": {
         "q": "How far ahead should we order?",
-        "a": "[LEAD TIME] from sample approval — to be confirmed."
+        "a": "About 7 working days from sample approval; order earlier for Tết. (Sample data, to be confirmed.)"
       },
       "invoice": {
         "q": "Do you issue VAT invoices?",
-        "a": "Prices include VAT. [INVOICE POLICY] — to be confirmed."
+        "a": "Prices include VAT. VAT invoices are issued to the company details you provide. (Sample data, to be confirmed.)"
       },
       "delivery": {
         "q": "Can you deliver to each recipient?",

@@ -744,20 +744,20 @@
     "lead": "nho Ninh Thuận, lên men chậm",
     "quote": "“Ở Ninh Thuận, nắng không bao giờ vội, gió cũng chẳng ngừng thổi.”",
     "storyEyebrow": "Câu chuyện",
-    "story": "[ĐOẠN CÂU CHUYỆN BRIO: vùng nguyên liệu, giống nho, người làm, cách lên men.]",
+    "story": "Brio bắt đầu từ những vườn nho Ninh Thuận, nơi nắng chiếu gần như quanh năm và gió từ biển thổi không ngừng. Nho được hái khi chín đều, ép nhẹ rồi lên men chậm ở nhiệt độ thấp để giữ hương quả tươi. Mỗi chai là một lát cắt của vùng đất ấy, mộc mạc và dịu dàng. (Nội dung mẫu: thay bằng câu chuyện thật của Brio.)",
     "processTitle": "Từ vườn nho đến hộp quà",
     "process": {
       "region": {
         "title": "Vùng nắng gió",
-        "body": "[Mô tả vùng nguyên liệu tại Ninh Thuận.]"
+        "body": "Đất cát pha, nắng nhiều và mưa ít giúp chùm nho chín ngọt, vỏ dày và thơm. (Nội dung mẫu.)"
       },
       "ferment": {
         "title": "Lên men chậm",
-        "body": "[Mô tả quy trình lên men.]"
+        "body": "Nước nho lên men chậm trong bồn thép lạnh, giữ trọn hương hoa và quả. (Nội dung mẫu.)"
       },
       "bottle": {
         "title": "Đóng chai thủ công",
-        "body": "[Mô tả chai, nút gỗ và nhãn.]"
+        "body": "Chai thủy tinh, nút gỗ tự nhiên và nhãn in hình chùm nho vẽ tay. (Nội dung mẫu.)"
       }
     },
     "specsEyebrow": "Thông số",
@@ -815,15 +815,15 @@
     "faq": {
       "minimum": {
         "q": "Số lượng tối thiểu cho mỗi đơn là bao nhiêu?",
-        "a": "[SỐ LƯỢNG TỐI THIỂU] — đang chờ xác nhận."
+        "a": "Từ 10 phần quà cho mỗi đơn. (Dữ liệu mẫu, đang chờ xác nhận.)"
       },
       "lead": {
         "q": "Cần đặt trước bao lâu?",
-        "a": "[THỜI GIAN CHUẨN BỊ] kể từ khi duyệt mẫu — đang chờ xác nhận."
+        "a": "Khoảng 7 ngày làm việc kể từ khi duyệt mẫu; mùa Tết nên đặt sớm hơn. (Dữ liệu mẫu, đang chờ xác nhận.)"
       },
       "invoice": {
         "q": "Xenia có xuất hoá đơn VAT không?",
-        "a": "Giá đã bao gồm VAT. [CHÍNH SÁCH HOÁ ĐƠN] — đang chờ xác nhận."
+        "a": "Giá đã bao gồm VAT. Hoá đơn VAT được xuất theo thông tin doanh nghiệp bạn cung cấp. (Dữ liệu mẫu, đang chờ xác nhận.)"
       },
       "delivery": {
         "q": "Có giao quà đến từng người nhận không?",

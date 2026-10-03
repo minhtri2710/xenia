@@ -63,13 +63,14 @@ test("the admin makes no third-party request in create-first-user, dashboard, ac
   await expect(page.locator("#field-email")).toHaveValue(EMAIL);
   await page.waitForLoadState("networkidle");
 
-  // The catalogue collections are managed here; each list's first page shows the last seeded row.
+  // The catalogue collections are managed here. Each list opens with one page for every row, however
+  // many archived rows earlier runs left, so a seeded row is always on it.
   for (const [collection, row] of [
     ["producers", "Southern Light Estate"],
     ["wines", "Lune Grise Réserve"],
     ["vintages", "2022"],
   ]) {
-    await page.goto(`/admin/collections/${collection}`);
+    await page.goto(`/admin/collections/${collection}?limit=${sql(`SELECT count(*) FROM ${collection}`)}`);
     await expect(page.locator(".collection-list table")).toContainText(row);
     await page.waitForLoadState("networkidle");
   }

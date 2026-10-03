@@ -16,6 +16,7 @@ const LOCALES = [
  */
 const ALL_BY_NAME = [
   "aubeline-brut",
+  "brio",
   "colle-vento-rosso",
   "cordillera-carmenere",
   "coteau-des-pierres",
@@ -36,6 +37,7 @@ const ALL_BY_NAME = [
 /** Each wine's lowest published price, ascending: [slug, from-price in VND]. */
 const BY_PRICE_ASC: [string, number][] = [
   ["sol-alto-crianza", 360_000],
+  ["brio", 420_000],
   ["cordillera-carmenere", 450_000],
   ["due-fiumi-moscato", 480_000],
   ["sol-alto-rosado", 540_000],
@@ -62,6 +64,7 @@ const EXPECTED: Record<string, { slugs: string[]; prices?: number[] }> = {
   "grape=Pinot+Noir": { slugs: ["aubeline-brut", "coteau-des-pierres", "southern-light-rose"] },
   "price=lt1m": {
     slugs: [
+      "brio",
       "colle-vento-rosso",
       "cordillera-carmenere",
       "due-fiumi-moscato",
@@ -80,7 +83,7 @@ const EXPECTED: Record<string, { slugs: string[]; prices?: number[] }> = {
   },
   "price=2m-4m": { slugs: ["aubeline-brut", "hollow-creek-cabernet"], prices: [2_450_000, 2_950_000] },
   "price=gte4m": { slugs: ["aubeline-brut", "due-fiumi-nebbiolo"], prices: [5_200_000, 4_600_000] },
-  "occasion=tet": { slugs: ["aubeline-brut", "due-fiumi-moscato", "red-gum-shiraz", "rio-velho-tawny-10"] },
+  "occasion=tet": { slugs: ["aubeline-brut", "brio", "due-fiumi-moscato", "red-gum-shiraz", "rio-velho-tawny-10"] },
   "size=375": { slugs: ["aubeline-brut", "rio-velho-tawny-10", "sol-alto-crianza"], prices: [1_350_000, 1_050_000, 360_000] },
   "size=1500": { slugs: ["aubeline-brut", "lune-grise-rouge"], prices: [5_200_000, 1_950_000] },
   "country=FR&type=red&price=lt1m": { slugs: ["lune-grise-rouge"], prices: [850_000] },
