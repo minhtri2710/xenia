@@ -110,6 +110,15 @@ body {
   .btn-line:hover {
     background: rgb(215 189 156 / 0.12);
   }
+  /* Ghost button on cream: wine hairline, fills on hover. */
+  .btn-ghost {
+    border-color: var(--color-wine);
+    color: var(--color-wine);
+  }
+  .btn-ghost:hover {
+    background: var(--color-wine);
+    color: var(--color-ivory);
+  }
 
   /* Product tile: raised paper, hairline border, soft lift on hover. */
   .card {

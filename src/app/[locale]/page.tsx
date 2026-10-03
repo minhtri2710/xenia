@@ -56,7 +56,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <div className="flex flex-1 flex-col gap-2 p-6">
                 <h3 className="font-display text-2xl font-semibold">{gifts(`collections.${occasion}.title`)}</h3>
                 <p className="text-muted">{gifts(`collections.${occasion}.lead`)}</p>
-                <Link href={`/qua-tang#collection-${occasion}`} className="mt-auto pt-2 text-sm font-medium text-wine underline underline-offset-4">
+                <Link href={`/qua-tang?occasion=${occasion}`} className="mt-auto pt-2 text-sm font-medium text-wine underline underline-offset-4">
                   {t("occasionsLink")}
                 </Link>
               </div>

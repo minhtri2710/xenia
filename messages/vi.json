@@ -462,9 +462,16 @@
         "lead": "Các loại vang được ghi nhận cho các buổi tiệc mừng."
       }
     },
-    "empty": "Chưa có loại vang nào trong bộ sưu tập này ở mức giá đã chọn.",
+    "empty": "Chưa có loại vang nào phù hợp với dịp và mức giá đã chọn.",
     "giftServiceNote": "Gói quà là dịch vụ có tính phí, tính riêng cho từng đơn hàng.",
-    "giftServiceLink": "Xem dịch vụ gói quà"
+    "giftServiceLink": "Xem dịch vụ gói quà",
+    "occasion": "Dịp tặng",
+    "occasionAll": "Tất cả",
+    "details": "Xem chi tiết",
+    "detailsFor": "Xem chi tiết {name}",
+    "ctaTitle": "Chưa thấy bộ quà phù hợp?",
+    "ctaLead": "Chúng tôi cá nhân hoá quà theo dịp, số lượng và thông điệp của bạn.",
+    "ctaButton": "Tìm hiểu cá nhân hoá"
   },
   "GiftService": {
     "eyebrow": "Dịch vụ",

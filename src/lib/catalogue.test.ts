@@ -6,7 +6,9 @@ import {
   facetOptions,
   featuredWines,
   type Filters,
-  giftCollections,
+  giftListing,
+  giftOccasionsOf,
+  parseGiftOccasion,
   isAdRestricted,
   isRestrictedWine,
   listWines,
@@ -187,7 +189,7 @@ describe("isAdRestricted (Law 44/2019 Art. 5.7, 5.9: 15% ABV and above)", () => 
 
 const vintage = (priceVnd: number, abvPct: number) => ({ priceVnd, bottleMl: 750 as const, stock: 1, abvPct });
 const gifted = (slug: string, vintages: CatalogueWine["vintages"], occasions: CatalogueWine["occasions"] = ["gift"]) => wine(slug, { occasions, vintages });
-const listed = (wines: CatalogueWine[], price?: PriceBand) => Object.fromEntries(giftCollections(wines, price, "en").map((c) => [c.occasion, c.listings.map((l) => l.wine.slug)]));
+const listed = (wines: CatalogueWine[], filters: { occasion?: "gift" | "tet" | "celebration"; price?: PriceBand } = {}) => giftListing(wines, filters, "en").map((l) => l.wine.slug);
 
 describe("isRestrictedWine (a whole wine is restricted when any published vintage is)", () => {
   it.each([
@@ -214,7 +216,7 @@ describe("isRestrictedWine (a whole wine is restricted when any published vintag
   });
 });
 
-describe("giftCollections", () => {
+describe("giftListing", () => {
   const WINES_BY_ABV = [
     gifted("safe-149", [vintage(900_000, 14.9)], ["gift", "tet"]),
     gifted("edge-15", [vintage(900_000, 15)], ["gift", "tet"]),
@@ -223,39 +225,58 @@ describe("giftCollections", () => {
     gifted("mixed-dear-restricted", [vintage(900_000, 13), vintage(2_500_000, 15.1)], ["gift"]),
   ];
 
-  it("lists a wine only when none of its vintages is restricted", () => {
-    expect(listed(WINES_BY_ABV)).toEqual({ gift: ["safe-149"], tet: ["safe-149"], celebration: [] });
+  it("lists a wine only when none of its vintages is restricted, for every occasion", () => {
+    expect(listed(WINES_BY_ABV)).toEqual(["safe-149"]);
+    expect(listed(WINES_BY_ABV, { occasion: "tet" })).toEqual(["safe-149"]);
+    expect(listed(WINES_BY_ABV, { occasion: "celebration" })).toEqual([]);
   });
 
-  it("keeps a wine out of every budget even when the band holds only its unrestricted vintage", () => {
-    expect(listed(WINES_BY_ABV, "2m-4m").gift).toEqual([]);
-    expect(listed(WINES_BY_ABV, "lt1m").gift).toEqual(["safe-149"]);
+  it("keeps a restricted wine out of every budget even when the band holds only its unrestricted vintage", () => {
+    expect(listed(WINES_BY_ABV, { price: "2m-4m" })).toEqual([]);
+    expect(listed(WINES_BY_ABV, { price: "lt1m" })).toEqual(["safe-149"]);
   });
 
-  it("makes one collection per gift occasion, in a fixed order, and none for a browse occasion", () => {
-    const all = [gifted("a", [vintage(500_000, 12)], ["dinner", "everyday"])];
-    expect(giftCollections(all, undefined, "en").map((c) => c.occasion)).toEqual(["gift", "tet", "celebration"]);
-    expect(listed(all)).toEqual({ gift: [], tet: [], celebration: [] });
+  it("lists every wine with a gift occasion once, in name order, and none with only browse occasions", () => {
+    const all = [
+      gifted("c", [vintage(500_000, 12)], ["celebration", "gift", "dinner"]),
+      gifted("a", [vintage(500_000, 12)], ["dinner", "everyday"]),
+      gifted("b", [vintage(500_000, 12)], ["tet"]),
+    ];
+    expect(listed(all)).toEqual(["b", "c"]);
+    expect(listed(all, { occasion: "gift" })).toEqual(["c"]);
+    expect(listed(all, { occasion: "tet" })).toEqual(["b"]);
   });
 
-  it("puts a wine in every gift collection it is tagged with", () => {
-    const all = [gifted("a", [vintage(500_000, 12)], ["celebration", "gift", "dinner"]), gifted("b", [vintage(500_000, 12)], ["tet"])];
-    expect(listed(all)).toEqual({ gift: ["a"], tet: ["b"], celebration: ["a"] });
-  });
-
-  it("narrows every collection by budget with the collection page's card semantics", () => {
+  it("narrows by budget with the collection page's card semantics", () => {
     const all = [gifted("a", [vintage(500_000, 12), vintage(1_500_000, 12)], ["gift", "tet"]), gifted("b", [vintage(1_000_000, 12)], ["gift"])];
-    expect(listed(all, "lt1m")).toEqual({ gift: ["a"], tet: ["a"], celebration: [] });
-    expect(listed(all, "1m-2m")).toEqual({ gift: ["a", "b"], tet: ["a"], celebration: [] });
-    const a = giftCollections(all, "1m-2m", "en")[0].listings.find((l) => l.wine.slug === "a")!;
-    expect(a.fromPriceVnd).toBe(1_500_000);
-    expect(listed(all, "gte4m")).toEqual({ gift: [], tet: [], celebration: [] });
+    expect(listed(all, { price: "lt1m" })).toEqual(["a"]);
+    expect(listed(all, { price: "1m-2m" })).toEqual(["a", "b"]);
+    expect(giftListing(all, { price: "1m-2m" }, "en").find((l) => l.wine.slug === "a")!.fromPriceVnd).toBe(1_500_000);
+    expect(listed(all, { occasion: "tet", price: "1m-2m" })).toEqual(["a"]);
+    expect(listed(all, { price: "gte4m" })).toEqual([]);
   });
 
   it("is derived from the vintages handed in, with nothing stored", () => {
     const w = gifted("a", [vintage(500_000, 14.9)]);
-    expect(listed([w]).gift).toEqual(["a"]);
-    expect(listed([{ ...w, vintages: [{ ...w.vintages[0], abvPct: 15 }] }]).gift).toEqual([]);
+    expect(listed([w])).toEqual(["a"]);
+    expect(listed([{ ...w, vintages: [{ ...w.vintages[0], abvPct: 15 }] }])).toEqual([]);
+  });
+});
+
+describe("parseGiftOccasion and giftOccasionsOf", () => {
+  it.each([
+    ["tet", "tet"],
+    [["celebration", "gift"], "celebration"],
+    [" gift ", "gift"],
+    ["dinner", undefined],
+    ["", undefined],
+    [undefined, undefined],
+  ])("reads %j as %j", (raw, expected) => {
+    expect(parseGiftOccasion(raw as string | string[] | undefined)).toBe(expected);
+  });
+
+  it("keeps a wine's gift occasions in the fixed order", () => {
+    expect(giftOccasionsOf({ occasions: ["dinner", "celebration", "gift"] })).toEqual(["gift", "celebration"]);
   });
 });
 

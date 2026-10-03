@@ -464,9 +464,16 @@
         "lead": "Wines noted for celebrations."
       }
     },
-    "empty": "No wine in this collection at the selected budget.",
+    "empty": "No wine matches the selected occasion and budget.",
     "giftServiceNote": "Gift wrap is a paid service, charged separately for each order.",
-    "giftServiceLink": "See the gift service"
+    "giftServiceLink": "See the gift service",
+    "occasion": "Occasion",
+    "occasionAll": "All",
+    "details": "View details",
+    "detailsFor": "View details of {name}",
+    "ctaTitle": "Haven't found the right gift?",
+    "ctaLead": "We personalise gifts to your occasion, quantity and message.",
+    "ctaButton": "About personalisation"
   },
   "GiftService": {
     "eyebrow": "Service",
