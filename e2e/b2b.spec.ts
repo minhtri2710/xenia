@@ -1,5 +1,3 @@
-import { execFileSync } from "node:child_process";
-
 import { expect, type Page, test } from "@playwright/test";
 
 import { blockThirdParty, declareAdult, expectNoSeriousA11yViolations, seedCatalogue, sql } from "./support";
@@ -16,19 +14,13 @@ const LOCALES = [
   { locale: "en", prefix: "/en" },
 ] as const;
 
-/** Puts the catalogue's `brio` wine at `abv`, or removes it (`absent`), through Payload's Local API. */
-const brio = (abv: string) => execFileSync("pnpm", ["payload", "run", "e2e/brio-fixture.ts"], { env: { ...process.env, BRIO_ABV: abv }, stdio: "inherit" });
-
 const quoteRows = () => Number(sql("SELECT count(*) FROM quote_requests"));
 
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async ({ request }) => {
   await seedCatalogue(request);
-  brio("absent");
 });
-
-test.afterAll(() => brio("absent"));
 
 for (const { locale, prefix } of LOCALES) {
   const vi = locale === "vi";
@@ -109,22 +101,22 @@ for (const { locale, prefix } of LOCALES) {
   });
 }
 
+// The seed's sample Brio (src/seed/data.ts) is published with one 750 ml vintage at 11% ABV. The tests
+// below change it with SQL and `pnpm seed` puts it back after each one.
 test.describe("Brio page", () => {
   const footerBrio = (page: Page) => page.locator("footer").getByRole("link", { name: "Brio", exact: true });
+  const brioWine = "(SELECT id FROM wines WHERE slug = 'brio')";
 
-  test("is not found and not linked while there is no Brio wine", async ({ page }) => {
-    await declareAdult(page, "/");
-    expect((await page.goto("/brio"))?.status()).toBe(404);
-    await expect(footerBrio(page)).toHaveCount(0);
+  test.afterEach(async ({ request }) => {
+    await seedCatalogue(request);
   });
 
   test("shows the story and the selected vintage's details while Brio is under 15%, in both locales", async ({ page }) => {
-    brio("12");
     await declareAdult(page, "/");
     for (const prefix of ["", "/en"]) {
       expect((await page.goto(`${prefix}/brio`))?.status()).toBe(200);
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Brio");
-      await expect(page.getByTestId("brio-specs").locator('[data-spec="abv"] dd')).toHaveText("12% vol");
+      await expect(page.getByTestId("brio-specs").locator('[data-spec="abv"] dd')).toHaveText("11% vol");
       await expect(page.getByTestId("brio-warning").locator('strong[lang="vi"]')).toHaveText(WARNING);
       await expect(footerBrio(page)).toHaveCount(1);
       await expectNoSeriousA11yViolations(page, `brio ${prefix || "vi"}`);
@@ -132,7 +124,14 @@ test.describe("Brio page", () => {
   });
 
   test("is not found and not linked once a published vintage is at 15% or above", async ({ page }) => {
-    brio("15");
+    sql(`UPDATE vintages SET abv_pct = 15 WHERE wine_id = ${brioWine}`);
+    await declareAdult(page, "/");
+    expect((await page.goto("/brio"))?.status()).toBe(404);
+    await expect(footerBrio(page)).toHaveCount(0);
+  });
+
+  test("is not found and not linked while the Brio wine is a draft", async ({ page }) => {
+    sql("UPDATE wines SET status = 'draft' WHERE slug = 'brio'");
     await declareAdult(page, "/");
     expect((await page.goto("/brio"))?.status()).toBe(404);
     await expect(footerBrio(page)).toHaveCount(0);

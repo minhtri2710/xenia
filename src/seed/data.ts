@@ -217,6 +217,16 @@ export const producers: SeedProducer[] = [
       en: "Long sunshine and a cold sea wind make bright, fresh whites.",
     },
   },
+  {
+    key: "brio-ninh-thuan",
+    name: "Brio Ninh Thuận (dữ liệu mẫu)",
+    country: "VN",
+    region: "Ninh Thuận",
+    story: {
+      vi: "Nhà làm nho lên men ở Ninh Thuận, nơi nắng không bao giờ vội và gió cũng chẳng ngừng thổi. Dữ liệu mẫu.",
+      en: "A grape fermentation house in Ninh Thuận, where the sun is never in a hurry and the wind never stops. Sample data.",
+    },
+  },
 ];
 
 const L = (vi: string, en: string): Localized => ({ vi, en });
@@ -628,6 +638,28 @@ export const wines: SeedWine[] = [
     occasions: ["gift"],
     status: "draft",
     vintages: [v(2022, 750, 14, 3_900_000, 0)],
+  },
+  {
+    // Brio, the sample of the brand's own fermented grape drink: the Brio page (/brio) shows it while
+    // every published vintage stays under 15% ABV. Sample data: replace with the real Brio in the admin.
+    slug: "brio",
+    producer: "brio-ninh-thuan",
+    name: L("Brio", "Brio"),
+    type: "white",
+    country: "VN",
+    region: "Ninh Thuận",
+    grapes: [{ grape: "NH01-48", pct: 100 }],
+    tasting: {
+      nose: L("Nho chín nắng, hoa trắng và chút mật ong (dữ liệu mẫu).", "Sun-ripe grapes, white flowers and a touch of honey (sample data)."),
+      palate: L("Nhẹ, tươi, ngọt dịu tự nhiên (dữ liệu mẫu).", "Light and fresh with a gentle natural sweetness (sample data)."),
+      finish: L("Dư vị gọn, thoảng vỏ nho (dữ liệu mẫu).", "A clean finish with a hint of grape skin (sample data)."),
+    },
+    profile: { body: 2, tannin: 1, sweetness: 3, acidity: 3 },
+    pairings: ["seafood", "cha-gio"],
+    servingTempC: 8,
+    occasions: ["gift", "tet"],
+    status: "published",
+    vintages: [v(2026, 750, 11, 420_000, 60)],
   },
 ];
 

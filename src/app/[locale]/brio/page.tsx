@@ -9,6 +9,7 @@ import { QUOTE_PATH } from "@/lib/quote";
 import { selectVintage } from "@/lib/vintage-selection";
 
 import { Band, Container, PageHero, SectionHeading } from "../page-parts";
+import { Photo } from "../photo";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -79,7 +80,9 @@ export default async function BrioPage({ params }: Props) {
           <ul className="mt-8 grid gap-8 md:grid-cols-3">
             {PROCESS.map((step) => (
               <li key={step} className="flex flex-col gap-4">
-                <div role="img" aria-label={home("placeholder")} className="aspect-[4/3] bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+                <Photo name={`site/brio-${step}`} className="aspect-[4/3]">
+                  <div role="img" aria-label={home("placeholder")} className="aspect-[4/3] bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+                </Photo>
                 <h3 className="font-display text-xl font-semibold">{t(`process.${step}.title`)}</h3>
                 <p>{t(`process.${step}.body`)}</p>
               </li>

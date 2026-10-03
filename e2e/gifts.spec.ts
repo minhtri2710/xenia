@@ -6,9 +6,9 @@ import { blockThirdParty, expectNoSeriousA11yViolations, seedCatalogue, vietnamD
 // `giftCollections`, `isRestrictedWine` or the page's own code.
 //
 // Gift occasions in the seed (published wines with a published vintage only), ABV in brackets:
-//   gift:        lune-grise-rouge (14), sept-pierres-blanc (13), aubeline-brut (12),
+//   gift:        lune-grise-rouge (14), sept-pierres-blanc (13), aubeline-brut (12), brio (11),
 //                due-fiumi-nebbiolo (14.5), hollow-creek-cabernet (14.5), rio-velho-tawny-10 (20)
-//   tet:         aubeline-brut, due-fiumi-moscato (5.5), red-gum-shiraz (14.5), rio-velho-tawny-10 (20)
+//   tet:         aubeline-brut, brio, due-fiumi-moscato (5.5), red-gum-shiraz (14.5), rio-velho-tawny-10 (20)
 //   celebration: coteau-des-pierres (13), aubeline-brut, due-fiumi-nebbiolo, hollow-creek-cabernet,
 //                southern-light-rose (12.5)
 // `rio-velho-tawny-10` is at 20% ABV and is never listed. `lune-grise-reserve` (a draft wine, tagged
@@ -35,6 +35,7 @@ const EXPECTED: [query: string, expected: Collections][] = [
     {
       gift: [
         ["aubeline-brut", 1_350_000],
+        ["brio", 420_000],
         ["due-fiumi-nebbiolo", 4_600_000],
         ["hollow-creek-cabernet", 2_950_000],
         ["lune-grise-rouge", 850_000],
@@ -42,6 +43,7 @@ const EXPECTED: [query: string, expected: Collections][] = [
       ],
       tet: [
         ["aubeline-brut", 1_350_000],
+        ["brio", 420_000],
         ["due-fiumi-moscato", 480_000],
         ["red-gum-shiraz", 1_150_000],
       ],
@@ -57,8 +59,14 @@ const EXPECTED: [query: string, expected: Collections][] = [
   [
     "?price=lt1m",
     {
-      gift: [["lune-grise-rouge", 850_000]],
-      tet: [["due-fiumi-moscato", 480_000]],
+      gift: [
+        ["brio", 420_000],
+        ["lune-grise-rouge", 850_000],
+      ],
+      tet: [
+        ["brio", 420_000],
+        ["due-fiumi-moscato", 480_000],
+      ],
       celebration: [["southern-light-rose", 820_000]],
     },
   ],

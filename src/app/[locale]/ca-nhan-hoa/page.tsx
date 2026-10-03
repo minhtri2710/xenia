@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { QUOTE_PATH } from "@/lib/quote";
 
 import { Band, Container, PageHero, SectionHeading } from "../page-parts";
+import { Photo } from "../photo";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -58,7 +59,9 @@ export default async function PersonalisePage({ params }: Props) {
 
       <Band tone="paper" labelledBy="personalise-process">
         <Container className="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16">
-          <div aria-hidden="true" className="aspect-[4/3] bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+          <Photo name="site/personalise" className="aspect-[4/3]">
+            <div aria-hidden="true" className="aspect-[4/3] bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
+          </Photo>
           <div>
             <SectionHeading id="personalise-process" title={t("processTitle")} />
             <ol className="mt-6 border-t border-line">
