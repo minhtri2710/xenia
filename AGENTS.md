@@ -40,6 +40,15 @@ CI (`.github/workflows/ci.yml`) runs the check set on every pull request and eve
 - Reset (dev data is disposable): `pnpm db:reset`.
 - Schema management pre-launch: Payload's dev **push** (`@payloadcms/db-postgres` pushes the schema when `NODE_ENV` is not `production`). There is no `migrations/` directory. Reason: the schema changes every slice and dev data is disposable, so migrations would only record churn. The first deploy creates one baseline migration and switches to migrations from then on.
 
+## Deployment (not yet done)
+
+There is no hosting choice yet and the shop cannot launch: the payment and the mail are mocks that refuse to run in production. What is in place for the first deploy:
+
+- Production guards (`src/lib/production.ts`): a server with `NODE_ENV=production` refuses to serve (the Payload config throws) while `PAYLOAD_SECRET` is the `.env.example` placeholder or shorter than `MIN_SECRET_LENGTH` (32), or `DATABASE_URI` carries the `.env.example` password; `next build` (`NEXT_PHASE=phase-production-build`) is not checked, so CI builds with the placeholders. `recordPayment` refuses in production (`assertMockPaymentAllowed`), as `mockEmailAdapter` does for mail.
+- Migrations: `pnpm migrate:create`, `pnpm migrate`, `pnpm migrate:status` (Payload's CLI; files in `src/migrations`). None exists yet; dev keeps the push (see Postgres).
+- First deploy, in order: choose hosting (Node 24, Postgres 17, HTTPS: every cookie is `Secure` in production); integrate a payment provider and a mail provider and remove the mocks (the Human's decision); record counsel's review before removing the legal-review notice; set real `site-settings` owner data, zones and the alcohol licence (the footer shows `SAMPLE DATA` until then); against an empty production database run `pnpm migrate:create baseline`, commit it and switch this file's schema rule to migrations; `pnpm migrate`; create the first admin at `/admin`; enter the real catalogue in the admin. Never run `pnpm seed` against production: it writes the fictional catalogue and sample owner data.
+- Production environment: `DATABASE_URI` and `PAYLOAD_SECRET` (a random value of at least 32 characters, e.g. `openssl rand -base64 48`), set on the host, never committed.
+
 ## Process rule
 
 Every server and container a seat starts is stopped before it reports: dev servers by the pid it started, Postgres by `pnpm db:down`. Never stop a process or container you did not start.
