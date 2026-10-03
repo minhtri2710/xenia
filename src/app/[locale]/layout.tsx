@@ -125,7 +125,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <Link href="/" className="font-display text-2xl font-semibold tracking-[0.12em] text-wine uppercase no-underline">{brand("name")}</Link>
                 <p className="eyebrow mt-1">{brand("tagline")}</p>
               </div>
-              <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <nav aria-label={footer("primaryNav")} className="flex w-full items-center gap-x-6 overflow-x-auto whitespace-nowrap sm:w-auto sm:flex-wrap sm:gap-y-2 sm:overflow-visible sm:whitespace-normal">
                 <NavLink href="/ruou-vang">{brand("wines")}</NavLink>
                 <NavLink href="/qua-tang">{brand("giftCollections")}</NavLink>
                 {showBrio && <NavLink href={BRIO_PATH} testId="header-brio">{brio("title")}</NavLink>}

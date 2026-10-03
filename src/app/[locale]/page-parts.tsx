@@ -25,7 +25,7 @@ const BANDS: Record<Tone, string> = {
   plain: "",
 };
 
-/** A full-width band; `framed` draws the gold hairline frame inside it. */
+/** A full-width band; `framed` draws the gold hairline frame inside it. A page that ends with one meets the footer without a gap. */
 export function Band({
   tone = "plain",
   framed = false,
@@ -40,7 +40,7 @@ export function Band({
   children: ReactNode;
 }) {
   return (
-    <section aria-labelledby={labelledBy} className={`${BANDS[tone]} ${framed ? "framed" : ""} ${className}`}>
+    <section aria-labelledby={labelledBy} data-band className={`${BANDS[tone]} ${framed ? "framed" : ""} ${className}`}>
       {framed ? <div className="frame">{children}</div> : children}
     </section>
   );

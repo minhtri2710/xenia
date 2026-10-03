@@ -140,6 +140,14 @@ body {
   }
 }
 
+/* A page that ends with a full-width band meets the footer without a strip of paper (unlayered, so it beats main's pb-16). */
+main:has(> [data-band]:last-child) {
+  padding-bottom: 0;
+}
+main:has(> article:last-child > [data-band]:last-child) {
+  padding-bottom: 0;
+}
+
 .skip-link {
   position: absolute;
   z-index: 50;

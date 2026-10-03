@@ -161,6 +161,30 @@ test.describe("Brio page", () => {
   });
 });
 
+test("a page that ends with a band meets the footer, one that ends with content keeps its spacing", async ({ page }) => {
+  await declareAdult(page, "/");
+  const gap = () =>
+    page.evaluate(() => {
+      const main = document.querySelector("main")!;
+      return document.querySelector("footer")!.getBoundingClientRect().top - main.lastElementChild!.getBoundingClientRect().bottom;
+    });
+  for (const path of ["/brio", "/ruou-vang/aubeline-brut", "/qua-tang"]) {
+    await page.goto(path);
+    expect(await gap(), path).toBe(0);
+  }
+  await page.goto("/gio-hang");
+  expect(await gap()).toBeGreaterThan(0);
+});
+
+test("below the sm breakpoint the primary nav is one row that scrolls, without widening the page", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await declareAdult(page, "/ruou-vang");
+  const nav = page.getByRole("navigation", { name: "Điều hướng chính" });
+  const tops = await nav.getByRole("link").evaluateAll((links) => new Set(links.map((l) => Math.round(l.getBoundingClientRect().top))).size);
+  expect(tops).toBe(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(360);
+});
+
 test("quote requests have no public REST surface", async ({ request }) => {
   const list = await request.get("/api/quote-requests");
   expect(list.status()).toBe(403);

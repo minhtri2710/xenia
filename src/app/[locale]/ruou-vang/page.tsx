@@ -51,7 +51,7 @@ function FacetGroup({
   return (
     <div>
       <h3 className="eyebrow">{label}</h3>
-      <ul className="mt-2 text-sm">
+      <ul className="mt-2 flex gap-x-4 overflow-x-auto text-sm whitespace-nowrap md:block md:overflow-visible md:whitespace-normal">
         {item(undefined, allLabel)}
         {options.map((o) => item(o.value, o.label))}
       </ul>
@@ -77,8 +77,8 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   return (
     <>
       <PageHero eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
-      <Container className="grid gap-10 pt-10 md:grid-cols-[15rem_1fr]">
-        <nav aria-label={t("filters")} className="card space-y-6 self-start p-6">
+      <Container className="grid grid-cols-1 gap-10 pt-10 md:grid-cols-[15rem_1fr]">
+        <nav aria-label={t("filters")} className="card min-w-0 space-y-4 self-start p-6 md:space-y-6">
           <h2 className="sr-only">{t("filters")}</h2>
           <FacetGroup
             label={t("facets.type")}
