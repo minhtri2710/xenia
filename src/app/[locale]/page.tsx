@@ -1,13 +1,18 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { GIFT_OCCASIONS } from "@/lib/catalogue";
+import { featuredWines, GIFT_OCCASIONS } from "@/lib/catalogue";
+import { loadCatalogue } from "@/lib/catalogue-data";
+import { QUOTE_PATH } from "@/lib/quote";
 
 import { Band, Container, SectionHeading } from "./page-parts";
 
 const STEPS = ["buyer", "delivery", "gift", "review"] as const;
 
-/** The home page: no wine and no product is featured here, so it promotes nothing (see AGENTS, ≥15°). */
+/**
+ * The home page. Its featured wines are a promotional surface: `featuredWines` never lists a wine
+ * with a published vintage at 15% ABV or above, and the under-18 warning stands beside them.
+ */
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -16,6 +21,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const gifts = await getTranslations("GiftCollections");
   const service = await getTranslations("GiftService");
   const steps = await getTranslations("Checkout.steps");
+  const c = await getTranslations("Catalogue");
+  const format = await getFormatter();
+  const featured = featuredWines(await loadCatalogue(locale === "en" ? "en" : "vi"), locale);
+  const money = (vnd: number) => format.number(vnd, { style: "currency", currency: "VND", maximumFractionDigits: 0 });
 
   return (
     <>
@@ -51,14 +60,58 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </ul>
       </Container>
 
-      <Band tone="paper" labelledBy="home-service">
+      {featured.length > 0 && (
+        <Band tone="paper" labelledBy="home-featured">
+          <Container className="py-16">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <SectionHeading id="home-featured" eyebrow={t("featuredEyebrow")} title={t("featuredTitle")} />
+              <Link href="/ruou-vang" className="inline-block py-2 text-sm font-medium text-wine underline underline-offset-4">
+                {t("featuredAll")}
+              </Link>
+            </div>
+            <p className="notice mt-6 max-w-2xl" data-testid="featured-warning">
+              <strong lang="vi" className="font-medium text-wine">
+                {gifts("warning")}
+              </strong>
+              {gifts.has("warningTranslation") && <span className="text-muted"> — {gifts("warningTranslation")}</span>}
+            </p>
+            <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-testid="featured-wines">
+              {featured.map(({ wine, fromPriceVnd, inStock }) => (
+                <li key={wine.slug} data-testid="featured-card" data-slug={wine.slug} className="card flex flex-col overflow-hidden">
+                  <div aria-hidden="true" className="flex aspect-[4/3] items-end justify-center bg-paper outline outline-1 -outline-offset-8 outline-champagne-deep/40">
+                    <div className="mb-6 h-3/4 w-1/6 rounded-t-full bg-wine/15" />
+                  </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <h3 className="font-display text-2xl font-semibold">
+                      <Link href={`/ruou-vang/${wine.slug}`} className="hover:text-wine-deep hover:underline">
+                        {wine.name}
+                      </Link>
+                    </h3>
+                    <p className="text-sm text-muted">{wine.producer}</p>
+                    <p className="mt-1 text-sm">
+                      {c(`types.${wine.type}`)} · {wine.region}, {c(`countries.${wine.country}`)}
+                    </p>
+                    <p className="mt-auto pt-4 font-display text-xl font-semibold text-ink">{c("from", { price: money(fromPriceVnd) })}</p>
+                    {!inStock && <p className="text-sm text-muted">{c("outOfStock")}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </Band>
+      )}
+
+      <Band labelledBy="home-service">
         <Container className="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16">
           <div aria-hidden="true" className="aspect-square bg-sand outline outline-1 -outline-offset-8 outline-champagne-deep/40" />
           <div>
             <SectionHeading id="home-service" eyebrow={t("serviceEyebrow")} title={service("title")} />
             <p className="mt-4 text-lg">{service("intro")}</p>
             <p className="mt-2 text-muted">{service("paid")}</p>
-            <Link href="/dich-vu-goi-qua" className="btn btn-primary mt-8">{t("serviceLink")}</Link>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link href="/dich-vu-goi-qua" className="btn btn-primary">{t("serviceLink")}</Link>
+              <Link href={QUOTE_PATH} className="btn border-ink/40 hover:border-wine hover:text-wine">{t("quoteButton")}</Link>
+            </div>
           </div>
         </Container>
       </Band>

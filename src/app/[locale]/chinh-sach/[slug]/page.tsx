@@ -92,6 +92,7 @@ export default async function PolicyPage({ params }: Props) {
         {factList(sections.flows, [copy("privacyFlows"), copy("cookieAge", { name: AGE_COOKIE }), copy("cookieCart", { name: CART_COOKIE }), copy("cookieCheckout", { name: CHECKOUT_COOKIE }), copy("messageFact", { max: MAX_MESSAGE_CODE_POINTS })])}
         {factList(sections.retention, [copy("privacyRetention"), copy("retentionFact", { years: ORDER_RETENTION_YEARS }), copy("draftFact", { hours: DRAFT_TTL_HOURS }), copy("privacyPending")])}
         {factList(sections.account, accountFacts)}
+        {factList(sections.quote, [copy("quoteData"), copy("quoteRetention")])}
         {factList(sections.access, [copy("privacyAccess")])}
         {factList(sections.rights, [copy("privacyRights")])}
       </>;

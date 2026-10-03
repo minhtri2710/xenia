@@ -103,17 +103,19 @@ test("V1: a customer's token, as a cookie or as a JWT header, gets nothing from 
   const of = (slug: string, op: string) => table.find((r) => r.slug === slug && r.op === op)!;
   expect(of("orders", "create").admin).toBe(403);
   expect(of("orders", "delete").admin).toBe(403);
+  // Quote requests come only from the contact page's server action, never from /api.
+  expect(of("quote-requests", "create").admin).toBe(403);
   // An admin still reads and lists the catalogue, orders and the outbox.
-  for (const slug of ["producers", "wines", "vintages", "orders", "mock-outbox", "packaging", "card-designs", "checkout-drafts", "users"]) expect(of(slug, "find").admin, `${slug} find as admin`).toBe(200);
+  for (const slug of ["producers", "wines", "vintages", "orders", "mock-outbox", "packaging", "card-designs", "checkout-drafts", "quote-requests", "users"]) expect(of(slug, "find").admin, `${slug} find as admin`).toBe(200);
   expect(of("site-settings", "global read").admin).toBe(200);
   // `customers` has no REST or GraphQL surface at all.
   for (const row of table.filter((r) => r.slug === "customers")) expect(row.admin, `customers ${row.op} as admin`).toBeGreaterThanOrEqual(400);
   // The mock outbox is read-only for everyone.
   for (const op of ["create", "update", "delete"]) expect(of("mock-outbox", op).admin, `mock-outbox ${op} as admin`).toBeGreaterThanOrEqual(400);
 
-  // V2: nobody signed in gets anything from the two collections that hold personal data either.
+  // V2: nobody signed in gets anything from the collections that hold personal data either.
   const nobody = await playwright.request.newContext({ baseURL: "http://localhost:3417" });
-  for (const [slug, refused] of [["customers", 501], ["mock-outbox", 403]] as const) {
+  for (const [slug, refused] of [["customers", 501], ["mock-outbox", 403], ["quote-requests", 403]] as const) {
     for (const path of [`/api/${slug}`, `/api/${slug}/999999`]) {
       const response = await nobody.get(path);
       expect(response.status(), `anonymous GET ${path}`).toBe(refused);

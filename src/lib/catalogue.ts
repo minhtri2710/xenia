@@ -7,7 +7,7 @@ export const WINE_TYPES = ["red", "white", "rose", "sparkling", "sweet"] as cons
 export type WineType = (typeof WINE_TYPES)[number];
 
 /** ISO 3166-1 alpha-2 codes; display names live in messages (`Catalogue.countries`). */
-export const COUNTRIES = ["FR", "IT", "ES", "PT", "DE", "AT", "US", "CL", "AR", "AU", "NZ", "ZA"] as const;
+export const COUNTRIES = ["FR", "IT", "ES", "PT", "DE", "AT", "US", "CL", "AR", "AU", "NZ", "ZA", "VN"] as const;
 export type Country = (typeof COUNTRIES)[number];
 
 export const OCCASIONS = ["gift", "tet", "celebration", "dinner", "everyday"] as const;
@@ -70,6 +70,8 @@ export type CatalogueWine = {
   region: string;
   grapes: string[];
   occasions: Occasion[];
+  /** Admin-set: offered for the home page's featured wines (`featuredWines`). */
+  featured: boolean;
   vintages: CatalogueVintage[];
 };
 
@@ -200,6 +202,18 @@ export type GiftCollection = { occasion: GiftOccasion; listings: Listing[] };
 export function giftCollections(wines: CatalogueWine[], price: PriceBand | undefined, locale: string): GiftCollection[] {
   const promotable = wines.filter((w) => !isRestrictedWine(w));
   return GIFT_OCCASIONS.map((occasion) => ({ occasion, listings: listWines(promotable, { sort: "name", occasion, price }, locale) }));
+}
+
+/** How many featured wines the home page shows. */
+export const FEATURED_LIMIT = 3;
+
+/**
+ * The home page's featured wines: the admin-set `featured` wines, in name order, at most
+ * `FEATURED_LIMIT`. A promotional surface, so a restricted wine is never among them.
+ */
+export function featuredWines(wines: CatalogueWine[], locale: string): Listing[] {
+  const promotable = wines.filter((w) => w.featured && !isRestrictedWine(w));
+  return listWines(promotable, { sort: "name" }, locale).slice(0, FEATURED_LIMIT);
 }
 
 export type FacetOptions = {

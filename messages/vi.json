@@ -40,6 +40,10 @@
     "back": "Quay lại trang xác minh tuổi"
   },
   "Home": {
+    "featuredEyebrow": "Tuyển chọn",
+    "featuredTitle": "Rượu vang nổi bật",
+    "featuredAll": "Xem toàn bộ rượu vang",
+    "quoteButton": "Nhận báo giá quà doanh nghiệp",
     "occasionsEyebrow": "Cho từng dịp trao gửi",
     "occasionsTitle": "Quà tặng theo dịp",
     "occasionsLead": "Mỗi bộ sưu tập gom các loại vang được ghi nhận cho một dịp.",
@@ -108,7 +112,8 @@
       "AR": "Argentina",
       "AU": "Úc",
       "NZ": "New Zealand",
-      "ZA": "Nam Phi"
+      "ZA": "Nam Phi",
+      "VN": "Việt Nam"
     },
     "occasions": {
       "gift": "Quà tặng",
@@ -477,6 +482,7 @@
     "delivery": "Chọn ngày và khung giờ giao (sáng, chiều, tối) khi thanh toán."
   },
   "Footer": {
+    "explore": "Khám phá",
     "business": "Thông tin doanh nghiệp",
     "representative": "Người đại diện theo pháp luật",
     "registration": "Đăng ký doanh nghiệp",
@@ -510,7 +516,7 @@
     "pending": "Đang chờ luật sư rà soát",
     "pages": {
       "thong-tin-doanh-nghiep": { "title": "Thông tin doanh nghiệp", "intro": "Thông tin dưới đây là dữ liệu mẫu để phát triển trước khai trương, không phải thông tin của một doanh nghiệp có thật.", "sections": { "owner": "Chủ sở hữu và đăng ký", "licence": "Giấy phép bán lẻ rượu", "notification": "Thông báo website" } },
-      "bao-mat": { "title": "Bảo mật và dữ liệu cá nhân", "intro": "Bản dự thảo mô tả dữ liệu mà phiên bản hiện tại của cửa hàng xử lý và nơi lưu trữ.", "sections": { "account": "Tài khoản tùy chọn", "purpose": "Mục đích và phạm vi", "flows": "Dữ liệu và cookie", "retention": "Thời hạn lưu giữ", "access": "Truy cập và bảo mật", "rights": "Quyền và khiếu nại", "pending": "Các điểm cần rà soát" } },
+      "bao-mat": { "title": "Bảo mật và dữ liệu cá nhân", "intro": "Bản dự thảo mô tả dữ liệu mà phiên bản hiện tại của cửa hàng xử lý và nơi lưu trữ.", "sections": { "account": "Tài khoản tùy chọn", "purpose": "Mục đích và phạm vi", "flows": "Dữ liệu và cookie", "retention": "Thời hạn lưu giữ", "access": "Truy cập và bảo mật", "rights": "Quyền và khiếu nại", "quote": "Yêu cầu báo giá", "pending": "Các điểm cần rà soát" } },
       "dieu-khoan": { "title": "Điều khoản mua bán", "intro": "Đây là dự thảo điều khoản cho quy trình đặt hàng mô phỏng hiện có.", "sections": { "account": "Tài khoản tùy chọn", "parties": "Các bên và điều kiện", "order": "Đặt hàng và xem lại", "delivery": "Giao hàng", "payment": "Giá và thanh toán", "retention": "Lưu giữ giao dịch", "pending": "Các điểm cần rà soát" } },
       "khieu-nai": { "title": "Tiếp nhận khiếu nại", "intro": "Kênh liên hệ trực tuyến và thời gian phản hồi dự kiến dưới đây cần được xác nhận trước khai trương.", "sections": { "channel": "Kênh tiếp nhận", "timeline": "Thời gian dự kiến", "scope": "Thông tin nên cung cấp" } },
       "gia": { "title": "Giá và phí", "intro": "Giá niêm yết bằng đồng Việt Nam; các mức giá sản phẩm và bao bì trong môi trường này là dữ liệu mẫu.", "sections": { "display": "Cách hiển thị giá", "delivery": "Phí giao hàng", "wrap": "Dịch vụ gói quà", "other": "Khoản phí khác" } },
@@ -520,6 +526,8 @@
       "doi-tra-hoan-tien": { "title": "Đổi trả và hoàn tiền", "intro": "Quy trình đổi trả và hoàn tiền thật chưa được tích hợp; nội dung này là dự thảo để rà soát.", "sections": { "mismatch": "Hàng không đúng mô tả", "returns": "Yêu cầu đổi trả", "refund": "Hoàn tiền", "failedId": "Không giao được khi kiểm tra giấy tờ" } }
     },
     "copy": {
+      "quoteData": "Biểu mẫu báo giá ở trang Liên hệ lưu tên doanh nghiệp, người liên hệ, email, điện thoại, dịp tặng, số phần quà, ngân sách và lời nhắn nếu bạn nhập, cùng thời điểm bạn đồng ý với chính sách này. Biểu mẫu không hỏi ngày sinh. Chỉ quản trị viên xem được các yêu cầu này.",
+      "quoteRetention": "Thời hạn lưu giữ yêu cầu báo giá đang chờ luật sư rà soát (Q-quote); trong thời gian đó, quản trị viên xoá yêu cầu khi người gửi đề nghị.",
       "bizOwner": "Các dữ liệu trên là giá trị hư cấu trong môi trường phát triển. Thông tin pháp nhân, giấy phép và tài liệu chứng minh đủ điều kiện thật chưa được cung cấp.",
       "bizLicence": "Số và cơ quan cấp dưới đây là văn bản mẫu; không phải bản sao hoặc bằng chứng giấy phép.",
       "bizNotice": "Chưa có liên kết thông báo thật được cấu hình. Việc nộp hồ sơ và xác nhận là công việc trước khai trương.",
@@ -728,6 +736,153 @@
         "intro": "Mở liên kết bên dưới để chọn mật khẩu mới.",
         "ignore": "Nếu bạn không yêu cầu, hãy bỏ qua thư này."
       }
+    }
+  },
+  "Brio": {
+    "title": "Brio",
+    "eyebrow": "Fermented Grape Drink",
+    "lead": "nho Ninh Thuận, lên men chậm",
+    "quote": "“Ở Ninh Thuận, nắng không bao giờ vội, gió cũng chẳng ngừng thổi.”",
+    "storyEyebrow": "Câu chuyện",
+    "story": "[ĐOẠN CÂU CHUYỆN BRIO: vùng nguyên liệu, giống nho, người làm, cách lên men.]",
+    "processTitle": "Từ vườn nho đến hộp quà",
+    "process": {
+      "region": {
+        "title": "Vùng nắng gió",
+        "body": "[Mô tả vùng nguyên liệu tại Ninh Thuận.]"
+      },
+      "ferment": {
+        "title": "Lên men chậm",
+        "body": "[Mô tả quy trình lên men.]"
+      },
+      "bottle": {
+        "title": "Đóng chai thủ công",
+        "body": "[Mô tả chai, nút gỗ và nhãn.]"
+      }
+    },
+    "specsEyebrow": "Thông số",
+    "specsTitle": "Thông tin Brio",
+    "productLink": "Xem Brio trong cửa hàng",
+    "quoteLink": "Đặt Brio số lượng lớn"
+  },
+  "Personalise": {
+    "nav": "Cá nhân hoá",
+    "eyebrow": "Dịch vụ cá nhân hoá",
+    "title": "Mỗi hộp quà một dấu ấn",
+    "lead": "mang tên doanh nghiệp và người nhận",
+    "accent": "With Compliments",
+    "optionsEyebrow": "Tuỳ chọn",
+    "optionsTitle": "Những gì xenia có thể cá nhân hoá",
+    "options": {
+      "box": {
+        "title": "Hộp quà",
+        "body": "Hộp cứng olive hoặc đỏ rượu, khung nhũ vàng trên nắp."
+      },
+      "logo": {
+        "title": "Logo in nhũ",
+        "body": "Logo doanh nghiệp ép nhũ vàng trên nắp hộp, thiệp và ruy băng."
+      },
+      "card": {
+        "title": "Thiệp With Compliments",
+        "body": "Thiệp kem in tên từng người nhận và lời nhắn của ban lãnh đạo."
+      },
+      "mix": {
+        "title": "Phối theo ngân sách",
+        "body": "Kết hợp rượu vang, ly và vật phẩm theo ngân sách mỗi phần quà."
+      }
+    },
+    "paid": "Cá nhân hoá là dịch vụ có tính phí, báo giá theo từng yêu cầu. Giá đã bao gồm VAT.",
+    "processTitle": "Quy trình đặt quà",
+    "process": {
+      "listen": {
+        "title": "Lắng nghe",
+        "body": "Xenia tìm hiểu dịp tặng, người nhận, số lượng và ngân sách."
+      },
+      "select": {
+        "title": "Tuyển chọn",
+        "body": "Đề xuất bộ quà kèm ảnh mẫu và báo giá chi tiết."
+      },
+      "personalise": {
+        "title": "Cá nhân hoá",
+        "body": "In nhũ logo, chọn màu hộp, làm thiệp theo tên người nhận."
+      },
+      "deliver": {
+        "title": "Trao gửi",
+        "body": "Đóng gói chỉn chu và giao theo danh sách người nhận."
+      }
+    },
+    "faqTitle": "Câu hỏi thường gặp",
+    "faq": {
+      "minimum": {
+        "q": "Số lượng tối thiểu cho mỗi đơn là bao nhiêu?",
+        "a": "[SỐ LƯỢNG TỐI THIỂU] — đang chờ xác nhận."
+      },
+      "lead": {
+        "q": "Cần đặt trước bao lâu?",
+        "a": "[THỜI GIAN CHUẨN BỊ] kể từ khi duyệt mẫu — đang chờ xác nhận."
+      },
+      "invoice": {
+        "q": "Xenia có xuất hoá đơn VAT không?",
+        "a": "Giá đã bao gồm VAT. [CHÍNH SÁCH HOÁ ĐƠN] — đang chờ xác nhận."
+      },
+      "delivery": {
+        "q": "Có giao quà đến từng người nhận không?",
+        "a": "Có thể giao theo danh sách người nhận. Người nhận phải đủ 18 tuổi và xuất trình giấy tờ, nếu không người giao hàng không trao quà."
+      }
+    },
+    "ctaTitle": "Sẵn sàng thiết kế bộ quà riêng?",
+    "ctaButton": "Gửi yêu cầu báo giá"
+  },
+  "Quote": {
+    "nav": "Liên hệ & báo giá",
+    "eyebrow": "Quà tặng doanh nghiệp",
+    "title": "Liên hệ & báo giá",
+    "lead": "Gửi nhu cầu của doanh nghiệp, xenia sẽ liên hệ lại với đề xuất và báo giá.",
+    "nextTitle": "Sau khi bạn gửi",
+    "next": {
+      "read": "Xenia đọc yêu cầu và liên hệ lại qua email hoặc điện thoại.",
+      "propose": "Bạn nhận đề xuất bộ quà và báo giá chi tiết.",
+      "confirm": "Đơn được xác nhận khi bạn duyệt mẫu và báo giá."
+    },
+    "contactTitle": "Liên hệ trực tiếp",
+    "formTitle": "Yêu cầu báo giá",
+    "company": "Tên doanh nghiệp",
+    "name": "Người liên hệ",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "occasion": "Dịp tặng",
+    "occasionPick": "Chọn dịp",
+    "occasions": {
+      "tet": "Tết & cuối năm",
+      "thanks": "Tri ân khách hàng",
+      "event": "Sự kiện & hội nghị",
+      "staff": "Ghi nhận nhân sự",
+      "other": "Khác"
+    },
+    "quantity": "Số phần quà",
+    "budget": "Ngân sách mỗi phần quà (không bắt buộc)",
+    "budgetNone": "Chưa xác định",
+    "message": "Lời nhắn (không bắt buộc)",
+    "messageHint": "Tối đa {max} ký tự.",
+    "privacy": "Tôi đồng ý để xenia lưu các thông tin này để liên hệ báo giá, theo <link>chính sách bảo mật</link>.",
+    "submit": "Gửi yêu cầu",
+    "sent": "Đã nhận yêu cầu của bạn. Xenia sẽ liên hệ lại.",
+    "sendAnother": "Gửi yêu cầu khác",
+    "errors": {
+      "companyRequired": "Vui lòng nhập tên doanh nghiệp.",
+      "companyTooLong": "Tên doanh nghiệp quá dài.",
+      "nameRequired": "Vui lòng nhập tên người liên hệ.",
+      "nameTooLong": "Tên quá dài.",
+      "emailRequired": "Vui lòng nhập email.",
+      "emailInvalid": "Email không hợp lệ.",
+      "phoneRequired": "Vui lòng nhập số điện thoại.",
+      "phoneInvalid": "Số điện thoại Việt Nam gồm 10 số, bắt đầu bằng 0 hoặc +84.",
+      "occasionRequired": "Vui lòng chọn dịp tặng.",
+      "quantityInvalid": "Nhập số phần quà từ 1 đến {max}.",
+      "budgetInvalid": "Vui lòng chọn một mức ngân sách trong danh sách.",
+      "messageTooLong": "Lời nhắn tối đa {max} ký tự.",
+      "messageControl": "Lời nhắn có ký tự không hợp lệ.",
+      "privacyRequired": "Vui lòng đồng ý với chính sách bảo mật để gửi yêu cầu."
     }
   }
 }

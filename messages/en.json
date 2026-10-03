@@ -41,6 +41,10 @@
     "back": "Back to age verification"
   },
   "Home": {
+    "featuredEyebrow": "Selected",
+    "featuredTitle": "Featured wines",
+    "featuredAll": "See every wine",
+    "quoteButton": "Request a corporate gift quote",
     "occasionsEyebrow": "For every occasion",
     "occasionsTitle": "Gifts by occasion",
     "occasionsLead": "Each collection gathers the wines noted for one occasion.",
@@ -109,7 +113,8 @@
       "AR": "Argentina",
       "AU": "Australia",
       "NZ": "New Zealand",
-      "ZA": "South Africa"
+      "ZA": "South Africa",
+      "VN": "Vietnam"
     },
     "occasions": {
       "gift": "Gift",
@@ -479,6 +484,7 @@
     "delivery": "Choose the delivery date and window (morning, afternoon, evening) at checkout."
   },
   "Footer": {
+    "explore": "Explore",
     "business": "Business information",
     "representative": "Legal representative",
     "registration": "Business registration",
@@ -512,7 +518,7 @@
     "pending": "Pending legal review",
     "pages": {
       "thong-tin-doanh-nghiep": { "title": "Business information", "intro": "The information below is sample data for pre-launch development, not the details of a real business.", "sections": { "owner": "Owner and registration", "licence": "Alcohol retail licence", "notification": "Website notification" } },
-      "bao-mat": { "title": "Privacy and personal data", "intro": "This draft describes data processed and stored by the current version of the shop.", "sections": { "account": "Optional account", "purpose": "Purpose and scope", "flows": "Data and cookies", "retention": "Retention", "access": "Access and security", "rights": "Rights and complaints", "pending": "Points for review" } },
+      "bao-mat": { "title": "Privacy and personal data", "intro": "This draft describes data processed and stored by the current version of the shop.", "sections": { "account": "Optional account", "purpose": "Purpose and scope", "flows": "Data and cookies", "retention": "Retention", "access": "Access and security", "rights": "Rights and complaints", "quote": "Quote requests", "pending": "Points for review" } },
       "dieu-khoan": { "title": "Terms of sale", "intro": "This is a draft for the current simulated order flow.", "sections": { "account": "Optional account", "parties": "Parties and conditions", "order": "Placing and reviewing an order", "delivery": "Delivery", "payment": "Price and payment", "retention": "Transaction retention", "pending": "Points for review" } },
       "khieu-nai": { "title": "Complaints", "intro": "The online contact channel and proposed response times below need confirmation before launch.", "sections": { "channel": "Contact channel", "timeline": "Proposed timing", "scope": "Information to include" } },
       "gia": { "title": "Prices and fees", "intro": "Prices are shown in Vietnamese đồng; product and packaging prices in this environment are sample data.", "sections": { "display": "How prices are shown", "delivery": "Delivery fees", "wrap": "Gift wrapping", "other": "Other fees" } },
@@ -522,6 +528,8 @@
       "doi-tra-hoan-tien": { "title": "Returns and refunds", "intro": "A real returns and refund process is not integrated; this draft is for review.", "sections": { "mismatch": "Goods that do not match the listing", "returns": "Return requests", "refund": "Refunds", "failedId": "Delivery refused after an ID check" } }
     },
     "copy": {
+      "quoteData": "The quote form on the contact page keeps the company, contact person, email, phone, occasion, number of gifts, budget and message if you enter them, with the time you agreed to this policy. It never asks for a date of birth. Only administrators can see these requests.",
+      "quoteRetention": "How long quote requests are kept is pending counsel's review (Q-quote); until then an administrator deletes a request when its sender asks.",
       "bizOwner": "The details above are fictional development values. Real entity, licence and eligibility documents have not been supplied.",
       "bizLicence": "The number and issuer below are sample text, not a licence or proof of eligibility.",
       "bizNotice": "No real notification link is configured. Filing and confirmation are pre-launch tasks.",
@@ -730,6 +738,153 @@
         "intro": "Open the link below to choose a new password.",
         "ignore": "If you did not ask for this, ignore this message."
       }
+    }
+  },
+  "Brio": {
+    "title": "Brio",
+    "eyebrow": "Fermented Grape Drink",
+    "lead": "Ninh Thuận grapes, slowly fermented",
+    "quote": "“In Ninh Thuận the sun is never in a hurry and the wind never stops.”",
+    "storyEyebrow": "Story",
+    "story": "[BRIO STORY: the vineyards, the grapes, the people, the fermentation.]",
+    "processTitle": "From vineyard to gift box",
+    "process": {
+      "region": {
+        "title": "Sun and wind",
+        "body": "[Describe the vineyards in Ninh Thuận.]"
+      },
+      "ferment": {
+        "title": "Slow fermentation",
+        "body": "[Describe the fermentation.]"
+      },
+      "bottle": {
+        "title": "Bottled by hand",
+        "body": "[Describe the bottle, the cork and the label.]"
+      }
+    },
+    "specsEyebrow": "Details",
+    "specsTitle": "About Brio",
+    "productLink": "See Brio in the shop",
+    "quoteLink": "Order Brio in quantity"
+  },
+  "Personalise": {
+    "nav": "Personalisation",
+    "eyebrow": "Personalisation",
+    "title": "A signature on every gift",
+    "lead": "with your company's name and each recipient's",
+    "accent": "With Compliments",
+    "optionsEyebrow": "Options",
+    "optionsTitle": "What xenia can personalise",
+    "options": {
+      "box": {
+        "title": "Gift box",
+        "body": "An olive or wine-red rigid box with a gold foil frame on the lid."
+      },
+      "logo": {
+        "title": "Foil logo",
+        "body": "Your logo in gold foil on the lid, the card and the ribbon."
+      },
+      "card": {
+        "title": "With Compliments card",
+        "body": "A cream card with each recipient's name and a message from your leadership."
+      },
+      "mix": {
+        "title": "Matched to your budget",
+        "body": "Wine, glasses and keepsakes combined to the budget of each gift."
+      }
+    },
+    "paid": "Personalisation is a paid service, quoted per request. Prices include VAT.",
+    "processTitle": "How ordering works",
+    "process": {
+      "listen": {
+        "title": "Listen",
+        "body": "We learn the occasion, the recipients, the quantity and the budget."
+      },
+      "select": {
+        "title": "Select",
+        "body": "We propose gift sets with sample photos and a detailed quote."
+      },
+      "personalise": {
+        "title": "Personalise",
+        "body": "Foil logo, box colour and a card for each recipient."
+      },
+      "deliver": {
+        "title": "Deliver",
+        "body": "Carefully packed and delivered to each recipient on your list."
+      }
+    },
+    "faqTitle": "Questions",
+    "faq": {
+      "minimum": {
+        "q": "What is the minimum quantity per order?",
+        "a": "[MINIMUM QUANTITY] — to be confirmed."
+      },
+      "lead": {
+        "q": "How far ahead should we order?",
+        "a": "[LEAD TIME] from sample approval — to be confirmed."
+      },
+      "invoice": {
+        "q": "Do you issue VAT invoices?",
+        "a": "Prices include VAT. [INVOICE POLICY] — to be confirmed."
+      },
+      "delivery": {
+        "q": "Can you deliver to each recipient?",
+        "a": "Yes, to a list of recipients. Each must be 18 or over and show ID, or the courier does not hand the gift over."
+      }
+    },
+    "ctaTitle": "Ready to design your own gift set?",
+    "ctaButton": "Send a quote request"
+  },
+  "Quote": {
+    "nav": "Contact & quote",
+    "eyebrow": "Corporate gifts",
+    "title": "Contact & quote",
+    "lead": "Tell us what your company needs and we will get back to you with a proposal and a quote.",
+    "nextTitle": "After you send it",
+    "next": {
+      "read": "We read your request and contact you by email or phone.",
+      "propose": "You receive a gift proposal and a detailed quote.",
+      "confirm": "The order is confirmed once you approve the sample and the quote."
+    },
+    "contactTitle": "Contact us directly",
+    "formTitle": "Quote request",
+    "company": "Company",
+    "name": "Contact person",
+    "email": "Email",
+    "phone": "Phone",
+    "occasion": "Occasion",
+    "occasionPick": "Choose an occasion",
+    "occasions": {
+      "tet": "Tết and year end",
+      "thanks": "Thanking clients",
+      "event": "Events and conferences",
+      "staff": "Staff recognition",
+      "other": "Other"
+    },
+    "quantity": "Number of gifts",
+    "budget": "Budget per gift (optional)",
+    "budgetNone": "Not decided",
+    "message": "Message (optional)",
+    "messageHint": "Up to {max} characters.",
+    "privacy": "I agree that xenia keeps these details to contact me about a quote, under the <link>privacy policy</link>.",
+    "submit": "Send request",
+    "sent": "Your request has arrived. We will be in touch.",
+    "sendAnother": "Send another request",
+    "errors": {
+      "companyRequired": "Enter the company name.",
+      "companyTooLong": "The company name is too long.",
+      "nameRequired": "Enter the contact person's name.",
+      "nameTooLong": "The name is too long.",
+      "emailRequired": "Enter an email address.",
+      "emailInvalid": "That email address is not valid.",
+      "phoneRequired": "Enter a phone number.",
+      "phoneInvalid": "A Vietnamese phone number has 10 digits and starts with 0 or +84.",
+      "occasionRequired": "Choose an occasion.",
+      "quantityInvalid": "Enter a number of gifts from 1 to {max}.",
+      "budgetInvalid": "Choose a budget from the list.",
+      "messageTooLong": "The message can be at most {max} characters.",
+      "messageControl": "The message contains a character that is not allowed.",
+      "privacyRequired": "Agree to the privacy policy to send the request."
     }
   }
 }

@@ -69,7 +69,8 @@ body {
     color: var(--color-ink);
     text-decoration: none;
   }
-  .nav-link:hover {
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
     border-bottom-color: var(--color-wine);
     color: var(--color-wine);
   }

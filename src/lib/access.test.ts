@@ -28,7 +28,7 @@ const ours = <T extends { slug: string }>(rows: T[]) => rows.filter((row) => !ro
 describe("access, from the configured slugs", () => {
   it("covers every collection the shop defines", () => {
     expect(ours(collections).map((c) => c.slug).sort()).toEqual(
-      ["card-designs", "checkout-drafts", "customers", "mock-outbox", "orders", "packaging", "producers", "users", "vintages", "wines"].sort(),
+      ["card-designs", "checkout-drafts", "customers", "mock-outbox", "orders", "packaging", "producers", "quote-requests", "users", "vintages", "wines"].sort(),
     );
     expect(globals.map((g) => g.slug)).toEqual(["site-settings"]);
   });
@@ -38,8 +38,8 @@ describe("access, from the configured slugs", () => {
   });
 
   it("gives a customer and an anonymous visitor false on every operation, and an administrator true", async () => {
-    // Closed for everyone: `create`/`delete` on orders and customers, and the outbox's writes.
-    const closed = new Set(["orders:create", "orders:delete", "customers:create", "customers:update", "customers:delete", "mock-outbox:create", "mock-outbox:update", "mock-outbox:delete"]);
+    // Closed for everyone: `create`/`delete` on orders and customers, the outbox's writes, and creating a quote request.
+    const closed = new Set(["orders:create", "orders:delete", "customers:create", "customers:update", "customers:delete", "mock-outbox:create", "mock-outbox:update", "mock-outbox:delete", "quote-requests:create"]);
     for (const c of ours(collections)) {
       for (const op of [...COLLECTION_OPS, ...(c.slug === "users" || c.slug === "customers" ? (["admin", "unlock"] as const) : [])]) {
         const rule = c.access[op];

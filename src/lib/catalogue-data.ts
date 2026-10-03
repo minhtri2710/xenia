@@ -1,6 +1,7 @@
 import config from "@payload-config";
 import { getPayload } from "payload";
 
+import { BRIO_SLUG, isBrioPromotable } from "@/lib/brio";
 import type { BottleSize, CatalogueWine } from "@/lib/catalogue";
 import { releaseExpiredOrders } from "@/lib/order-expiry";
 import type { Producer, Vintage, Wine } from "@/payload-types";
@@ -29,6 +30,7 @@ export async function loadCatalogue(locale: "vi" | "en"): Promise<CatalogueWine[
         region: w.region,
         grapes: w.grapes.map((g) => g.grape),
         occasions: w.occasions ?? [],
+        featured: w.featured ?? false,
         vintages: own.map((x) => ({ priceVnd: x.priceVnd, bottleMl: Number(x.bottleMl) as BottleSize, stock: x.stock, abvPct: x.abvPct })),
       },
     ];
@@ -61,4 +63,18 @@ export async function loadWine(
     wine: { ...wine, producer: wine.producer },
     vintages: vintages.docs.map((x) => ({ ...x, year: x.year ?? null, bottleMl: Number(x.bottleMl) as BottleSize })),
   };
+}
+
+/** Whether the Brio page may show (and be linked to): the `brio` wine is published and `isBrioPromotable`. */
+export async function brioIsPromotable(): Promise<boolean> {
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: "wines",
+    where: { and: [{ slug: { equals: BRIO_SLUG } }, { status: { equals: "published" } }] },
+    depth: 0,
+    limit: 1,
+  });
+  if (!docs[0]) return false;
+  const vintages = await payload.find({ collection: "vintages", where: { wine: { equals: docs[0].id } }, depth: 0, pagination: false });
+  return isBrioPromotable(vintages.docs.map((x) => ({ priceVnd: x.priceVnd, bottleMl: Number(x.bottleMl) as BottleSize, stock: x.stock, abvPct: x.abvPct, status: x.status })));
 }
