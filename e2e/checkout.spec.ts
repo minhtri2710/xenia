@@ -148,10 +148,11 @@ for (const { locale, prefix } of LOCALES) {
     const external = await blockThirdParty(page);
     const lune = vintageId("lune-grise-rouge", 2020, 750); // 850 000
     const colle = vintageId("colle-vento-rosso", 2021, 750); // 720 000
+    // The first storefront request releases overdue orders (releaseExpiredOrders), which can restock
+    // these vintages on a reused database; the baseline is read after it.
+    await declareAdult(page, `${prefix}/ruou-vang/lune-grise-rouge`);
     const luneStock = stockOf(lune);
     const colleStock = stockOf(colle);
-
-    await declareAdult(page, `${prefix}/ruou-vang/lune-grise-rouge`);
     await addToCart(page, prefix, "lune-grise-rouge");
     await addToCart(page, prefix, "colle-vento-rosso");
 
