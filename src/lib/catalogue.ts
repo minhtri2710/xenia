@@ -192,16 +192,23 @@ export function isRestrictedWine(wine: Pick<CatalogueWine, "vintages">): boolean
 export const GIFT_OCCASIONS = ["gift", "tet", "celebration"] as const satisfies readonly Occasion[];
 export type GiftOccasion = (typeof GIFT_OCCASIONS)[number];
 
-export type GiftCollection = { occasion: GiftOccasion; listings: Listing[] };
+/** The occasion facet of `/qua-tang`: one of `GIFT_OCCASIONS`, anything else is ignored. */
+export function parseGiftOccasion(raw: string | string[] | undefined): GiftOccasion | undefined {
+  const value = (Array.isArray(raw) ? raw[0] : raw)?.trim();
+  return GIFT_OCCASIONS.find((o) => o === value);
+}
+
+/** A wine's gift occasions, in `GIFT_OCCASIONS` order (its browse occasions left out). */
+export const giftOccasionsOf = (wine: Pick<CatalogueWine, "occasions">): GiftOccasion[] => GIFT_OCCASIONS.filter((o) => wine.occasions.includes(o));
 
 /**
- * The gift collections: one per gift occasion, from each wine's admin-set `occasions`, narrowed
- * by an optional price band with `/ruou-vang`'s card semantics. A restricted wine appears in none,
- * and a wine tagged with several gift occasions appears in each of them.
+ * The gift listing of `/qua-tang`: one name-ordered grid of the wines tagged with a gift occasion
+ * (only `occasion` when one is chosen), narrowed by an optional price band with `/ruou-vang`'s card
+ * semantics. A promotional surface, so a restricted wine is never in it, whatever the band.
  */
-export function giftCollections(wines: CatalogueWine[], price: PriceBand | undefined, locale: string): GiftCollection[] {
-  const promotable = wines.filter((w) => !isRestrictedWine(w));
-  return GIFT_OCCASIONS.map((occasion) => ({ occasion, listings: listWines(promotable, { sort: "name", occasion, price }, locale) }));
+export function giftListing(wines: CatalogueWine[], { occasion, price }: { occasion?: GiftOccasion; price?: PriceBand }, locale: string): Listing[] {
+  const promotable = wines.filter((w) => !isRestrictedWine(w) && giftOccasionsOf(w).some((o) => !occasion || o === occasion));
+  return listWines(promotable, { sort: "name", price }, locale);
 }
 
 /** How many featured wines the home page shows. */

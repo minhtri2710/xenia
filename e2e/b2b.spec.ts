@@ -48,6 +48,12 @@ for (const { locale, prefix } of LOCALES) {
       await page.goto(`${prefix}/gio-hang`);
       await expect(cart).toHaveAttribute("aria-current", "page");
       await expect(wines).not.toHaveAttribute("aria-current", /.*/);
+      const personalise = nav.getByRole("link", { name: vi ? "Cá nhân hoá" : "Personalisation", exact: true });
+      await expect(personalise).toHaveAttribute("href", `${prefix}/ca-nhan-hoa`);
+      await personalise.click();
+      await expect(page).toHaveURL((url) => url.pathname === `${prefix}/ca-nhan-hoa`);
+      await expect(personalise).toHaveAttribute("aria-current", "page");
+      await expect(cart).not.toHaveAttribute("aria-current", /.*/);
     });
 
     test("the personalisation page states a paid service and answers questions without third-party requests", async ({ page }) => {
@@ -105,6 +111,7 @@ for (const { locale, prefix } of LOCALES) {
 // below change it with SQL and `pnpm seed` puts it back after each one.
 test.describe("Brio page", () => {
   const footerBrio = (page: Page) => page.locator("footer").getByRole("link", { name: "Brio", exact: true });
+  const headerBrio = (page: Page) => page.getByTestId("header-brio");
   const brioWine = "(SELECT id FROM wines WHERE slug = 'brio')";
 
   test.afterEach(async ({ request }) => {
@@ -119,6 +126,8 @@ test.describe("Brio page", () => {
       await expect(page.getByTestId("brio-specs").locator('[data-spec="abv"] dd')).toHaveText("11% vol");
       await expect(page.getByTestId("brio-warning").locator('strong[lang="vi"]')).toHaveText(WARNING);
       await expect(footerBrio(page)).toHaveCount(1);
+      await expect(headerBrio(page)).toHaveAttribute("href", `${prefix}/brio`);
+      await expect(headerBrio(page)).toHaveAttribute("aria-current", "page");
       await expectNoSeriousA11yViolations(page, `brio ${prefix || "vi"}`);
     }
   });
@@ -128,6 +137,7 @@ test.describe("Brio page", () => {
     await declareAdult(page, "/");
     expect((await page.goto("/brio"))?.status()).toBe(404);
     await expect(footerBrio(page)).toHaveCount(0);
+    await expect(headerBrio(page)).toHaveCount(0);
   });
 
   test("is not found and not linked while the Brio wine is a draft", async ({ page }) => {
@@ -135,6 +145,7 @@ test.describe("Brio page", () => {
     await declareAdult(page, "/");
     expect((await page.goto("/brio"))?.status()).toBe(404);
     await expect(footerBrio(page)).toHaveCount(0);
+    await expect(headerBrio(page)).toHaveCount(0);
   });
 });
 

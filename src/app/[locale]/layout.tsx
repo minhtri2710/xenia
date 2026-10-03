@@ -109,7 +109,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   const brand = await getTranslations("Brand");
   const notice = await getTranslations("Notice");
   const footer = await getTranslations("Footer");
+  const brio = await getTranslations("Brio");
+  const personalise = await getTranslations("Personalise");
   const account = await currentCustomer();
+  const showBrio = await brioIsPromotable();
 
   return (
     <html lang={locale}>
@@ -122,9 +125,11 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <Link href="/" className="font-display text-2xl font-semibold tracking-[0.12em] text-wine uppercase no-underline">{brand("name")}</Link>
                 <p className="eyebrow mt-1">{brand("tagline")}</p>
               </div>
-              <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-8 gap-y-2">
+              <nav aria-label={footer("primaryNav")} className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <NavLink href="/ruou-vang">{brand("wines")}</NavLink>
                 <NavLink href="/qua-tang">{brand("giftCollections")}</NavLink>
+                {showBrio && <NavLink href={BRIO_PATH} testId="header-brio">{brio("title")}</NavLink>}
+                <NavLink href="/ca-nhan-hoa">{personalise("nav")}</NavLink>
                 <NavLink href="/dich-vu-goi-qua">{brand("giftService")}</NavLink>
                 <NavLink href="/gio-hang">{brand("cart")}</NavLink>
                 <NavLink href={account ? ACCOUNT_PATH : ACCOUNT_ROUTES.signIn} testId="header-account">{account ? brand("account") : brand("signIn")}</NavLink>
