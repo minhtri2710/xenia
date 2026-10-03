@@ -771,9 +771,15 @@
       }
     },
     "specsEyebrow": "Details",
-    "specsTitle": "About Brio",
+    "specsTitle": "{name} {vintage}",
     "productLink": "See Brio in the shop",
-    "quoteLink": "Order Brio in quantity"
+    "quoteLink": "Order Brio in quantity",
+    "intro": "Brio is made to keep the slow pace of Ninh Thuận's sun and wind. (Sample text.)",
+    "giftsLink": "Gifts with Brio",
+    "specsLead": "Details of the Brio bottle on sale.",
+    "ctaTitle": "Brio in a xenia gift box",
+    "ctaLead": "Pair Brio with the paid gift wrap service and a card with your message.",
+    "ctaButton": "See the gift collections"
   },
   "Personalise": {
     "nav": "Personalisation",
@@ -804,21 +810,21 @@
     "paid": "Personalisation is a paid service, quoted per request. Prices include VAT.",
     "processTitle": "How ordering works",
     "process": {
-      "listen": {
-        "title": "Listen",
-        "body": "We learn the occasion, the recipients, the quantity and the budget."
+      "send": {
+        "title": "Send your brief",
+        "body": "Occasion, quantity, budget and delivery deadline."
       },
-      "select": {
-        "title": "Select",
-        "body": "We propose gift sets with sample photos and a detailed quote."
+      "propose": {
+        "title": "Receive a proposal & quote",
+        "body": "Gift options with sample photos."
       },
-      "personalise": {
-        "title": "Personalise",
-        "body": "Foil logo, box colour and a card for each recipient."
+      "approve": {
+        "title": "Approve the personalisation",
+        "body": "Confirm the logo, card and box before production."
       },
       "deliver": {
-        "title": "Deliver",
-        "body": "Carefully packed and delivered to each recipient on your list."
+        "title": "Packing & delivery",
+        "body": "Delivered to one address or to each recipient on your list."
       }
     },
     "faqTitle": "Questions",
@@ -845,17 +851,16 @@
   },
   "Quote": {
     "nav": "Contact & quote",
-    "eyebrow": "Corporate gifts",
-    "title": "Contact & quote",
-    "lead": "Tell us what your company needs and we will get back to you with a proposal and a quote.",
-    "nextTitle": "After you send it",
-    "next": {
-      "read": "We read your request and contact you by email or phone.",
-      "propose": "You receive a gift proposal and a detailed quote.",
-      "confirm": "The order is confirmed once you approve the sample and the quote."
-    },
-    "contactTitle": "Contact us directly",
-    "formTitle": "Quote request",
+    "eyebrow": "Contact",
+    "title": "Get a proposal & quote",
+    "lead": "Tell us about the occasion and the recipients, and xenia will select the right gifts for your company.",
+    "formTitle": "Your request",
+    "accent": "With Compliments",
+    "hotline": "Hotline",
+    "emailLabel": "Email",
+    "office": "Head office",
+    "sentEyebrow": "Request received",
+    "sentTitle": "Thank you",
     "company": "Company",
     "name": "Contact person",
     "email": "Email",
@@ -876,7 +881,7 @@
     "messageHint": "Up to {max} characters.",
     "privacy": "I agree that xenia keeps these details to contact me about a quote, under the <link>privacy policy</link>.",
     "submit": "Send request",
-    "sent": "Your request has arrived. We will be in touch.",
+    "sent": "xenia will get back to you with a gift proposal and a quote.",
     "sendAnother": "Send another request",
     "errors": {
       "companyRequired": "Enter the company name.",
