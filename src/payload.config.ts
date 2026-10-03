@@ -16,6 +16,7 @@ import { QuoteRequests } from "./collections/quotes";
 import { SiteSettings } from "./globals/site-settings";
 import { adminOnlyAuthAccess } from "./lib/access";
 import { mockEmailAdapter } from "./lib/outbox";
+import { productionEnvProblems } from "./lib/production";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +25,10 @@ function requiredEnv(name: string): string {
   if (!value) throw new Error(`${name} is not set. Copy .env.example to .env.`);
   return value;
 }
+
+// A production server refuses to serve with the dev placeholders (src/lib/production.ts).
+const problems = productionEnvProblems(process.env);
+if (problems.length > 0) throw new Error(`Refusing to serve in production:\n- ${problems.join("\n- ")}`);
 
 export default buildConfig({
   secret: requiredEnv("PAYLOAD_SECRET"),
@@ -66,7 +71,8 @@ export default buildConfig({
     // A missing translation is a content error the seed tests catch, not something to paper over.
     fallback: false,
   },
-  // Pre-launch: Payload pushes the schema in development; no migrations until first deploy.
+  // Pre-launch: Payload pushes the schema in development; no migrations until the first deploy
+  // creates the baseline in src/migrations (AGENTS.md, "Deployment").
   db: postgresAdapter({
     pool: { connectionString: requiredEnv("DATABASE_URI") },
     afterSchemaInit: [

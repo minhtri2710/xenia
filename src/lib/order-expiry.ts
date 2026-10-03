@@ -3,6 +3,7 @@ import { sql } from "@payloadcms/db-postgres";
 import { commitTransaction, createLocalReq, getPayload, initTransaction, killTransaction } from "payload";
 
 import type { PaymentMethod } from "@/lib/order";
+import { assertMockPaymentAllowed } from "@/lib/production";
 
 async function executeInTransaction(
   payload: Awaited<ReturnType<typeof getPayload>>,
@@ -84,12 +85,13 @@ export async function releaseExpiredOrders(now: Date): Promise<number> {
   }
 }
 
-/** Releases due orders, then conditionally records one mock payment attempt. */
+/** Releases due orders, then conditionally records one mock payment attempt. Refuses in production. */
 export async function recordPayment(
   token: string,
   method: PaymentMethod,
   outcome: "success" | "failure",
 ): Promise<"paid" | "failed" | "expired" | "unavailable"> {
+  assertMockPaymentAllowed(process.env.NODE_ENV === "production");
   const attemptAt = new Date();
   await releaseExpiredOrders(attemptAt);
   const payload = await getPayload({ config });
