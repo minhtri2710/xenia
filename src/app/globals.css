@@ -140,11 +140,10 @@ body {
   }
 }
 
-/* A page that ends with a full-width band meets the footer without a strip of paper (unlayered, so it beats main's pb-16). */
-main:has(> [data-band]:last-child) {
-  padding-bottom: 0;
-}
-main:has(> article:last-child > [data-band]:last-child) {
+/* A page that ends with a full-width band meets the footer without a strip of paper (unlayered, so it beats main's pb-16).
+   Bands sit only directly in <main> or in a page's single <article>, so a band that is a last child ends the page.
+   One rule on purpose: the production minifier merged two :has() rules into an invalid selector that browsers drop. */
+main:has([data-band]:last-child) {
   padding-bottom: 0;
 }
 
